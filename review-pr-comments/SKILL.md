@@ -22,11 +22,7 @@ For each unresponded comment, extract:
 - **Author** and timestamp
 - **File and line** (for review comments)
 - **Category**: bug, correctness, design, security, performance, style/nitpick, question, suggestion
-- **Severity**:
-  - **P0** — must fix: bug, security vulnerability, data loss risk
-  - **P1** — should fix: correctness issue, design flaw, missing error handling
-  - **P2** — nice to have: style improvement, better naming, minor enhancement
-  - **P3** — optional: personal preference, nitpick, cosmetic
+- **Severity**: classify according to the definitions in `references/SEVERITY.md`
 
 ## 3. Triage each comment
 
