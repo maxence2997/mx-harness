@@ -19,16 +19,60 @@ Systematic triage and response workflow for unresponded PR review comments.
 **Install:**
 
 ```bash
-npx skills add https://github.com/anthropics-tw/skills --skill review-pr-comments -g -y
+npx skills add https://github.com/maxence2997/skills --skill review-pr-comments -g -y
 ```
-
-> Replace `anthropics-tw/skills` with the actual repo path after publishing.
 
 **Usage (Claude Code):**
 
 ```
 /review-pr-comments 42
 /review-pr-comments https://github.com/org/repo/pull/42
+```
+
+## Prerequisites for Private Repos
+
+This skill uses `gh api` to fetch and reply to PR comments. If you are working with **private repositories**, ensure the following before use:
+
+### 1. GitHub CLI authentication
+
+```bash
+gh auth login
+```
+
+Verify access to your target repo:
+
+```bash
+gh api repos/<owner>/<repo> --jq '.full_name'
+```
+
+### 2. Required scopes
+
+Your GitHub token must have these scopes:
+- `repo` — read/write access to private repositories
+- `read:org` — if the repo belongs to an organization
+
+Check your current scopes:
+
+```bash
+gh auth status
+```
+
+If scopes are missing, re-authenticate:
+
+```bash
+gh auth login --scopes repo,read:org
+```
+
+### 3. Fine-grained PAT (alternative)
+
+If using a fine-grained personal access token instead of `gh auth`:
+- **Repository access**: select the target repos
+- **Permissions**: Pull requests (Read and write), Contents (Read)
+
+Set it via:
+
+```bash
+gh auth login --with-token < my-token.txt
 ```
 
 ## Adding More Skills
