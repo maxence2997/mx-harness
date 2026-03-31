@@ -27,52 +27,35 @@ npx skills add https://github.com/maxence2997/skills --skill review-pr-comments 
 ```
 /review-pr-comments 42
 /review-pr-comments https://github.com/org/repo/pull/42
+/review-pr-comments https://gitlab.com/org/repo/-/merge_requests/42
 ```
 
 ## Prerequisites for Private Repos
 
-This skill uses `gh api` to fetch and reply to PR comments. If you are working with **private repositories**, ensure the following before use:
+This skill uses the platform CLI to fetch and reply to comments. For **private repositories**, authenticate before use:
 
-### 1. GitHub CLI authentication
-
-```bash
-gh auth login
-```
-
-Verify access to your target repo:
-
-```bash
-gh api repos/<owner>/<repo> --jq '.full_name'
-```
-
-### 2. Required scopes
-
-Your GitHub token must have these scopes:
-- `repo` — read/write access to private repositories
-- `read:org` — if the repo belongs to an organization
-
-Check your current scopes:
-
-```bash
-gh auth status
-```
-
-If scopes are missing, re-authenticate:
+### GitHub
 
 ```bash
 gh auth login --scopes repo,read:org
+gh auth status  # verify scopes
 ```
 
-### 3. Fine-grained PAT (alternative)
-
-If using a fine-grained personal access token instead of `gh auth`:
-- **Repository access**: select the target repos
-- **Permissions**: Pull requests (Read and write), Contents (Read)
-
-Set it via:
+### GitLab
 
 ```bash
-gh auth login --with-token < my-token.txt
+glab auth login
+glab auth status  # verify access
+```
+
+For either platform, verify repo access:
+
+```bash
+# GitHub
+gh api repos/<owner>/<repo> --jq '.full_name'
+
+# GitLab
+glab api projects/<id> --jq '.path_with_namespace'
 ```
 
 ## Adding More Skills
