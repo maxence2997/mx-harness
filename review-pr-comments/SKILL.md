@@ -5,11 +5,15 @@ description: Triage and respond to unresponded PR review comments. Fetches comme
 
 # Review PR Comments
 
-Systematic triage and response workflow for unresponded pull request comments. Takes a PR number or URL as argument.
+Systematic triage and response workflow for unresponded pull request (or merge request) comments. Takes a PR/MR number or URL as argument. Works with both GitHub and GitLab.
 
 ## 1. Fetch comments
 
-Use `gh api` to pull all comments on the PR (review comments + issue comments). Filter out:
+Detect the platform from the repo's remote URL. Use the appropriate CLI to pull all comments:
+- **GitHub**: `gh api` to fetch review comments and issue comments
+- **GitLab**: `glab api` to fetch MR discussions and notes
+
+Filter out:
 - Comments already replied to by the PR author
 - Bot-generated summary comments (e.g. Copilot review overview, dependency bot summaries)
 - Individual line comments from bots MUST still be evaluated
@@ -76,20 +80,20 @@ After the table, briefly explain any non-obvious triage decisions.
 
 After user reviews and approves (possibly adjusting bucket assignments), execute each:
 
-- **Fix now**: make the code change, commit, then reply on the PR:
+- **Fix now**: make the code change, commit, then reply on the PR/MR:
   `Fixed in {commit-hash}. {what changed and why}`
 
-- **Track**: add entry to repo root `TODOS.md` with context and PR comment link, then reply:
+- **Track**: add entry to repo root `TODOS.md` with context and comment link, then reply:
   `Tracked in TODOS.md — {reason for deferring}`
 
-- **Skip (won't fix)**: reply on the PR:
+- **Skip (won't fix)**: reply on the PR/MR:
   `Won't fix. {clear reasoning}`
 
-- **Skip (not applicable)**: reply on the PR:
+- **Skip (not applicable)**: reply on the PR/MR:
   `Not applicable — {explanation}`
 
 Duplicate or related comments may reference each other: `Same reasoning as #{N} above — {brief}`.
 
 ## 7. Final check
 
-After all comments are addressed, verify zero unresponded comments remain on the PR. Report the final count. The PR must have zero unaddressed comments before merge — this is a hard gate.
+After all comments are addressed, verify zero unresponded comments remain on the PR/MR. Report the final count. The PR/MR must have zero unaddressed comments before merge — this is a hard gate.
