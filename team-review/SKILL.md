@@ -373,7 +373,7 @@ For issues with `line: 0`, display `L-` instead of `L0`.
 After displaying the report, ask:
 
 ```
-請確認報告內容，有需要調整嗎？
+Please review the report. Any changes needed?
 ```
 
 **If the user requests changes:**
@@ -381,7 +381,7 @@ After displaying the report, ask:
 1. Discuss the issue with the user
 2. Modify the report and update the saved file accordingly
 3. Display the updated report
-4. Ask again: `還有其他需要調整的嗎？`
+4. Ask again: `Any other changes?`
 5. Repeat until the user confirms
 
 **If the user confirms (e.g., "no", "OK", "looks good"):**
