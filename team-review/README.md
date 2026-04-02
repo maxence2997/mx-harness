@@ -1,4 +1,4 @@
-# review
+# team-review
 
 Multi-perspective code review using three AI review agents (Senior Engineer, SRE Guardian, Future Maintainer) synthesized by a Tech Lead into one final report.
 
@@ -15,16 +15,16 @@ Multi-perspective code review using three AI review agents (Senior Engineer, SRE
 
 **Diff mode** (default):
 ```
-/review                    # staged changes
-/review HEAD~3             # last 3 commits
-/review main..HEAD         # branch diff
-/review abc..def           # commit range
+/team-review                    # staged changes
+/team-review HEAD~3             # last 3 commits
+/team-review main..HEAD         # branch diff
+/team-review abc..def           # commit range
 ```
 
 **Repo mode**:
 ```
-/review --repo src/service/          # entire directory
-/review --repo src/service/order.go  # specific file
+/team-review --repo src/service/          # entire directory
+/team-review --repo src/service/order.go  # specific file
 ```
 
 ## Supported languages

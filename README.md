@@ -18,7 +18,7 @@ npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
 
 | Skill | Description |
 |-------|-------------|
-| [review](review/) | Multi-perspective code review with three AI agents and Tech Lead synthesis |
+| [team-review](team-review/) | Multi-perspective code review with three AI agents and Tech Lead synthesis |
 | [review-pr-comments](review-pr-comments/) | Triage and respond to unresponded PR review comments |
 
 ## License

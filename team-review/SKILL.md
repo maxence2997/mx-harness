@@ -1,5 +1,5 @@
 ---
-name: review
+name: team-review
 description: >
   Multi-perspective code review for local changes or entire files.
   Reviews git diffs (staged, commit ranges, branch comparisons) or whole files/directories.
@@ -7,7 +7,7 @@ description: >
   feed into a Tech Lead who synthesizes the final report with noise filtering and conflict resolution.
   Auto-detects language from file extensions and loads language-specific review standards.
   Supports parallel subagents (Claude Code) or single-pass fallback (Copilot, Cursor, etc.).
-  Usage: /review [diff-spec] or /review --repo <path>
+  Usage: /team-review [diff-spec] or /team-review --repo <path>
   Supported languages: Go (.go), C# .NET 8 (.cs)
 user-invocable: true
 allowed-tools:
@@ -24,8 +24,8 @@ allowed-tools:
 ## Trigger
 
 ```
-/review [diff-spec]
-/review --repo <path>
+/team-review [diff-spec]
+/team-review --repo <path>
 ```
 
 ---
@@ -36,12 +36,12 @@ Parse the user's argument to determine the review mode:
 
 | Invocation | Mode | Action |
 |---|---|---|
-| `/review` (no args) | diff | `git diff --cached` (staged changes) |
-| `/review HEAD~3` | diff | `git diff HEAD~3..HEAD` |
-| `/review main..HEAD` | diff | `git diff main..HEAD` |
-| `/review abc..def` | diff | `git diff abc..def` |
-| `/review --repo src/service/` | repo | Read all code files in directory |
-| `/review --repo src/service/order.go` | repo | Read specific file(s) |
+| `/team-review` (no args) | diff | `git diff --cached` (staged changes) |
+| `/team-review HEAD~3` | diff | `git diff HEAD~3..HEAD` |
+| `/team-review main..HEAD` | diff | `git diff main..HEAD` |
+| `/team-review abc..def` | diff | `git diff abc..def` |
+| `/team-review --repo src/service/` | repo | Read all code files in directory |
+| `/team-review --repo src/service/order.go` | repo | Read specific file(s) |
 
 **Argument parsing:**
 1. If argument starts with `--repo` → repo mode. The path(s) follow.
