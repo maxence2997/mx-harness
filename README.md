@@ -18,8 +18,9 @@ npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
 
 | Skill | Description |
 |-------|-------------|
-| [team-review](team-review/) | Multi-perspective code review with three AI agents and Tech Lead synthesis |
-| [review-pr-comments](review-pr-comments/) | Triage and respond to unresponded PR review comments |
+| [mx-commit](mx-commit/) | Commit staged changes with structured commit message convention |
+| [mx-team-review](mx-team-review/) | Multi-perspective code review with three AI agents and Tech Lead synthesis |
+| [mx-pr-triage](mx-pr-triage/) | Triage and respond to unresponded PR review comments |
 
 ## License
 

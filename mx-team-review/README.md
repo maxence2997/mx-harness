@@ -1,4 +1,4 @@
-# team-review
+# mx-team-review
 
 Multi-perspective code review using three AI review agents (Senior Engineer, SRE Guardian, Future Maintainer) synthesized by a Tech Lead into one final report.
 

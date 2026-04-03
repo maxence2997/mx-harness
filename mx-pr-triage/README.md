@@ -1,4 +1,4 @@
-# review-pr-comments
+# mx-pr-triage
 
 Systematic triage and response workflow for unresponded PR review comments.
 
