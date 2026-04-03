@@ -34,6 +34,7 @@ Edit `references/commit-message.md` to adjust types, format, or examples to matc
 
 ## Notes
 
+- Commit message must be in English — all fields (type, subject, body)
 - Never stages additional files — only commits what is already staged
 - Never uses `--no-verify`
 - Refuses to commit if secrets files (`.env`, `*.pem`, `*.key`) are staged

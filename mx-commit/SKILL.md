@@ -4,7 +4,7 @@ description: >
   Commit staged changes following the project's commit message convention.
   Enforces: one logical change per commit, type prefix, 50-char subject limit,
   numbered body items in "reason → change" format, English only.
-  Usage: /commit
+  Usage: /mx-commit
 user-invocable: true
 allowed-tools:
   - Bash
@@ -13,12 +13,12 @@ allowed-tools:
   - Grep
 ---
 
-# Commit
+# mx-commit
 
 ## Trigger
 
 ```
-/commit
+/mx-commit
 ```
 
 ---
