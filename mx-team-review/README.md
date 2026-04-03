@@ -15,16 +15,16 @@ Multi-perspective code review using three AI review agents (Senior Engineer, SRE
 
 **Diff mode** (default):
 ```
-/team-review                    # staged changes
-/team-review HEAD~3             # last 3 commits
-/team-review main..HEAD         # branch diff
-/team-review abc..def           # commit range
+/mx-team-review                    # staged changes
+/mx-team-review HEAD~3             # last 3 commits
+/mx-team-review main..HEAD         # branch diff
+/mx-team-review abc..def           # commit range
 ```
 
 **Repo mode**:
 ```
-/team-review --repo src/service/          # entire directory
-/team-review --repo src/service/order.go  # specific file
+/mx-team-review --repo src/service/          # entire directory
+/mx-team-review --repo src/service/order.go  # specific file
 ```
 
 ## Supported languages
