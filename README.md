@@ -10,8 +10,18 @@ Each skill lives in `<skill-name>/` with:
 
 ## Install
 
+Install a specific skill:
+
 ```bash
 npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
+```
+
+Install all skills at once:
+
+```bash
+for skill in mx-commit mx-team-review mx-pr-triage; do
+  npx skills add https://github.com/maxence2997/skills --skill $skill -g -y
+done
 ```
 
 ## Available Skills
