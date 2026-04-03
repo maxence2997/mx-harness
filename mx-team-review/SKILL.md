@@ -1,5 +1,5 @@
 ---
-name: team-review
+name: mx-team-review
 description: >
   Multi-perspective code review for local changes or entire files.
   Reviews git diffs (staged, commit ranges, branch comparisons) or whole files/directories.

@@ -1,5 +1,5 @@
 ---
-name: review-pr-comments
+name: mx-pr-triage
 description: Triage and respond to unresponded PR review comments. Fetches comments, classifies severity (P0-P3), assesses implementation cost and risk, sorts into action buckets (fix now / track / skip), presents interactive report for approval, then executes approved decisions with standardized responses. Use when handling PR feedback, reviewing comments, or preparing to merge a PR with unresolved comments.
 ---
 
