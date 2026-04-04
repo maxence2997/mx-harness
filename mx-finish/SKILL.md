@@ -1,8 +1,9 @@
 ---
 name: mx-finish
 description: >
-  Clean up after a feature branch is merged. Deletes the plan file, preserves the spec,
-  clears related review reports, and reminds you to manually remove the worktree and branch.
+  Complete the lifecycle of a merged feature branch. Deletes the plan file, preserves
+  the spec, clears related review reports, removes the worktree, and deletes the branch.
+  Git's own safety checks prevent accidental deletion of dirty worktrees.
   Use after the PR is merged.
 user-invocable: true
 allowed-tools:
@@ -16,7 +17,7 @@ allowed-tools:
 ## Trigger
 
 ```
-/mx-finish <name>   ← clean up named feature
+/mx-finish <name>   ← finish named feature
 /mx-finish          ← find completed plan or ask
 ```
 
@@ -25,7 +26,7 @@ allowed-tools:
 ## Step 1 — Confirm the PR is merged
 
 Ask the user to confirm the PR is merged before proceeding.
-If running from within a worktree, note that and remind the user to switch back to the main branch first.
+If running from within a worktree, remind the user to switch back to the main branch first — worktree removal must be run from outside the worktree.
 
 ---
 
@@ -50,39 +51,70 @@ Report: `Kept .mx/design/<name>.md (spec preserved)`
 
 ## Step 4 — Clean up review reports
 
-Find and remove review reports related to this feature from `/tmp/review-reports/`:
+List reports in `/tmp/review-reports/` with timestamps:
 
 ```bash
-ls -t /tmp/review-reports/
+ls -lt /tmp/review-reports/
 ```
 
-Ask the user which reports to delete (show the list with timestamps).
-Delete the selected ones.
+Ask the user which reports to delete. Delete the selected ones.
 
 ---
 
-## Step 5 — Remind: worktree and branch cleanup
+## Step 5 — Remove the worktree
 
-Do **not** auto-delete the worktree or branch. Print the commands for the user to run:
+```bash
+git worktree remove .worktrees/<branch-name>
+```
+
+**If the command succeeds:** report `Worktree removed.`
+
+**If git refuses** (uncommitted changes detected):
 
 ```
-Run these manually to complete cleanup:
+git worktree remove failed — the worktree has uncommitted changes.
 
-  git worktree remove .worktrees/<branch-name>
-  git branch -d <branch-name>
+Either:
+  1. Go into .worktrees/<branch-name>, commit or discard changes, then re-run /mx-finish
+  2. Force remove (loses uncommitted changes):
+     git worktree remove --force .worktrees/<branch-name>
+```
 
-If the branch was force-merged or needs force-delete:
+Do not force-remove automatically. Wait for the user to decide.
+
+---
+
+## Step 6 — Delete the branch
+
+```bash
+git branch -d <branch-name>
+```
+
+`-d` (not `-D`) is intentional — git refuses to delete an unmerged branch, which acts as a safety net.
+
+**If git refuses** (branch not fully merged):
+
+```
+Branch deletion failed — git reports the branch is not fully merged.
+
+If the PR was squash-merged or rebased, the branch may look unmerged to git.
+To force delete:
   git branch -D <branch-name>
 ```
 
+Do not force-delete automatically. Wait for the user to confirm.
+
 ---
 
-## Step 6 — Summary
+## Step 7 — Summary
 
 ```
-Cleanup complete for <name>:
+Finished <name>:
   ✓ Plan deleted
   ✓ Spec preserved at .mx/design/<name>.md
   ✓ Review reports cleared
-  ○ Worktree and branch: run the commands above manually
+  ✓ Worktree removed
+  ✓ Branch deleted
 ```
+
+If any step was skipped due to a safety refusal, mark it with `○` and note what remains.

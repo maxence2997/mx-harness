@@ -1,27 +1,34 @@
 # mx-finish
 
-Clean up after a feature branch is merged.
+Complete the lifecycle of a merged feature branch in one command.
 
-Deletes the plan file, preserves the spec, clears related review reports from `/tmp`, and gives you the exact commands to remove the worktree and branch.
+Deletes the plan, preserves the spec, clears review reports, removes the worktree, and deletes the branch. Git's own safety checks act as the safety net — it refuses to remove dirty worktrees or unmerged branches without explicit confirmation.
 
 ## Usage
 
 ```
-/mx-finish <name>   # clean up named feature
+/mx-finish <name>   # finish named feature
 /mx-finish          # find completed plan or ask
 ```
 
 ## What it does
 
-| Action | Detail |
-|--------|--------|
-| Delete plan | `.mx/plan/<name>.md` — no value after tasks complete |
-| Preserve spec | `.mx/design/<name>.md` — kept permanently |
-| Clear reports | `/tmp/review-reports/` related files — asks before deleting |
-| Remind worktree | Prints commands, does not auto-delete |
+| Step | Action |
+|------|--------|
+| Plan | Deleted — no value after all tasks complete |
+| Spec | Preserved — `.mx/design/<name>.md` kept permanently |
+| Review reports | Cleared from `/tmp/review-reports/` (asks before deleting) |
+| Worktree | `git worktree remove .worktrees/<branch>` — stops if dirty |
+| Branch | `git branch -d <branch>` — stops if not fully merged |
+
+## Safety behaviour
+
+- **Dirty worktree**: git refuses to remove — presents force-remove option, waits for user
+- **Unmerged branch**: git refuses `-d` — presents `-D` option, waits for user
+- Nothing is force-deleted automatically
 
 ## Notes
 
-- Confirm PR is merged before running
-- Worktree and branch cleanup is manual (to avoid accidental deletion)
 - Run from the main branch, not from inside the worktree
+- Confirm the PR is merged before running
+- Squash-merge or rebase workflows may require `git branch -D` — mx-finish will prompt if needed
