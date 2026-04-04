@@ -16,20 +16,23 @@ Install a specific skill:
 npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
 ```
 
-Install all skills at once:
+Install all skills at once (auto-discovers skills from the repo — no hardcoded list):
 
 **bash / zsh**
 ```bash
-for skill in mx-flow mx-brainstorm mx-plan mx-worktree mx-tdd mx-verify mx-finish mx-commit mx-team-review mx-review-triage; do
-  npx skills add https://github.com/maxence2997/skills --skill $skill -g -y
-done
+curl -s https://api.github.com/repos/maxence2997/skills/contents \
+  | grep '"name"' | grep -o '"mx-[^"]*"' | tr -d '"' \
+  | xargs -I{} npx skills add https://github.com/maxence2997/skills --skill {} -g -y
 ```
 
 **PowerShell**
 ```powershell
-@("mx-flow","mx-brainstorm","mx-plan","mx-worktree","mx-tdd","mx-verify","mx-finish","mx-commit","mx-team-review","mx-review-triage") | ForEach-Object {
-  npx skills add https://github.com/maxence2997/skills --skill $_ -g -y
-}
+(Invoke-RestMethod "https://api.github.com/repos/maxence2997/skills/contents") |
+  Where-Object { $_.name -like "mx-*" } |
+  Select-Object -ExpandProperty name |
+  ForEach-Object {
+    npx skills add https://github.com/maxence2997/skills --skill $_ -g -y
+  }
 ```
 
 ## Workflow
