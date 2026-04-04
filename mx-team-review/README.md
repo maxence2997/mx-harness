@@ -33,3 +33,13 @@ Multi-perspective code review using three AI review agents (Senior Engineer, SRE
 - C# .NET 8 (`.cs`)
 
 Extensible via `references/_template.md`.
+
+## In the workflow
+
+Use after completing a milestone in `/mx-tdd`, before `/mx-review-triage`:
+
+```
+mx-tdd (tasks done) → mx-team-review → mx-review-triage --source review
+```
+
+The report is saved to `/tmp/review-reports/` and automatically picked up by `/mx-review-triage --source review`.

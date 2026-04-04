@@ -2,7 +2,7 @@
 
 Final verification gate before committing or pushing.
 
-Runs the full test suite, confirms every task in the plan is marked complete, and reminds you to update `.mx/ai-learning.md`. No partial checks accepted — evidence before claims.
+Runs the full test suite, confirms every task in `.mx/plan/<name>.md` is marked complete, and reminds you to update `.mx/ai-learning.md` for cross-session memory. No partial checks accepted — evidence before claims.
 
 ## Usage
 

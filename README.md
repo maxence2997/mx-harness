@@ -24,6 +24,31 @@ for skill in mx-flow mx-brainstorm mx-plan mx-worktree mx-tdd mx-verify mx-finis
 done
 ```
 
+## Workflow
+
+The skills are designed to work together in a sequence. Use `/mx-flow` to run the full pipeline, or invoke each skill individually:
+
+```
+/mx-brainstorm   idea → spec (.mx/design/)
+/mx-plan         spec → task list (.mx/plan/)
+/mx-worktree     isolated worktree + baseline test
+
+loop:
+  /mx-tdd              one task: red → green → refactor → commit
+  (milestone reached)
+  /mx-team-review      multi-perspective code review
+  /mx-review-triage    triage findings → fix / track / skip
+  → fixes? back to mx-tdd
+  → clean? continue
+
+/mx-verify       full test suite + plan checklist + ai-learning reminder
+/mx-commit       structured commit
+
+(after PR merge)
+/mx-review-triage --source pr   triage PR comments before merge
+/mx-finish                      clean up plan, reports, remind worktree removal
+```
+
 ## Available Skills
 
 ### Workflow
