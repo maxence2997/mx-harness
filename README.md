@@ -18,10 +18,18 @@ npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
 
 Install all skills at once:
 
+**bash / zsh**
 ```bash
 for skill in mx-flow mx-brainstorm mx-plan mx-worktree mx-tdd mx-verify mx-finish mx-commit mx-team-review mx-review-triage; do
   npx skills add https://github.com/maxence2997/skills --skill $skill -g -y
 done
+```
+
+**PowerShell**
+```powershell
+@("mx-flow","mx-brainstorm","mx-plan","mx-worktree","mx-tdd","mx-verify","mx-finish","mx-commit","mx-team-review","mx-review-triage") | ForEach-Object {
+  npx skills add https://github.com/maxence2997/skills --skill $_ -g -y
+}
 ```
 
 ## Workflow
