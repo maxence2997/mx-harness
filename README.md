@@ -8,7 +8,7 @@ Each skill lives in `<skill-name>/` with:
 - `SKILL.md` — main skill file with YAML frontmatter (`name`, `description`) and prompt body
 - `references/` — optional supplementary documents
 
-## Install
+## Quickstart
 
 Install a specific skill:
 
