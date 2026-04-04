@@ -122,15 +122,19 @@ Rules:
 
 ---
 
-## Step 6 — Mark task and commit
+## Step 6 — Exit condition checklist
 
-Mark the task complete in the plan:
+Before marking the task done, verify all five conditions are met — every one is required:
 
-```bash
-# In .mx/plan/<name>.md, change [ ] to [x] for this task
+```
+□ RED observed: test failure was seen with actual output (not assumed)
+□ GREEN confirmed: test passes after implementation
+□ Full suite clean: no new failures introduced by this change
+□ Plan updated: task marked [x] in .mx/plan/<name>.md
+□ Committed: /mx-commit completed for this task
 ```
 
-Then invoke `/mx-commit` for this task's change.
+If any item is unchecked, do not advance to the next task.
 
 ---
 

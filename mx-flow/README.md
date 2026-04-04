@@ -33,6 +33,16 @@ mx-verify → mx-commit
 
 Between gates, mx-flow runs automatically.
 
+## Convergent loop safety limit
+
+The tdd → review → triage cycle runs a maximum of **3 iterations**. If findings are still unresolved after 3 rounds, mx-flow escalates and presents three options:
+
+- **Continue** — extend the loop manually
+- **Redesign** — return to the spec; the findings indicate a design problem
+- **Abort** — discard the branch and start fresh
+
+Three unresolved iterations almost always signal a design issue, not a code issue.
+
 ## Individual skills
 
 Each skill in the flow can also be used standalone:

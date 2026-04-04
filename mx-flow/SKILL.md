@@ -116,8 +116,31 @@ Run mx-review-triage with `--source review` directly (no auto-detect).
 **GATE 3**: Present the triage report. Discuss adjustments. Approve before executing.
 
 After approved fixes are applied:
-- If fixes were made → run the test suite → back to 4a for any new tasks
+- If fixes were made → run the test suite → back to 4a for any new tasks, increment iteration counter
 - If clean (no fixes needed) → exit the loop
+
+### Loop safety limit
+
+The convergent loop has a maximum of **3 iterations** (one iteration = one full tdd → review → triage cycle).
+
+If the loop reaches 3 iterations without converging to clean:
+
+```
+[ESCALATE] Convergent loop has not resolved after 3 iterations.
+
+Current state:
+  Iteration: 3/3
+  Remaining findings: <list>
+
+Options:
+  [A] Continue — extend the loop (you take responsibility)
+  [B] Redesign — the findings suggest a design issue; revisit .mx/design/
+  [C] Abort — discard this branch and start fresh
+
+Three iterations without convergence usually indicates a design problem, not a code problem.
+```
+
+Do not continue automatically. Wait for the user to choose.
 
 ---
 

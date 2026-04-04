@@ -94,4 +94,27 @@ Verification passed.
 Ready to commit and push.
 ```
 
-If either step fails, do not output the above. Fix the issue first.
+If either step fails, present the abort path instead of stopping silently.
+
+---
+
+## Abort path
+
+When verification fails, present three recovery options:
+
+```
+[VERIFICATION FAILED]
+  <specific failure: test output / open tasks>
+
+Recovery options:
+  [A] Investigate — return to mx-tdd to fix the failing test or task
+        Re-entry: specify which task or failing test to address first
+  [B] Adjust plan — the failure reveals that a task definition was wrong
+        Re-entry: edit .mx/plan/<name>.md, then re-run mx-tdd for that task
+  [C] Abort branch — this branch is not recoverable
+        Will preserve: .mx/design/<name>.md (spec)
+        Will discard:  .mx/plan/<name>.md
+        Reminder:      git worktree remove .worktrees/<branch>
+```
+
+Wait for the user to choose. Do not attempt to fix anything automatically.

@@ -32,8 +32,17 @@ COMMIT → /mx-commit, mark [x] in plan
 
 Auto-detects in priority order: Makefile (`check`/`test`) → `package.json` scripts → language toolchain (`go test`, `cargo test`, `pytest`, `dotnet test`, `swift test`).
 
+## Exit condition (all five required)
+
+Before a task is considered done:
+
+- RED was observed — failure output seen, not assumed
+- GREEN confirmed — test passes after implementation
+- Full suite clean — no new failures introduced
+- Plan updated — task marked `[x]` in `.mx/plan/<name>.md`
+- Committed — `/mx-commit` completed
+
 ## Notes
 
-- After each task: marks `[x]` in `.mx/plan/<name>.md` then calls `/mx-commit`
 - Asks before advancing to the next task
 - At milestone: announces readiness for `/mx-team-review`

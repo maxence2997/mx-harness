@@ -19,6 +19,18 @@ Runs the full test suite, confirms every task in `.mx/plan/<name>.md` is marked 
 
 All three must pass before the final commit and push.
 
+## Abort path
+
+When verification fails, three recovery options are presented:
+
+| Option | When to use |
+|--------|-------------|
+| **[A] Investigate** | Failing test or incomplete task — return to `mx-tdd` at the specific point |
+| **[B] Adjust plan** | Task definition was wrong — edit `.mx/plan/` then re-run `mx-tdd` |
+| **[C] Abort branch** | Branch is not recoverable — spec preserved, plan and worktree discarded |
+
+Nothing executes automatically — the user chooses the path.
+
 ## Notes
 
 - Auto-detects test runner: Makefile → package.json → language toolchain
