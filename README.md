@@ -3,7 +3,6 @@
 > Plug-and-play AI coding skills that guide your agent from raw idea to merged PR — with structured reviews, TDD loops, and clean commits at every step.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Skills](https://img.shields.io/badge/skills-10-brightgreen)
 ![Works with](https://img.shields.io/badge/works%20with-GitHub%20Copilot%20%7C%20Cursor%20%7C%20Claude-blueviolet)
 ![Stars](https://img.shields.io/github/stars/maxence2997/skills)
 ![Last commit](https://img.shields.io/github/last-commit/maxence2997/skills)
