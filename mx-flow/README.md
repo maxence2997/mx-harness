@@ -1,5 +1,7 @@
 # mx-flow
 
+> You make a few decisions. The agent handles the rest.
+
 Full development workflow orchestrator. One command to run the entire process from idea to verified, committable code.
 
 ## Usage
@@ -79,8 +81,6 @@ Future Maintainer: "Document why TTL=300."
 ```
 
 You decide what to fix, track, or skip. Then push and open the PR with `/mx-pr`.
-
-**You make a few decisions. The agent handles the rest.**
 
 ## Notes
 
