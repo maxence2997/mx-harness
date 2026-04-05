@@ -21,6 +21,44 @@ AI agents are great at writing code — but left unchecked they skip planning, s
 
 ---
 
+## The difference
+
+**Without mx-skills**
+
+```
+User:  "Add caching to the search endpoint"
+Agent: [writes 200 lines of code]
+       [commit: "add cache"]
+       [no tests · no design doc · breaks 2 existing behaviours]
+```
+
+**With mx-skills**
+
+```
+User:  /mx-brainstorm "Add caching to the search endpoint"
+Agent: → Asks: Redis or in-memory? TTL strategy? Cache invalidation scope?
+       → Writes design spec + ADR to ~/.mx/project/search-cache/
+       → Waits for approval before touching any code
+
+User:  /mx-plan
+Agent: → Task 1: Cache interface (testable abstraction)
+       → Task 2: Redis adapter
+       → Task 3: Wire into search handler
+       → Task 4: Integration test with mock Redis
+       → Waits for task list approval
+
+       [each task: red → green → refactor → structured commit]
+
+User:  /mx-team-review
+Agent: → Senior Engineer:     "Cache key includes user locale? Edge case."
+       → SRE:                 "No TTL cap — potential memory leak under load."
+       → Future Maintainer:   "Document why TTL=300 was chosen."
+```
+
+The first scenario is something most engineers have lived through. The second is what these skills enforce.
+
+---
+
 ## Skills
 
 ### Workflow
