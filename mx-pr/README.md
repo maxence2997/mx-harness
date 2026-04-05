@@ -31,16 +31,21 @@ Draft a pull/merge request from the feature spec and git log, review it, then pu
 
 ## PR draft format
 
+Defined in `references/pr-template.md` — edit it to match your team's conventions.
+
+Default sections and their sources:
+
 | Section | Source |
 |---------|--------|
-| Summary | Spec — What and How |
-| Motivation | Spec — Why |
-| Changes | Git log since branch start |
-| Test plan | `~/.mx/<project>/<name>/plan.md` tasks |
-| Notes | Optional follow-ups or trade-offs |
+| Summary | Design spec — What and How |
+| Motivation | Design spec — Why |
+| Changes | Git log since branch start, grouped by commit type |
+| Test plan | Completed tasks from plan.md |
+| Notes | Design spec — Out of scope / trade-offs (omitted if empty) |
 
 ## Notes
 
 - Run after `/mx-verify` passes and the branch is pushed
+- Customize `references/pr-template.md` to add checklists, issue references, screenshots, etc.
 - Draft is never deleted on failure — you can recover and retry
 - After merge: run `/mx-finish <name>` to clean up

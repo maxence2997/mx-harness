@@ -58,34 +58,25 @@ gh issue list --state open --limit 10 2>/dev/null || true
 
 ## Step 2 — Write draft to temp file
 
+Read `references/pr-template.md` (located in the same directory as this SKILL.md).
+It defines the PR sections and how each placeholder maps to a source.
+
+Fill each placeholder using the context gathered in Step 1:
+
+| Placeholder | Source |
+|-------------|--------|
+| `{{summary}}` | spec.md — What and How (2-4 bullet points) |
+| `{{motivation}}` | spec.md — Why (one paragraph) |
+| `{{changes}}` | git log, grouped by commit type |
+| `{{test_plan}}` | completed tasks from plan.md |
+| `{{notes}}` | spec.md — Out of scope, known trade-offs; omit if empty |
+
+If spec.md does not exist, derive `{{summary}}`, `{{motivation}}`, and `{{notes}}` from the git log only.
+Remove any section whose content is empty and marked optional in the template.
+
 Create `MX/<name>/tmp/` if it does not exist.
 Generate draft path: `MX/<name>/tmp/pr-draft-<YYYYMMDD-HHmmss>.md` using the current timestamp.
-
-Write the draft PR in this format:
-
-```markdown
-## Summary
-
-<2-4 bullet points drawn from the spec's What and How sections>
-
-## Motivation
-
-<One paragraph from the spec's Why section>
-
-## Changes
-
-<Bullet list derived from the git log — group by commit type if helpful>
-
-## Test plan
-
-<What was tested, based on the tasks in ~/.mx/<project>/<name>/plan.md>
-
-## Notes
-
-<Optional: migration steps, config changes, follow-ups, known trade-offs>
-```
-
-Save to `$DRAFT`.
+Write the filled template to the draft file.
 
 ---
 
@@ -181,7 +172,8 @@ Do not delete the draft file here. mx-finish handles all `~/.mx/<project>/<name>
 
 ## Notes
 
-- Title is derived from the first Summary bullet — keep it under 72 characters
-- If `~/.mx/<project>/<name>/spec.md` does not exist, derive content from git log only
-- Draft files live in `~/.mx/<project>/<name>/tmp/` — under home directory, no repo permissions or gitignore needed
+- PR format is defined in `references/pr-template.md` — customize it to match your team's conventions
+- Title is derived from the first bullet of `{{summary}}` — keep it under 72 characters
+- If spec.md does not exist, all content is derived from the git log
+- Draft files live in `MX/<name>/tmp/` — under home directory, no repo permissions or gitignore needed
 - The timestamp suffix prevents collisions if mx-pr is run multiple times for the same feature
