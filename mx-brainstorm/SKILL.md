@@ -101,12 +101,11 @@ Show the design spec to the user for final review. Allow adjustments.
 
 ## Step 5 — Record ADR
 
-After the spec is confirmed, automatically write the ADR without asking:
+After the spec is confirmed, automatically write the ADR without asking.
 
-Create `MX/<name>/adr.md` capturing:
-- The options that were proposed (from Step 2)
-- The trade-offs discussed
-- The user's choice and reasoning
+Read `references/adr-format.md` (located in the same directory as this SKILL.md)
+for the format and rules. Populate from the brainstorm conversation and append to
+`MX/<name>/adr.md`.
 
 Report: `ADR saved to ~/.mx/<project>/<name>/adr.md`
 
