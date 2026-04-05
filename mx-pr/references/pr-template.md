@@ -48,6 +48,8 @@ Sections marked `<!-- optional -->` are omitted from the draft if no content is 
 - [ ] Each commit represents exactly one logical change
 - [ ] Commit messages follow the project's commit format
 - [ ] No unrelated code reformatting in this PR
+- [ ] No secrets committed
+- [ ] CHANGELOG updated
 
 ### Conditional
 
