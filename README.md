@@ -118,12 +118,14 @@ Use `/mx-flow` to run the full pipeline automatically, or invoke each skill indi
 
 ## Quick example
 
+Just tell the agent your idea — rough or detailed, it will ask what it needs.
+
 ```
 /mx-flow add Redis caching to the search endpoint
 ```
 
 Brainstorm → spec approval → plan approval → TDD loop → review → triage approval → verify → PR.
-You make three decisions. The agent handles the rest. [Full walkthrough →](mx-flow/)
+You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-flow/)
 
 ---
 

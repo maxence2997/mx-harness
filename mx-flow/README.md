@@ -79,7 +79,7 @@ Future Maintainer: "Document why TTL=300."
 
 You decide what to fix, track, or skip. Then push and open the PR with `/mx-pr`.
 
-**You make three decisions. The agent handles the rest.**
+**You make a few decisions. The agent handles the rest.**
 
 ## Notes
 
