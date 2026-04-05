@@ -8,8 +8,9 @@ Full development workflow orchestrator. One command to run the entire process fr
 
 ```
 /mx-flow <topic>
-/mx-flow
 ```
+
+_Rough or detailed — the agent will ask what it needs._
 
 ## What it runs
 
