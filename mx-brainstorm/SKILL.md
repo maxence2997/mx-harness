@@ -3,8 +3,9 @@ name: mx-brainstorm
 description: >
   Turn a rough idea into an approved design spec before any code is written.
   Asks one focused question at a time, proposes 2-3 approaches with trade-offs,
-  and writes the approved design to .mx/design/<name>.md.
-  Hard gate: no implementation skill may be invoked until the user approves the spec.
+  writes the approved design spec to .mx/<name>/spec.md, and automatically records
+  an ADR at .mx/<name>/adr.md.
+  Hard gate: no implementation skill may be invoked until the user approves the design spec.
   Use at the start of any new feature, change, or non-trivial fix.
 user-invocable: true
 allowed-tools:
@@ -63,16 +64,18 @@ If you have a strong preference based on the context, state the reason once, bri
 Ask follow-up questions one at a time if the user's choice reveals new ambiguities.
 Iterate until the design is unambiguous.
 
-**Hard gate: do not proceed to Step 4 until the user explicitly approves the design.**
+**Hard gate: do not proceed to Step 4 until the user explicitly approves the design spec.**
 
 ---
 
-## Step 4 — Write the spec
+## Step 4 — Write the design spec
 
-Create `.mx/design/<name>.md` in the project root.
+Resolve the MX directory:
+- Get the repo root name: final path component of `git rev-parse --show-toplevel`
+- MX = `~/.mx/<project>/` (Unix) or `%USERPROFILE%\.mx\<project>\` (Windows)
+- Create `MX/<name>/` if it does not exist
 
-If `.mx/` does not exist, create it.
-If `.mx/` is not in `.gitignore`, add it and note this to the user.
+Create `MX/<name>/spec.md`.
 
 Spec format:
 
@@ -92,17 +95,31 @@ Spec format:
 <Explicitly list what this change does NOT cover>
 ```
 
-Show the spec to the user for final review. Allow adjustments.
+Show the design spec to the user for final review. Allow adjustments.
 
 ---
 
-## Step 5 — Hand off
+## Step 5 — Record ADR
 
-Once the user confirms the spec, announce:
+After the spec is confirmed, automatically write the ADR without asking:
+
+Create `MX/<name>/adr.md` capturing:
+- The options that were proposed (from Step 2)
+- The trade-offs discussed
+- The user's choice and reasoning
+
+Report: `ADR saved to ~/.mx/<project>/<name>/adr.md`
+
+---
+
+## Step 6 — Hand off
+
+Once the design spec and ADR are saved, announce:
 
 ```
-Spec saved to .mx/design/<name>.md
-Ready for /mx-plan — this will decompose the spec into tasks.
+Design spec saved to ~/.mx/<project>/<name>/spec.md
+ADR saved to ~/.mx/<project>/<name>/adr.md
+Ready for /mx-plan — this will decompose the design spec into tasks.
 ```
 
 Do not invoke mx-plan automatically. The user invokes it.
