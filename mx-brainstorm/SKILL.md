@@ -39,7 +39,16 @@ Then ask the user **one question at a time** to clarify:
 Rules:
 - One question per message — never bundle multiple questions
 - Prefer multiple-choice over open-ended where possible
-- Stop asking when you have enough to propose approaches
+- There is no question limit — keep asking until the picture is genuinely clear
+
+When you believe you have enough context, ask before proposing approaches:
+
+```
+I think I have a clear enough picture. Anything else you'd like to clarify,
+or shall we move on to exploring approaches?
+```
+
+Do not proceed to Step 2 until the user confirms.
 
 ---
 
