@@ -30,8 +30,12 @@ allowed-tools:
 ## Step 1 — Determine source
 
 ### If `--source review`
-Read the most recent file in `/tmp/review-reports/` (sorted by modification time).
-If no report exists, report the error and stop.
+Find the most recent review report:
+1. Resolve MX directory, then check `MX/*/tmp/review-*.md` (active feature path)
+2. Fall back to `/tmp/review-reports/` (Unix) or `%TEMP%\review-reports\` (Windows)
+
+Pick the file with the latest modification time across both locations.
+If no report exists in either location, report the error and stop.
 
 ### If `--source pr <id|url>`
 Detect the platform from the repo's remote URL:
@@ -48,7 +52,7 @@ If zero unresponded comments remain, report "No unresponded comments." and stop.
 ### If no argument (direct invocation only)
 
 Auto-detect in this order:
-1. `/tmp/review-reports/` has a file modified within the last hour → suggest `--source review`
+1. `MX/*/tmp/review-*.md` or the OS temp review-reports directory has a file modified within the last hour → suggest `--source review`
 2. Current branch has an open PR (`gh pr view` or `glab mr view` succeeds) → suggest `--source pr`
 3. Both available → ask user which source to use
 4. Neither available → ask user

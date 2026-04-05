@@ -360,10 +360,12 @@ For issues with `line: 0`, display `L-` instead of `L0`.
 
 **Output actions:**
 
-1. Create reports directory if not exists: `mkdir -p /tmp/review-reports`
-2. Save the report:
-   - Diff mode: `/tmp/review-reports/review-{YYYYMMDD-HHmmss}.md`
-   - Repo mode: `/tmp/review-reports/review-repo-{YYYYMMDD-HHmmss}.md`
+1. Detect active feature:
+   - Resolve MX directory (final component of `git rev-parse --show-toplevel` as `<project>`, then `~/.mx/<project>/` or `%USERPROFILE%\.mx\<project>\`)
+   - Look for any `MX/*/plan.md` — take the first match as the active feature
+   - If found → report directory is `MX/<name>/tmp/` (create if needed)
+   - If not found → report directory is `/tmp/review-reports/` on Unix or `%TEMP%\review-reports\` on Windows (create if needed)
+2. Save the report as `{report-dir}/review-{YYYYMMDD-HHmmss}.md`
 3. Display the full report in the terminal
 
 ---
@@ -389,8 +391,12 @@ Please review the report. Any changes needed?
 Done. Display the saved report path with a reminder:
 
 ```
-📄 Report saved: /tmp/review-reports/review-{timestamp}.md
-⚠️  Reports are stored in /tmp and will be cleared on reboot. Copy to a permanent location if needed.
+📄 Report saved: {report-dir}/review-{timestamp}.md
+```
+
+If saved to `/tmp/review-reports/`, add a note:
+```
+⚠️  No active feature detected — report saved to /tmp (cleared on reboot). Run from within a feature workflow to save under ~/.mx/<project>/<name>/tmp/ instead.
 ```
 
 ---

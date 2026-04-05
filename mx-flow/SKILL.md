@@ -134,7 +134,7 @@ Current state:
 
 Options:
   [A] Continue — extend the loop (you take responsibility)
-  [B] Redesign — the findings suggest a design issue; revisit .mx/design/
+  [B] Redesign — the findings suggest a design issue; revisit ~/.mx/<project>/<name>/spec.md (design spec)
   [C] Abort — discard this branch and start fresh
 
 Three iterations without convergence usually indicates a design problem, not a code problem.

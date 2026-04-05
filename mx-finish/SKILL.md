@@ -14,6 +14,14 @@ allowed-tools:
 
 # mx-finish
 
+## Path resolution
+
+Resolve MX base directory before any file operation:
+- Final path component of `git rev-parse --show-toplevel` = `<project>`
+- MX = `~/.mx/<project>/` (Unix/macOS) or `%USERPROFILE%\.mx\<project>\` (Windows)
+
+---
+
 ## Trigger
 
 ```
@@ -33,31 +41,32 @@ If running from within a worktree, remind the user to switch back to the main br
 ## Step 2 — Delete the plan file
 
 ```bash
-rm .mx/plan/<name>.md
+rm ~/.mx/<project>/<name>/plan.md
 ```
 
-The plan has no value after all tasks are done. Report: `Deleted .mx/plan/<name>.md`
+The plan has no value after all tasks are done. Report: `Deleted ~/.mx/<project>/<name>/plan.md`
 
 ---
 
-## Step 3 — Preserve the spec
+## Step 3 — Preserve design spec and ADRs
 
-Do **not** delete `.mx/design/<name>.md`.
-The spec records what was built and why — it has lasting documentation value.
+Do **not** delete `~/.mx/<project>/<name>/spec.md` or anything in `~/.mx/<project>/<name>/adr.md`.
+The design spec records what was built, the ADRs record why — both have lasting documentation value.
 
-Report: `Kept .mx/design/<name>.md (spec preserved)`
+Report: `Kept ~/.mx/<project>/<name>/spec.md (design spec) and ~/.mx/<project>/<name>/adr.md (preserved)`
 
 ---
 
-## Step 4 — Clean up review reports
+## Step 4 — Clean up temp files
 
-List reports in `/tmp/review-reports/` with timestamps:
+List all files in `~/.mx/<project>/<name>/tmp/` with timestamps:
 
 ```bash
-ls -lt /tmp/review-reports/
+ls -lt ~/.mx/<project>/<name>/tmp/ 2>/dev/null
 ```
 
-Ask the user which reports to delete. Delete the selected ones.
+Show the list to the user and ask which to delete. Delete the selected ones.
+If `~/.mx/<project>/<name>/tmp/` is empty after deletion, remove the directory.
 
 ---
 
@@ -110,9 +119,9 @@ Do not force-delete automatically. Wait for the user to confirm.
 
 ```
 Finished <name>:
-  ✓ Plan deleted
-  ✓ Spec preserved at .mx/design/<name>.md
-  ✓ Review reports cleared
+  ✓ Plan deleted (~/.mx/<project>/<name>/plan.md)
+  ✓ Design spec and ADRs preserved at ~/.mx/<project>/<name>/
+  ✓ Temp files cleared (~/.mx/<project>/<name>/tmp/)
   ✓ Worktree removed
   ✓ Branch deleted
 ```

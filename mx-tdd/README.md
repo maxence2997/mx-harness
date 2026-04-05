@@ -2,7 +2,7 @@
 
 Implement one task from the plan using test-driven development.
 
-Red → Green → Refactor, one behavior at a time. Reads the next pending task from `.mx/plan/<name>.md`, enforces the Iron Law (no production code without a failing test), and commits each completed behavior with `/mx-commit`.
+Red → Green → Refactor, one behavior at a time. Reads the next pending task from `~/.mx/<project>/<name>/plan.md`, enforces the Iron Law (no production code without a failing test), and commits each completed behavior with `/mx-commit`.
 
 ## Usage
 
@@ -39,7 +39,7 @@ Before a task is considered done:
 - RED was observed — failure output seen, not assumed
 - GREEN confirmed — test passes after implementation
 - Full suite clean — no new failures introduced
-- Plan updated — task marked `[x]` in `.mx/plan/<name>.md`
+- Plan updated — task marked `[x]` in `~/.mx/<project>/<name>/plan.md`
 - Committed — `/mx-commit` completed
 
 ## Notes

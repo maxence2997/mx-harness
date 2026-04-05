@@ -3,7 +3,7 @@ name: mx-verify
 description: >
   Final verification gate before committing or pushing. Runs the full test suite,
   checks every task in the plan is marked complete, and reminds to update
-  .mx/ai-learning.md. No partial checks accepted. Use after the convergent
+  ~/.mx/<project>/ai-learning.md. No partial checks accepted. Use after the convergent
   review loop is clean and before the final commit and push.
 user-invocable: true
 allowed-tools:
@@ -15,11 +15,19 @@ allowed-tools:
 
 # mx-verify
 
+## Path resolution
+
+Resolve MX base directory before any file operation:
+- Final path component of `git rev-parse --show-toplevel` = `<project>`
+- MX = `~/.mx/<project>/` (Unix/macOS) or `%USERPROFILE%\.mx\<project>\` (Windows)
+
+---
+
 ## Trigger
 
 ```
-/mx-verify <name>   ← verify against named plan
-/mx-verify          ← find active plan in .mx/plan/ or ask
+/mx-verify <name>   ← verify against ~/.mx/<project>/<name>/plan.md
+/mx-verify          ← find active plan (look for plan.md in ~/.mx/<project>/*/) or ask
 ```
 
 ---
@@ -52,7 +60,7 @@ Read the full output. Count failures.
 
 ## Step 2 — Check plan completion
 
-Read `.mx/plan/<name>.md`.
+Read `~/.mx/<project>/<name>/plan.md`.
 
 For every task line, verify its status:
 - `[x]` — completed
@@ -69,7 +77,7 @@ If all tasks are `[x]`, report: `All N tasks complete.`
 Show this reminder:
 
 ```
-Update .mx/ai-learning.md before closing this session.
+Update ~/.mx/<project>/ai-learning.md before closing this session.
 
 Format:
 | Date       | Issue or Learning | Root Cause | Prevention Rule |
@@ -110,10 +118,10 @@ Recovery options:
   [A] Investigate — return to mx-tdd to fix the failing test or task
         Re-entry: specify which task or failing test to address first
   [B] Adjust plan — the failure reveals that a task definition was wrong
-        Re-entry: edit .mx/plan/<name>.md, then re-run mx-tdd for that task
+        Re-entry: edit ~/.mx/<project>/<name>/plan.md, then re-run mx-tdd for that task
   [C] Abort branch — this branch is not recoverable
-        Will preserve: .mx/design/<name>.md (spec)
-        Will discard:  .mx/plan/<name>.md
+        Will preserve: ~/.mx/<project>/<name>/spec.md (design spec) and ~/.mx/<project>/<name>/adr.md
+        Will discard:  ~/.mx/<project>/<name>/plan.md
         Reminder:      git worktree remove .worktrees/<branch>
 ```
 

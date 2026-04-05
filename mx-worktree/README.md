@@ -22,7 +22,7 @@ Sets up `.worktrees/<branch-name>` in the project root, verifies gitignore rules
 
 ## What it does
 
-1. Verifies `.mx/` and `.worktrees/` are in `.gitignore` (adds + commits if not)
+1. Verifies `~/.mx/<project>/` and `.worktrees/` are in `.gitignore` (adds + commits if not)
 2. Creates the worktree at `.worktrees/<branch-name>`
 3. Runs project setup (go mod download / npm install / pip install / etc.)
 4. Verifies a clean test baseline — stops if tests fail

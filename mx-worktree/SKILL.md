@@ -21,31 +21,26 @@ allowed-tools:
 /mx-worktree
 ```
 
-If no branch name given, derive it from the active plan in `.mx/plan/` or ask the user.
+If no branch name given, resolve the MX directory (see Path resolution below) and look for any `MX/*/plan.md` to find the active feature name. Derive the branch name from it, or ask the user.
 
 ---
 
-## Step 1 — Verify .mx/ is gitignored
+## Path resolution
 
-Check whether `.mx/` is ignored:
+At the start of any file operation, resolve the MX base directory:
 
-```bash
-git check-ignore -q .mx 2>/dev/null
-```
+- Run `git rev-parse --show-toplevel` to get the repo root path
+- Take the final path component as `<project>`
+- MX = user home + `.mx/<project>/`
+  - Unix/macOS: `~/.mx/<project>/`
+  - Windows: `%USERPROFILE%\.mx\<project>\`
+- Create the directory if it does not exist
 
-If **not ignored**, add it to `.gitignore` immediately:
-
-```bash
-echo '.mx/' >> .gitignore
-git add .gitignore
-git commit -m "chore: add .mx/ to .gitignore"
-```
-
-Inform the user this was done automatically.
+All feature paths are then `MX/<name>/`.
 
 ---
 
-## Step 2 — Verify .worktrees/ is gitignored
+## Step 1 — Verify .worktrees/ is gitignored
 
 ```bash
 git check-ignore -q .worktrees 2>/dev/null
@@ -61,7 +56,7 @@ git commit -m "chore: add .worktrees/ to .gitignore"
 
 ---
 
-## Step 3 — Determine branch name
+## Step 2 — Determine branch name
 
 Apply branch naming convention:
 
@@ -77,7 +72,7 @@ If the name already has a correct prefix, proceed.
 
 ---
 
-## Step 4 — Create the worktree
+## Step 3 — Create the worktree
 
 ```bash
 git worktree add .worktrees/<branch-name> -b <branch-name>
@@ -91,7 +86,7 @@ git worktree list
 
 ---
 
-## Step 5 — Run project setup
+## Step 4 — Run project setup
 
 From within the worktree directory, auto-detect and run setup:
 
@@ -116,7 +111,7 @@ if [ -f Cargo.toml ]; then cargo build; fi
 
 ---
 
-## Step 6 — Verify baseline
+## Step 5 — Verify baseline
 
 Run the full test suite to confirm the worktree starts clean.
 
@@ -131,7 +126,7 @@ Do not proceed silently with a failing baseline.
 
 ---
 
-## Step 7 — Report
+## Step 6 — Report
 
 ```
 Worktree ready at .worktrees/<branch-name>

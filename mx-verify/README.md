@@ -2,7 +2,7 @@
 
 Final verification gate before committing or pushing.
 
-Runs the full test suite, confirms every task in `.mx/plan/<name>.md` is marked complete, and reminds you to update `.mx/ai-learning.md` for cross-session memory. No partial checks accepted — evidence before claims.
+Runs the full test suite, confirms every task in `~/.mx/<project>/<name>/plan.md` is marked complete, and reminds you to update `~/.mx/<project>/ai-learning.md` for cross-session memory. No partial checks accepted — evidence before claims.
 
 ## Usage
 
@@ -26,8 +26,8 @@ When verification fails, three recovery options are presented:
 | Option | When to use |
 |--------|-------------|
 | **[A] Investigate** | Failing test or incomplete task — return to `mx-tdd` at the specific point |
-| **[B] Adjust plan** | Task definition was wrong — edit `.mx/plan/` then re-run `mx-tdd` |
-| **[C] Abort branch** | Branch is not recoverable — spec preserved, plan and worktree discarded |
+| **[B] Adjust plan** | Task definition was wrong — edit `~/.mx/<project>/<name>/plan.md` then re-run `mx-tdd` |
+| **[C] Abort branch** | Branch is not recoverable — design spec and ADRs preserved, plan and worktree discarded |
 
 Nothing executes automatically — the user chooses the path.
 

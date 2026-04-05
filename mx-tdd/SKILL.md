@@ -2,7 +2,7 @@
 name: mx-tdd
 description: >
   Implement one task from the plan using test-driven development.
-  Reads the next pending task from .mx/plan/<name>.md, writes a failing test first,
+  Reads the next pending task from ~/.mx/<project>/<name>/plan.md, writes a failing test first,
   implements the minimal code to pass it, refactors, then commits with /mx-commit.
   Uses vertical slices (one test → one impl), never horizontal slicing.
   Use for each task in the plan after /mx-worktree is ready.
@@ -16,10 +16,18 @@ allowed-tools:
 
 # mx-tdd
 
+## Path resolution
+
+Resolve MX base directory before any file operation:
+- Final path component of `git rev-parse --show-toplevel` = `<project>`
+- MX = `~/.mx/<project>/` (Unix/macOS) or `%USERPROFILE%\.mx\<project>\` (Windows)
+
+---
+
 ## Trigger
 
 ```
-/mx-tdd          ← pick next pending task from .mx/plan/
+/mx-tdd          ← pick next pending task from ~/.mx/<project>/<name>/plan.md
 /mx-tdd <task>   ← specify task number or description
 ```
 
@@ -55,7 +63,7 @@ Each test must respond to what you learned from the previous cycle.
 
 ## Step 1 — Read the task
 
-Read `.mx/plan/<name>.md` and identify the next `[ ]` task.
+Read `~/.mx/<project>/<name>/plan.md` and identify the next `[ ]` task.
 Read its full specification (What, Test, Files).
 Read the relevant existing code before writing anything.
 
@@ -130,7 +138,7 @@ Before marking the task done, verify all five conditions are met — every one i
 □ RED observed: test failure was seen with actual output (not assumed)
 □ GREEN confirmed: test passes after implementation
 □ Full suite clean: no new failures introduced by this change
-□ Plan updated: task marked [x] in .mx/plan/<name>.md
+□ Plan updated: task marked [x] in ~/.mx/<project>/<name>/plan.md
 □ Committed: /mx-commit completed for this task
 ```
 

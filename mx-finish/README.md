@@ -2,7 +2,7 @@
 
 Complete the lifecycle of a merged feature branch in one command.
 
-Deletes the plan, preserves the spec, clears review reports, removes the worktree, and deletes the branch. Git's own safety checks act as the safety net — it refuses to remove dirty worktrees or unmerged branches without explicit confirmation.
+Deletes the plan, preserves the design spec and ADRs, clears review reports, removes the worktree, and deletes the branch. Git's own safety checks act as the safety net — it refuses to remove dirty worktrees or unmerged branches without explicit confirmation.
 
 ## Usage
 
@@ -15,9 +15,9 @@ Deletes the plan, preserves the spec, clears review reports, removes the worktre
 
 | Step | Action |
 |------|--------|
-| Plan | Deleted — no value after all tasks complete |
-| Spec | Preserved — `.mx/design/<name>.md` kept permanently |
-| Review reports | Cleared from `/tmp/review-reports/` (asks before deleting) |
+| Plan | Deleted — `~/.mx/<project>/<name>/plan.md` has no value after all tasks complete |
+| Design spec + ADRs | Preserved — `~/.mx/<project>/<name>/spec.md` and `~/.mx/<project>/<name>/adr.md` kept permanently |
+| Temp files | `~/.mx/<project>/<name>/tmp/` (PR drafts + review reports) cleared (asks before deleting) |
 | Worktree | `git worktree remove .worktrees/<branch>` — stops if dirty |
 | Branch | `git branch -d <branch>` — stops if not fully merged |
 

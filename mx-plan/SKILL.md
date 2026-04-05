@@ -1,12 +1,12 @@
 ---
 name: mx-plan
 description: >
-  Decompose an approved spec into a concrete, ordered task list.
-  Reads .mx/design/<name>.md and produces .mx/plan/<name>.md.
+  Decompose an approved design spec into a concrete, ordered task list.
+  Reads ~/.mx/<project>/<name>/spec.md and produces ~/.mx/<project>/<name>/plan.md.
   Each task maps to exactly one mx-commit type and specifies the expected
   test and outcome. No vague placeholders allowed.
   Hard gate: no implementation begins until the user approves the task list.
-  Use after mx-brainstorm approves the spec.
+  Use after mx-brainstorm approves the design spec.
 user-invocable: true
 allowed-tools:
   - Bash
@@ -17,6 +17,15 @@ allowed-tools:
 
 # mx-plan
 
+## Path resolution
+
+Resolve MX base directory before any file operation:
+- Final path component of `git rev-parse --show-toplevel` = `<project>`
+- MX = `~/.mx/<project>/` (Unix/macOS) or `%USERPROFILE%\.mx\<project>\` (Windows)
+- Create directories as needed using the OS-appropriate command
+
+---
+
 ## Trigger
 
 ```
@@ -24,13 +33,13 @@ allowed-tools:
 /mx-plan
 ```
 
-If no name given, list available specs in `.mx/design/` and ask the user to choose.
+If no name given, list available feature directories in `~/.mx/<project>/` (those containing a `spec.md`) and ask the user to choose.
 
 ---
 
-## Step 1 — Read the spec
+## Step 1 — Read the design spec
 
-Read `.mx/design/<name>.md` in full.
+Read `~/.mx/<project>/<name>/spec.md` in full.
 Also read relevant existing code (entry points, interfaces, test files) to understand
 the current structure before decomposing.
 
@@ -75,12 +84,12 @@ Order tasks so that:
 
 ## Step 4 — Write the plan
 
-Write `.mx/plan/<name>.md`:
+Write `~/.mx/<project>/<name>/plan.md`:
 
 ```markdown
 # <name> — Plan
 
-> Spec: .mx/design/<name>.md
+> Design spec: ~/.mx/<project>/<name>/spec.md
 
 ## Tasks
 
@@ -101,7 +110,7 @@ Allow the user to add, remove, reorder, or rewrite tasks.
 Once approved:
 
 ```
-Plan saved to .mx/plan/<name>.md
+Plan saved to ~/.mx/<project>/<name>/plan.md
 Ready for /mx-worktree — this will create an isolated workspace and run the baseline.
 ```
 
