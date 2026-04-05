@@ -28,12 +28,13 @@ AI agents are great at writing code — but left unchecked they skip planning, s
 | Skill                           | Description                                                               |
 | ------------------------------- | ------------------------------------------------------------------------- |
 | [mx-flow](mx-flow/)             | Full pipeline orchestrator — idea to verified commit                      |
-| [mx-brainstorm](mx-brainstorm/) | Turn a rough idea into an approved design spec                            |
+| [mx-brainstorm](mx-brainstorm/) | Turn a rough idea into an approved design spec (with ADR auto-recorded)   |
 | [mx-plan](mx-plan/)             | Decompose a spec into a concrete, ordered task list                       |
 | [mx-worktree](mx-worktree/)     | Create an isolated git worktree with baseline verification                |
 | [mx-tdd](mx-tdd/)               | Implement one task: red → green → refactor → commit (one commit per task) |
 | [mx-verify](mx-verify/)         | Final gate: full test suite + plan checklist before push                  |
-| [mx-finish](mx-finish/)         | Post-merge cleanup — plan files, review reports, worktree                 |
+| [mx-pr](mx-pr/)                 | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket            |
+| [mx-finish](mx-finish/)         | Post-merge cleanup — plan files, review reports, worktree, branch         |
 
 ### Review
 
@@ -55,8 +56,8 @@ AI agents are great at writing code — but left unchecked they skip planning, s
 Use `/mx-flow` to run the full pipeline automatically, or invoke each skill individually for more control:
 
 ```
-/mx-brainstorm   ──▶  idea → approved spec  (.mx/design/)
-/mx-plan         ──▶  spec → task list      (.mx/plan/)
+/mx-brainstorm   ──▶  idea → approved design spec + ADR  (~/.mx/<project>/<name>/)
+/mx-plan         ──▶  spec → task list            (~/.mx/<project>/<name>/plan.md)
 /mx-worktree     ──▶  isolated branch + baseline test pass
 
   ┌─ loop (one iteration per task) ──────────────────────────────┐
@@ -69,6 +70,7 @@ Use `/mx-flow` to run the full pipeline automatically, or invoke each skill indi
   └──────────────────────────────────────────────────────────────┘
 
 /mx-verify       ──▶  full suite + checklist + learning note
+/mx-pr           ──▶  draft PR → review → publish (GitHub/GitLab/Bitbucket)
 
 ── after PR merge ─────────────────────────────────────────────
 /mx-finish                      clean up and close out the branch
