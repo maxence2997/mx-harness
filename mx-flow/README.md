@@ -23,15 +23,16 @@ mx-worktree
 mx-verify → mx-commit
 ```
 
-## Three human gates
+## Human decision gates
+
+mx-flow pauses at key points where your judgement matters. Between gates, it runs automatically.
 
 | Gate | When | What you do |
 |------|------|-------------|
-| Spec approval | After brainstorm | Review and confirm the design |
+| Spec approval | After brainstorm | Review and confirm the design spec |
 | Task list approval | After planning | Add, remove, or reorder tasks |
 | Triage approval | After each review cycle | Approve fix/track/skip decisions |
-
-Between gates, mx-flow runs automatically.
+| PR review | Before publishing | Review draft, choose platform or skip |
 
 ## Convergent loop safety limit
 
