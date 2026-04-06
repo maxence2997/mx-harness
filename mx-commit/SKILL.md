@@ -97,15 +97,15 @@ If `--auto` was passed, proceed through all units without pausing.
 
 ## Step 6 — Verify
 
-```bash
-git log --graph --oneline -5
+Do not run additional bash commands. Using information already known from Step 5, output a formatted summary directly:
+
+```
+✔ <hash-short>  <type>: <subject>
+  <file1>  +{n} -{n}
+  <file2>  +{n} -{n}
 ```
 
-Then for each commit just made, show the changed files:
-
-```bash
-git show --stat --format="" <commit-hash>
-```
+If multiple commits were made, repeat the block for each one in order.
 
 ---
 
