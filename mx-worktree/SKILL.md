@@ -2,8 +2,9 @@
 name: mx-worktree
 description: >
   Create an isolated git worktree for a feature branch before implementation begins.
-  Handles directory setup, gitignore verification, branch naming, dependency setup,
-  and baseline test verification. Use before mx-tdd when starting new work.
+  Worktree is placed under ~/.mx/<project>/<name>/worktree/ alongside the spec and plan.
+  Handles branch naming, base branch resolution, dependency setup, and baseline verification.
+  Use before mx-tdd when starting new work.
 user-invocable: true
 allowed-tools:
   - Bash
@@ -40,23 +41,7 @@ All feature paths are then `MX/<name>/`.
 
 ---
 
-## Step 1 — Verify .worktrees/ is gitignored
-
-```bash
-git check-ignore -q .worktrees 2>/dev/null
-```
-
-If **not ignored**, add it and commit:
-
-```bash
-echo '.worktrees/' >> .gitignore
-git add .gitignore
-git commit -m "chore: add .worktrees/ to .gitignore"
-```
-
----
-
-## Step 2 — Determine branch name
+## Step 1 — Determine branch name
 
 Apply branch naming convention:
 
@@ -72,7 +57,7 @@ If the name already has a correct prefix, proceed.
 
 ---
 
-## Step 3 — Create the worktree
+## Step 2 — Create the worktree
 
 First, resolve the base branch in this order:
 
@@ -88,10 +73,10 @@ git rev-parse --verify main 2>/dev/null || git rev-parse --verify origin/main 2>
 4. If found → use `main` as base
 5. If neither exists → ask the user which branch to base from
 
-Then create the worktree from the resolved base:
+Then create the worktree under `MX/<name>/worktree/`:
 
 ```bash
-git worktree add .worktrees/<branch-name> -b <branch-name> <base-branch>
+git worktree add ~/.mx/<project>/<name>/worktree -b <branch-name> <base-branch>
 ```
 
 Verify it was created:
@@ -102,7 +87,7 @@ git worktree list
 
 ---
 
-## Step 4 — Run project setup
+## Step 3 — Run project setup
 
 From within the worktree directory, auto-detect and run setup:
 
@@ -127,7 +112,7 @@ if [ -f Cargo.toml ]; then cargo build; fi
 
 ---
 
-## Step 5 — Verify baseline
+## Step 4 — Verify baseline
 
 Run the full test suite to confirm the worktree starts clean.
 
@@ -142,12 +127,12 @@ Do not proceed silently with a failing baseline.
 
 ---
 
-## Step 6 — Report
+## Step 5 — Report
 
 ```
-Worktree ready at .worktrees/<branch-name>
-Branch: <branch-name>
+Worktree ready at ~/.mx/<project>/<name>/worktree/
+Branch  : <branch-name>
 Baseline: <N> tests passing
 
-Ready for /mx-tdd — work from .worktrees/<branch-name>/
+Ready for /mx-tdd — work from ~/.mx/<project>/<name>/worktree/
 ```
