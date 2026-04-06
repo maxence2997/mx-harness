@@ -1,6 +1,6 @@
 # mx-skills
 
-> Plug-and-play AI coding skills that guide your agent from raw idea to merged PR — with structured reviews, TDD loops, and clean commits at every step.
+> Your AI agent writes fast. mx-skills makes it engineer properly.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Works with](https://img.shields.io/badge/works%20with-GitHub%20Copilot%20%7C%20Cursor%20%7C%20Claude-blueviolet)
@@ -10,9 +10,28 @@
 
 ---
 
+## See it in action
+
+Just tell the agent your idea — rough or detailed, it will ask what it needs.
+
+```
+/mx-flow add Redis caching to the search endpoint
+```
+
+Brainstorm → spec approval → plan approval → TDD loop → review → triage → verify → PR.  
+You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-flow/)
+
+---
+
 ## Why?
 
-AI agents are great at writing code — but left unchecked they skip planning, skip tests, and produce unmaintainable diffs. These skills inject discipline into the loop:
+mx-skills is the engineering harness your agent is missing.
+
+Left unchecked, AI agents skip planning, skip tests, and produce unmaintainable diffs. Every session you end up reminding it: write the design doc first, follow TDD, fix the commit message, check the SRE angle...
+
+Plan Mode helps — but it only covers the beginning. What comes after — how to write tests, who reviews, what the commit looks like, how to clean up after merge — it doesn't handle any of that.
+
+mx-skills wraps the entire lifecycle into a set of skills the agent is forced to follow:
 
 - **Spec before code** — brainstorm and lock down a design doc before any implementation
 - **Test-first** — every task follows red → green → refactor
@@ -55,7 +74,7 @@ Agent: → Senior Engineer:     "Cache key includes user locale? Edge case."
        → Future Maintainer:   "Document why TTL=300 was chosen."
 ```
 
-The first scenario is something most engineers have lived through. The second is what these skills enforce.
+The first scenario is something most engineers have lived through. The second is what mx-skills locks in by default.
 
 ---
 
@@ -76,9 +95,9 @@ The first scenario is something most engineers have lived through. The second is
 
 ### Review
 
-| Skill                                 | Description                                                         |
-| ------------------------------------- | ------------------------------------------------------------------- |
-| [mx-team-review](mx-team-review/)     | 3-perspective code review — Senior Engineer, SRE, Future Maintainer |
+| Skill                                  | Description                                                         |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| [mx-team-review](mx-team-review/)      | 3-perspective code review — Senior Engineer, SRE, Future Maintainer |
 | [mx-review-triage](mx-review-triage/) | Triage review findings into fix / track / skip buckets              |
 
 ### Commit
@@ -113,19 +132,6 @@ Use `/mx-flow` to run the full pipeline automatically, or invoke each skill indi
 ── after PR merge ─────────────────────────────────────────────
 /mx-finish                      clean up and close out the branch
 ```
-
----
-
-## Quick example
-
-Just tell the agent your idea — rough or detailed, it will ask what it needs.
-
-```
-/mx-flow add Redis caching to the search endpoint
-```
-
-Brainstorm → spec approval → plan approval → TDD loop → review → triage approval → verify → PR.
-You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-flow/)
 
 ---
 
