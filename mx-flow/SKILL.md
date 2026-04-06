@@ -179,15 +179,18 @@ If verification passes, run mx-commit --auto for any remaining staged changes.
 
 ---
 
-## Phase 6 — Hand off
+## Phase 6 — PR
+
+Run mx-pr. It will:
+- Draft the PR description from the spec and git log
+- Present the draft for review (**GATE 4**)
+- Ask which platform to publish to (GitHub / GitLab / Bitbucket), or skip
+
+Do not push or open the PR before mx-pr presents the draft. The user decides whether to publish and where.
+
+After mx-pr completes (published or skipped), announce:
 
 ```
 mx-flow complete.
-
-Next steps:
-  git push
-  Open PR following your team's PR template
-  After merge: /mx-finish <name>
+After merge: /mx-finish <name>
 ```
-
-Do not push automatically.
