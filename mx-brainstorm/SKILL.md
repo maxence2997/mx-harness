@@ -75,6 +75,16 @@ Iterate until the design is unambiguous.
 
 **Hard gate: do not proceed to Step 4 until the user explicitly approves the design spec.**
 
+### Side requests during brainstorm
+
+The user may ask for something while the brainstorm conversation is in progress (e.g. "open an issue", "add a comment", "check a file"). When this happens:
+
+- Execute **exactly** what was requested — nothing more
+- Do not make additional code changes, file edits, or actions that were not asked for
+- After completing the side request, return to the brainstorm conversation
+
+Example: "go open an issue describing this" → open the issue, stop. Do not also edit source files.
+
 ---
 
 ## Step 4 — Write the design spec
