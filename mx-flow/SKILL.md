@@ -93,26 +93,11 @@ Do this before asking any questions or writing any files.
 
 ## Phase 1 — Brainstorm
 
-The topic the user provided with `/mx-flow` is the brainstorm starting point.
-**Do not ask if the user wants to brainstorm — it has already begun.**
+Run mx-brainstorm with the following context:
+- The MX directory has already been created in Phase 0 (`~/.mx/<project>/<name>/`)
+- The topic is already provided — begin asking clarifying questions immediately, do not ask if the user wants to start
 
-### Side requests during brainstorm
-
-The user may ask for something while the brainstorm conversation is in progress (e.g. "open an issue", "add a comment", "check a file"). When this happens:
-
-- Execute **exactly** what was requested — nothing more
-- Do not make additional code changes, file edits, or actions that were not asked for
-- After completing the side request, return to the brainstorm conversation
-
-Example: "go open an issue describing this" → open the issue, stop. Do not also edit source files.
-
-Run mx-brainstorm inline (do not invoke it as a separate skill):
-- Ask clarifying questions one at a time
-- When the picture is clear, check with the user before proposing approaches
-- Present 2-3 approaches with trade-offs
-- Refine until the design is unambiguous
-- Write the spec to `~/.mx/<project>/<name>/spec.md`
-- Write the ADR to `~/.mx/<project>/<name>/adr.md` (no confirmation needed)
+Follow mx-brainstorm's full procedure. It owns the spec and ADR output.
 
 **GATE 1**: Present the draft spec. Do not proceed until the user explicitly confirms.
 

@@ -40,6 +40,7 @@ Rules:
 - One question per message — never bundle multiple questions
 - Prefer multiple-choice over open-ended where possible
 - There is no question limit — keep asking until the picture is genuinely clear
+- If invoked from mx-flow, the topic is already provided — begin with the first clarifying question immediately, do not ask if the user wants to start
 
 When you believe you have enough context, ask before proposing approaches:
 
@@ -49,6 +50,16 @@ or shall we move on to exploring approaches?
 ```
 
 Do not proceed to Step 2 until the user confirms.
+
+### Side requests
+
+The user may ask for something mid-conversation (e.g. "open an issue", "add a comment", "check a file"). When this happens:
+
+- Execute **exactly** what was requested — nothing more
+- Do not make additional code changes, file edits, or actions that were not asked for
+- After completing the side request, return to the brainstorm conversation
+
+Example: "go open an issue describing this" → open the issue, stop. Do not also edit source files.
 
 ---
 
