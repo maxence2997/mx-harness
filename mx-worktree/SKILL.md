@@ -74,8 +74,24 @@ If the name already has a correct prefix, proceed.
 
 ## Step 3 — Create the worktree
 
+First, resolve the base branch in this order:
+
+1. Check if `develop` exists (local or remote):
 ```bash
-git worktree add .worktrees/<branch-name> -b <branch-name>
+git rev-parse --verify develop 2>/dev/null || git rev-parse --verify origin/develop 2>/dev/null
+```
+2. If found → use `develop` as base
+3. Otherwise, check if `main` exists:
+```bash
+git rev-parse --verify main 2>/dev/null || git rev-parse --verify origin/main 2>/dev/null
+```
+4. If found → use `main` as base
+5. If neither exists → ask the user which branch to base from
+
+Then create the worktree from the resolved base:
+
+```bash
+git worktree add .worktrees/<branch-name> -b <branch-name> <base-branch>
 ```
 
 Verify it was created:
