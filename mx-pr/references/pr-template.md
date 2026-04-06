@@ -45,10 +45,6 @@ Sections marked `<!-- optional -->` are omitted from the draft if no content is 
 
 {{test_plan}}
 
-## Notes <!-- optional -->
-
-{{notes}}
-
 ## Checklist
 
 ### Required
@@ -65,6 +61,10 @@ Sections marked `<!-- optional -->` are omitted from the draft if no content is 
 <!-- Skill selects applicable items based on change type. Remove any that do not apply. -->
 
 {{checklist_conditional}}
+
+## Notes <!-- optional -->
+
+{{notes}}
 ```
 
 ---
