@@ -99,13 +99,20 @@ If `--auto` was passed, proceed through all units without pausing.
 
 Do not run additional bash commands. Using information already known from Step 5, output a formatted summary directly:
 
+For each commit just made, show the full block:
 ```
 ✔ <hash-short>  <type>: <subject>
   <file1>  +{n} -{n}
   <file2>  +{n} -{n}
 ```
 
-If multiple commits were made, repeat the block for each one in order.
+Then show the two commits before those, hash and subject only:
+```
+  <hash-short>  <type>: <subject>
+  <hash-short>  <type>: <subject>
+```
+
+If multiple commits were made in this run, all of them get the full block. The two trailing entries are always the ones immediately preceding this run.
 
 ---
 
