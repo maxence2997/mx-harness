@@ -1,12 +1,12 @@
-# mx-skills
+# mx-harness
 
-> Your AI agent writes fast. mx-skills makes it engineer properly.
+> Your AI agent writes fast. mx-harness makes it engineer properly.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Works with](https://img.shields.io/badge/works%20with-GitHub%20Copilot%20%7C%20Cursor%20%7C%20Claude-blueviolet)
-![Stars](https://img.shields.io/github/stars/maxence2997/skills)
-![Last commit](https://img.shields.io/github/last-commit/maxence2997/skills)
-![Forks](https://img.shields.io/github/forks/maxence2997/skills)
+![Stars](https://img.shields.io/github/stars/maxence2997/mx-harness)
+![Last commit](https://img.shields.io/github/last-commit/maxence2997/mx-harness)
+![Forks](https://img.shields.io/github/forks/maxence2997/mx-harness)
 
 ---
 
@@ -25,13 +25,13 @@ You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-
 
 ## Why?
 
-mx-skills is the engineering harness your agent is missing.
+mx-harness is the engineering harness your agent is missing.
 
 Left unchecked, AI agents skip planning, skip tests, and produce unmaintainable diffs. Every session you end up reminding it: write the design doc first, follow TDD, fix the commit message, check the SRE angle...
 
 Plan Mode helps — but it only covers the beginning. What comes after — how to write tests, who reviews, what the commit looks like, how to clean up after merge — it doesn't handle any of that.
 
-mx-skills wraps the entire lifecycle into a set of skills the agent is forced to follow:
+mx-harness wraps the entire lifecycle into a set of skills the agent is forced to follow:
 
 - **Spec before code** — brainstorm and lock down a design doc before any implementation
 - **Test-first** — every task follows red → green → refactor
@@ -42,7 +42,7 @@ mx-skills wraps the entire lifecycle into a set of skills the agent is forced to
 
 ## The difference
 
-**Without mx-skills**
+**Without mx-harness**
 
 ```
 User:  "Add caching to the search endpoint"
@@ -51,7 +51,7 @@ Agent: [writes 200 lines of code]
        [no tests · no design doc · breaks 2 existing behaviours]
 ```
 
-**With mx-skills**
+**With mx-harness**
 
 ```
 User:  /mx-brainstorm "Add caching to the search endpoint"
@@ -74,7 +74,7 @@ Agent: → Senior Engineer:     "Cache key includes user locale? Edge case."
        → Future Maintainer:   "Document why TTL=300 was chosen."
 ```
 
-The first scenario is something most engineers have lived through. The second is what mx-skills locks in by default.
+The first scenario is something most engineers have lived through. The second is what mx-harness locks in by default.
 
 ---
 
@@ -141,25 +141,25 @@ Use `/mx-flow` to run the full pipeline automatically, or invoke each skill indi
 
 ```bash
 # bash / zsh
-npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
+npx skills add https://github.com/maxence2997/mx-harness --skill <skill-name> -g -y
 ```
 
 **Install or update everything at once:**
 
 ```bash
 # bash / zsh — auto-discovers all mx-* skills
-curl -s https://api.github.com/repos/maxence2997/skills/contents \
+curl -s https://api.github.com/repos/maxence2997/mx-harness/contents \
   | grep '"name"' | grep -o '"mx-[^"]*"' | tr -d '"' \
-  | xargs -I{} npx skills add https://github.com/maxence2997/skills --skill {} -g -y
+  | xargs -I{} npx skills add https://github.com/maxence2997/mx-harness --skill {} -g -y
 ```
 
 ```powershell
 # PowerShell
-(Invoke-RestMethod "https://api.github.com/repos/maxence2997/skills/contents") |
+(Invoke-RestMethod "https://api.github.com/repos/maxence2997/mx-harness/contents") |
   Where-Object { $_.name -like "mx-*" } |
   Select-Object -ExpandProperty name |
   ForEach-Object {
-    npx skills add https://github.com/maxence2997/skills --skill $_ -g -y
+    npx skills add https://github.com/maxence2997/mx-harness --skill $_ -g -y
   }
 ```
 
