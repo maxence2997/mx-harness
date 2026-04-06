@@ -73,7 +73,12 @@ Before anything else:
 1. Derive the feature name from the topic (kebab-case, ≤ 4 words). Example: `write-timeout-error-propagation`
 2. Resolve the MX directory (same rules as mx-brainstorm: `git rev-parse --show-toplevel` → project name → `~/.mx/<project>/<name>/`)
 3. Create the directory if it does not exist
-4. Announce clearly:
+4. **Read relevant context** — based on the topic, use Glob and Read to collect information the brainstorm will need:
+   - Files, modules, or packages mentioned explicitly in the topic
+   - Related code that is likely in scope (e.g. if topic mentions a component, read adjacent files)
+   - Any design docs, behaviour specs, or CLAUDE.md files that apply
+   - Read broadly enough that the first brainstorm question is grounded in actual code
+5. Announce clearly:
 
 ```
 mx-flow started
