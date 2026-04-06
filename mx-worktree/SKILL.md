@@ -35,7 +35,8 @@ At the start of any file operation, resolve the MX base directory:
 - MX = user home + `.mx/<project>/`
   - Unix/macOS: `~/.mx/<project>/`
   - Windows: `%USERPROFILE%\.mx\<project>\`
-- Create the directory if it does not exist
+- Create `~/.mx/<project>/` if it does not exist
+- Create `~/.mx/<project>/<name>/` if it does not exist
 
 All feature paths are then `MX/<name>/`.
 
