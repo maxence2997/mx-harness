@@ -97,13 +97,15 @@ If `--auto` was passed, proceed through all units without pausing.
 
 ## Step 6 — Verify
 
-For each commit just made, show:
-
 ```bash
-git show --stat --format="%H%n%s%n%b" <commit-hash>
+git log --graph --oneline -5
 ```
 
-Display the commit hash, message (subject + body), and the list of changed files with insertion/deletion counts. If multiple commits were made, show each one in order.
+Then for each commit just made, show the changed files:
+
+```bash
+git show --stat --format="" <commit-hash>
+```
 
 ---
 
