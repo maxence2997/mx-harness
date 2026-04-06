@@ -1,9 +1,11 @@
 ---
 name: mx-commit
 description: >
-  Commit staged changes following the project's commit message convention.
-  Enforces: one logical change per commit, type prefix, 50-char subject limit,
-  numbered body items in "reason → change" format, English only.
+  Commit all pending changes following the project's commit message convention.
+  Inspects both staged and unstaged changes, groups them by logical concern,
+  stages and commits each group separately. Enforces: one logical change per
+  commit, type prefix, 50-char subject limit, numbered body items in
+  "reason → change" format, English only.
   Usage: /mx-commit
 user-invocable: true
 allowed-tools:
@@ -18,8 +20,11 @@ allowed-tools:
 ## Trigger
 
 ```
-/mx-commit
+/mx-commit          # interactive — shows draft and waits for approval per commit
+/mx-commit --auto   # non-interactive — commits all groups immediately without confirmation
 ```
+
+Use `--auto` when invoked from an orchestrating skill (mx-tdd, mx-flow). Use the default when invoked directly by the user.
 
 ---
 
@@ -30,37 +35,53 @@ This file contains the format, type definitions, rules, and examples to follow w
 
 ---
 
-## Step 2 — Inspect staged changes
+## Step 2 — Inspect all pending changes
 
 ```bash
-git diff --staged
 git status
+git diff          # unstaged
+git diff --staged # staged
 ```
 
-If nothing is staged, tell the user and stop. Do not `git add` files without explicit instruction.
+If there are no changes at all (nothing staged, nothing modified), tell the user and stop.
 
 ---
 
-## Step 3 — Classify the change
+## Step 3 — Group by logical concern
 
-Determine the correct `type` from the type table in `references/commit-message.md` based on what is staged. When in doubt between two types, pick the one that most accurately describes the primary intent.
+Analyse all pending changes (staged and unstaged together) and group them into one or more **logical units**. A logical unit is a set of files that together represent exactly one coherent change with a single `type`.
 
----
+Rules:
+- A logical unit maps to exactly one commit type (`feat`, `fix`, `refactor`, `doc`, `test`, `chore`, …)
+- Files that belong to the same behaviour change belong in the same unit
+- Test files and their corresponding implementation belong in the same unit
+- Unrelated changes must be split into separate units
 
-## Step 4 — Draft the commit message
-
-Following the format in `references/commit-message.md`:
-
-1. Write the subject line: `<type>: <subject>` — must be ≤ 50 characters.
-2. If the change needs explanation, write up to 3 body items in `reason → change` format, each ≤ 50 characters.
-3. Present the draft to the user for review before committing.
+If changes span multiple logical units, plan the commit order (dependencies first).
 
 ---
 
-## Step 5 — Commit
+## Step 4 — Draft commit messages
 
-After the user approves (or if the context makes approval implicit), commit using a HEREDOC to preserve formatting:
+For each logical unit, draft a commit message following the format in `references/commit-message.md`:
 
+1. Subject line: `<type>: <subject>` — must be ≤ 50 characters.
+2. Optional body: up to 3 items in `reason → change` format, each ≤ 50 characters.
+
+If `--auto` was **not** passed, present all drafts to the user grouped by unit before committing any of them. Wait for approval.
+
+---
+
+## Step 5 — Commit each unit
+
+For each logical unit in order:
+
+1. Stage only the files in that unit:
+```bash
+git add <file1> <file2> ...
+```
+
+2. Commit using a HEREDOC:
 ```bash
 git commit -m "$(cat <<'EOF'
 <type>: <subject>
@@ -70,12 +91,14 @@ EOF
 )"
 ```
 
+If `--auto` was passed, proceed through all units without pausing.
+
 ---
 
 ## Step 6 — Verify
 
 ```bash
-git log --oneline -3
+git log --oneline -5
 ```
 
 Show the result to the user.
@@ -87,5 +110,3 @@ Show the result to the user.
 - Never use `--no-verify` or `--no-gpg-sign` unless the user explicitly requests it.
 - Never amend a commit that has already been pushed.
 - Never commit files that likely contain secrets (`.env`, credentials, private keys).
-- Never stage additional files beyond what the user has already staged.
-- One logical change per commit — if staged changes span multiple concerns, tell the user and ask them to split.

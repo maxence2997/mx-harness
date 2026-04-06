@@ -139,7 +139,7 @@ Before marking the task done, verify all five conditions are met — every one i
 □ GREEN confirmed: test passes after implementation
 □ Full suite clean: no new failures introduced by this change
 □ Plan updated: task marked [x] in ~/.mx/<project>/<name>/plan.md
-□ Committed: /mx-commit completed for this task
+□ Committed: /mx-commit --auto completed for this task
 ```
 
 If any item is unchecked, do not advance to the next task.

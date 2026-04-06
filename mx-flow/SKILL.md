@@ -99,7 +99,7 @@ If baseline fails, pause and resolve before continuing.
 
 For each `[ ]` task in the plan:
 1. Run mx-tdd for that task (full red → green → refactor cycle)
-2. Run mx-commit for the completed task
+2. Run mx-commit --auto for the completed task
 3. Mark `[x]` in the plan
 
 Continue until all tasks are done or a milestone is reached.
@@ -147,7 +147,7 @@ Do not continue automatically. Wait for the user to choose.
 ## Phase 5 — Verify and commit
 
 Run mx-verify.
-If verification passes, run mx-commit for any remaining staged changes.
+If verification passes, run mx-commit --auto for any remaining staged changes.
 
 ---
 
