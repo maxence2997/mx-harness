@@ -48,11 +48,15 @@ Get the diff summary:
 git diff $(git merge-base HEAD main)..HEAD --stat
 ```
 
-Check for open issues that may be referenced:
-
+Find related issues by checking in this order:
+1. Branch name — extract any issue number (e.g. `fix/123-timeout` → `#123`)
+2. Commit messages since branch start — look for `#<number>`, `closes`, `fixes`, `resolves`
+3. Open issues list — match by title keywords against the feature name:
 ```bash
-gh issue list --state open --limit 10 2>/dev/null || true
+gh issue list --state open --limit 20 2>/dev/null || true
 ```
+
+Collect all candidate issue references. If ambiguous, include all candidates and let the user trim during review.
 
 ---
 
@@ -70,6 +74,7 @@ Fill each placeholder using the context gathered in Step 1:
 | `{{changes}}` | git log, grouped by commit type |
 | `{{test_plan}}` | completed tasks from plan.md |
 | `{{notes}}` | spec.md — Out of scope, known trade-offs; omit if empty |
+| `{{issues}}` | Related issues found in Step 1 — use `Closes #N` if this PR resolves the issue, `Relates to #N` if partial; omit section if none found |
 
 If spec.md does not exist, derive `{{summary}}`, `{{motivation}}`, and `{{notes}}` from the git log only.
 Remove any section whose content is empty and marked optional in the template.

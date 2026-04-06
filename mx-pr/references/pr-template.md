@@ -16,6 +16,7 @@ The skill reads this file and fills each section using collected context.
 | `{{test_plan}}` | Completed tasks from plan.md |
 | `{{notes}}` | Design spec — Out of scope / trade-offs (omitted if empty) |
 | `{{checklist_conditional}}` | Skill selects relevant items based on commit types in the git log |
+| `{{issues}}` | Related issues found via branch name, commit messages, or open issue list — omitted if none found |
 
 Sections marked `<!-- optional -->` are omitted from the draft if no content is available.
 
@@ -60,6 +61,10 @@ Sections marked `<!-- optional -->` are omitted from the draft if no content is 
 ## Notes <!-- optional -->
 
 {{notes}}
+
+## Related issues <!-- optional -->
+
+{{issues}}
 ```
 
 ---
