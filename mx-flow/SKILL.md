@@ -184,9 +184,10 @@ If verification passes, run mx-commit --auto for any remaining staged changes.
 Run mx-pr. It will:
 - Draft the PR description from the spec and git log
 - Present the draft for review (**GATE 4**)
-- Ask which platform to publish to (GitHub / GitLab / Bitbucket), or skip
-
-Do not push or open the PR before mx-pr presents the draft. The user decides whether to publish and where.
+- Offer three options:
+  - Publish to a platform (GitHub / GitLab / Bitbucket) — mx-pr handles push + PR creation
+  - Skip — branch stays local, user handles push and PR manually
+  - Exit — hand off entirely, no further action taken
 
 After mx-pr completes (published or skipped), announce:
 

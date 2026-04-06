@@ -112,11 +112,11 @@ Ask the user which platform to publish to:
 
 ```
 Publish to:
-  [1] GitHub   (gh pr create)
-  [2] GitLab   (glab mr create)
-  [3] Bitbucket (bb pr create — requires bb CLI)
-  [4] Other    (show the draft, you handle it manually)
-  [5] Skip     (don't publish now)
+  [1] GitHub      (gh pr create)
+  [2] GitLab      (glab mr create)
+  [3] Bitbucket   (bb pr create — requires bb CLI)
+  [4] Hand off    (show draft path, you push and open the PR yourself)
+  [5] Skip        (do nothing — branch stays local, come back later)
 ```
 
 Wait for the user to choose.
