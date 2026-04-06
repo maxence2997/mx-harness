@@ -159,6 +159,40 @@ curl -s https://api.github.com/repos/maxence2997/skills/contents \
 
 ---
 
+## Updating
+
+**Update a single skill:**
+
+```bash
+# bash / zsh
+npx skills add https://github.com/maxence2997/skills --skill <skill-name> -g -y
+```
+
+**Update all skills at once:**
+
+```bash
+# bash / zsh
+curl -s https://api.github.com/repos/maxence2997/skills/contents \
+  | grep '"name"' | grep -o '"mx-[^"]*"' | tr -d '"' \
+  | xargs -I{} npx skills add https://github.com/maxence2997/skills --skill {} -g -y
+```
+
+```powershell
+# PowerShell
+(Invoke-RestMethod "https://api.github.com/repos/maxence2997/skills/contents") |
+  Where-Object { $_.name -like "mx-*" } |
+  Select-Object -ExpandProperty name |
+  ForEach-Object {
+    npx skills add https://github.com/maxence2997/skills --skill $_ -g -y
+  }
+```
+
+Same command as install — `-y` overwrites the existing version automatically.
+
+> **If you cloned the repo directly:** `git pull` is all you need — your symlinks already point to the repo.
+
+---
+
 ## License
 
 MIT
