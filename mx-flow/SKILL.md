@@ -66,10 +66,38 @@ Gates are not "y/n continue" prompts. They are real review and discussion opport
 
 ---
 
+## Phase 0 — Initialize
+
+Before anything else:
+
+1. Derive the feature name from the topic (kebab-case, ≤ 4 words). Example: `write-timeout-error-propagation`
+2. Resolve the MX directory (same rules as mx-brainstorm: `git rev-parse --show-toplevel` → project name → `~/.mx/<project>/<name>/`)
+3. Create the directory if it does not exist
+4. Announce clearly:
+
+```
+mx-flow started
+Feature : <feature-name>
+Spec    : ~/.mx/<project>/<name>/spec.md (will be written after GATE 1)
+Phase   : 1 — Brainstorm
+```
+
+Do this before asking any questions or writing any files.
+
+---
+
 ## Phase 1 — Brainstorm
 
-Run mx-brainstorm for the given topic.
-Follow its full procedure (one question at a time, 2-3 approaches).
+The topic the user provided with `/mx-flow` is the brainstorm starting point.
+**Do not ask if the user wants to brainstorm — it has already begun.**
+
+Run mx-brainstorm inline (do not invoke it as a separate skill):
+- Ask clarifying questions one at a time
+- When the picture is clear, check with the user before proposing approaches
+- Present 2-3 approaches with trade-offs
+- Refine until the design is unambiguous
+- Write the spec to `~/.mx/<project>/<name>/spec.md`
+- Write the ADR to `~/.mx/<project>/<name>/adr.md` (no confirmation needed)
 
 **GATE 1**: Present the draft spec. Do not proceed until the user explicitly confirms.
 
