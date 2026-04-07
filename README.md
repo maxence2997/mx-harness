@@ -80,40 +80,52 @@ The first scenario is something most engineers have lived through. The second is
 
 ## Skills
 
+### `/mx-flow` — the full pipeline
+
+One command, idea to PR. Brainstorm → spec → plan → TDD loop → review → verify → PR.
+
+```
+/mx-flow add Redis caching to the search endpoint
+```
+
+[How it works →](mx-flow/)
+
+### Standalone skills
+
+These skills also run inside `mx-flow`, but you can use them independently anytime:
+
 | Skill                                  | Description                                                         |
 | -------------------------------------- | ------------------------------------------------------------------- |
-| [mx-flow](mx-flow/)                   | Full pipeline orchestrator — idea to verified commit                |
 | [mx-brainstorm](mx-brainstorm/)       | Turn a rough idea into an approved design spec (with ADR)           |
 | [mx-team-review](mx-team-review/)     | 3-perspective code review — Senior Engineer, SRE, Future Maintainer |
 | [mx-review-triage](mx-review-triage/) | Triage review findings into fix / track / skip buckets              |
 | [mx-commit](mx-commit/)               | Structured commit with enforced message format                      |
 | [mx-pr](mx-pr/)                       | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket      |
 
----
-
-## How It Fits Together
-
-Use `/mx-flow` to run the full pipeline automatically, or invoke each skill individually for more control:
+### How mx-flow fits together
 
 ```
-/mx-brainstorm   ──▶  idea → approved design spec + ADR  (~/.mx/<project>/<name>/)
-/mx-plan         ──▶  spec → task list            (~/.mx/<project>/<name>/plan.md)
-/mx-worktree     ──▶  isolated branch + baseline test pass
+  Brainstorm  ──▶  Design spec + ADR
+  Plan        ──▶  Ordered task list
+  Worktree    ──▶  Isolated branch + baseline pass
 
-  ┌─ loop (one iteration per task) ──────────────────────────────┐
-  │  /mx-tdd              red → green → refactor                 │
-  │  /mx-commit           structured commit for this task        │
-  │  (milestone reached)                                         │
-  │  /mx-team-review      3-perspective code review              │
-  │  /mx-review-triage    fix / track / skip                     │
-  │  ↺  fixes? → back to mx-tdd + mx-commit                     │
-  └──────────────────────────────────────────────────────────────┘
+  ┌─ convergent loop (max 3 iterations) ────────────┐
+  │                                                 │
+  │  ┌─ per task ────────────────────────┐          │
+  │  │  TDD       red → green → refactor │          │
+  │  │  Commit    one structured commit  │          │
+  │  └──────────────────────────────────-┘          │
+  │                                                 │
+  │  Review      3-perspective code review          │
+  │  Triage      fix / track / skip                 │
+  │                                                 │
+  │  ↺  fixes? → TDD + Commit → Review + Triage     │
+  │  ✔  clean? → exit loop                          │
+  └─────────────────────────────────────────────────┘
 
-/mx-verify       ──▶  full suite + checklist + learning note
-/mx-pr           ──▶  draft PR → review → publish (GitHub/GitLab/Bitbucket)
-
-── after PR merge ─────────────────────────────────────────────
-/mx-finish                      clean up and close out the branch
+  Verify      ──▶  Full suite + plan checklist
+  PR          ──▶  Draft → review → publish
+  Finish      ──▶  Clean up branch + worktree
 ```
 
 ---
