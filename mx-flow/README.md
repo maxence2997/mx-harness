@@ -8,9 +8,14 @@ Full development workflow orchestrator. One command to run the entire process fr
 
 ```
 /mx-flow <topic>
+/mx-flow --fast <topic>
 ```
 
 _Rough or detailed — the agent will ask what it needs._
+
+### Fast mode
+
+Add `--fast` to reduce to 1 hard gate (spec approval only). Task list, triage, and PR all auto-proceed — reports are still shown for visibility. The agent only pauses mid-flow if it's stuck and needs human input.
 
 ## What it runs
 
@@ -30,12 +35,14 @@ mx-verify → mx-commit
 
 mx-flow pauses at key points where your judgement matters. Between gates, it runs automatically.
 
-| Gate | When | What you do |
-|------|------|-------------|
-| Spec approval | After brainstorm | Review and confirm the design spec |
-| Task list approval | After planning | Add, remove, or reorder tasks |
-| Triage approval | After each review cycle | Approve fix/track/skip decisions |
-| PR review | Before publishing | Review draft, choose platform or skip |
+| Gate | When | Normal | Fast |
+|------|------|--------|------|
+| Spec approval | After brainstorm | Human | Human |
+| Task list approval | After planning | Human | Auto |
+| Triage approval | After each review cycle | Human | Auto |
+| PR review | Before publishing | Human | Auto* |
+
+\* Agent pauses only if it cannot determine how to proceed (no remote, ambiguous platform, etc.)
 
 ## Convergent loop safety limit
 
@@ -67,6 +74,7 @@ Each skill in the flow can also be used standalone:
 
 ```
 /mx-flow add Redis caching to the search endpoint
+/mx-flow --fast add Redis caching to the search endpoint
 ```
 
 Agent asks one question at a time — Redis or in-memory? TTL? Invalidation scope? —
