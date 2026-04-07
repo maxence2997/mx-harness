@@ -80,31 +80,14 @@ The first scenario is something most engineers have lived through. The second is
 
 ## Skills
 
-### Workflow
-
-| Skill                           | Description                                                               |
-| ------------------------------- | ------------------------------------------------------------------------- |
-| [mx-flow](mx-flow/)             | Full pipeline orchestrator — idea to verified commit                      |
-| [mx-brainstorm](mx-brainstorm/) | Turn a rough idea into an approved design spec (with ADR auto-recorded)   |
-| [mx-plan](mx-plan/)             | Decompose a spec into a concrete, ordered task list                       |
-| [mx-worktree](mx-worktree/)     | Create an isolated git worktree with baseline verification                |
-| [mx-tdd](mx-tdd/)               | Implement one task: red → green → refactor → commit (one commit per task) |
-| [mx-verify](mx-verify/)         | Final gate: full test suite + plan checklist before push                  |
-| [mx-pr](mx-pr/)                 | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket            |
-| [mx-finish](mx-finish/)         | Post-merge cleanup — plan files, review reports, worktree, branch         |
-
-### Review
-
 | Skill                                  | Description                                                         |
 | -------------------------------------- | ------------------------------------------------------------------- |
-| [mx-team-review](mx-team-review/)      | 3-perspective code review — Senior Engineer, SRE, Future Maintainer |
+| [mx-flow](mx-flow/)                   | Full pipeline orchestrator — idea to verified commit                |
+| [mx-brainstorm](mx-brainstorm/)       | Turn a rough idea into an approved design spec (with ADR)           |
+| [mx-team-review](mx-team-review/)     | 3-perspective code review — Senior Engineer, SRE, Future Maintainer |
 | [mx-review-triage](mx-review-triage/) | Triage review findings into fix / track / skip buckets              |
-
-### Commit
-
-| Skill                   | Description                                                      |
-| ----------------------- | ---------------------------------------------------------------- |
-| [mx-commit](mx-commit/) | Commit staged changes with a structured, enforced message format |
+| [mx-commit](mx-commit/)               | Structured commit with enforced message format                      |
+| [mx-pr](mx-pr/)                       | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket      |
 
 ---
 
