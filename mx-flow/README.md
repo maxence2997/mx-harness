@@ -8,39 +8,40 @@ Full development workflow orchestrator. One command to run the entire process fr
 
 ```
 /mx-flow <topic>
-/mx-flow --fast <topic>
+/mx-flow --gated <topic>
 ```
 
 _Rough or detailed — the agent will ask what it needs._
 
-### Fast mode
+### Gated mode
 
-Add `--fast` to reduce to 1 hard gate (spec approval only). Task list, triage, and PR all auto-proceed — reports are still shown for visibility. The agent only pauses mid-flow if it's stuck and needs human input.
+Add `--gated` for full human control at all 4 gates. By default, mx-flow only requires spec approval — task list, triage, and PR all auto-proceed (reports are still shown for visibility).
 
 ## What it runs
 
 ```
-mx-brainstorm  →  [GATE: spec approval]
-mx-plan        →  [GATE: task list approval]
+mx-brainstorm  →  [GATE: spec approval]     ← human
+mx-plan                                      ← auto
 mx-worktree
   loop:
     mx-tdd → mx-commit (per task)
-    mx-team-review → mx-review-triage  →  [GATE: triage approval]
+    mx-team-review → mx-review-triage        ← auto
     → fixes? back to loop
     → clean? exit loop
 mx-verify → mx-commit
+mx-pr                                        ← auto
 ```
 
 ## Human decision gates
 
 mx-flow pauses at key points where your judgement matters. Between gates, it runs automatically.
 
-| Gate | When | Normal | Fast |
-|------|------|--------|------|
+| Gate | When | Default | Gated |
+|------|------|---------|-------|
 | Spec approval | After brainstorm | Human | Human |
-| Task list approval | After planning | Human | Auto |
-| Triage approval | After each review cycle | Human | Auto |
-| PR review | Before publishing | Human | Auto* |
+| Task list approval | After planning | Auto | Human |
+| Triage approval | After each review cycle | Auto | Human |
+| PR review | Before publishing | Auto* | Human |
 
 \* Agent pauses only if it cannot determine how to proceed (no remote, ambiguous platform, etc.)
 
@@ -74,7 +75,7 @@ Each skill in the flow can also be used standalone:
 
 ```
 /mx-flow add Redis caching to the search endpoint
-/mx-flow --fast add Redis caching to the search endpoint
+/mx-flow --gated add Redis caching to the search endpoint
 ```
 
 Agent asks one question at a time — Redis or in-memory? TTL? Invalidation scope? —
@@ -89,9 +90,9 @@ SRE:               "No fallback if Redis is down."
 Future Maintainer: "Document why TTL=300."
 ```
 
-You decide what to fix, track, or skip. Then push and open the PR with `/mx-pr`.
+By default, the agent decides what to fix and publishes the PR automatically. Use `--gated` if you want to approve each step.
 
 ## Notes
 
-- Does not push automatically — you control when to push and open the PR
+- Default mode auto-publishes the PR. Use `--gated` for manual control
 - After merge: run `/mx-finish <name>` to clean up
