@@ -20,16 +20,27 @@ Add `--gated` for full human control at all 4 gates. By default, mx-flow only re
 ## What it runs
 
 ```
-mx-brainstorm  →  [GATE: spec approval]     ← human
-mx-plan                                      ← auto
-mx-worktree
-  loop:
-    mx-tdd → mx-commit (per task)
-    mx-team-review → mx-review-triage        ← auto
-    → fixes? back to loop
-    → clean? exit loop
-mx-verify → mx-commit
-mx-pr                                        ← auto
+  Brainstorm  ──▶  Design spec + ADR          [GATE: spec approval]
+  Plan        ──▶  Ordered task list
+  Worktree    ──▶  Isolated branch + baseline pass
+
+  ┌─ convergent loop (max 3 iterations) ────────────┐
+  │                                                 │
+  │  ┌─ per task ────────────────────────┐          │
+  │  │  TDD       red → green → refactor │          │
+  │  │  Commit    one structured commit  │          │
+  │  └──────────────────────────────────-┘          │
+  │                                                 │
+  │  Review      3-perspective code review          │
+  │  Triage      fix / track / skip                 │
+  │                                                 │
+  │  ↺  fixes? → TDD + Commit → Review + Triage     │
+  │  ✔  clean? → exit loop                          │
+  └─────────────────────────────────────────────────┘
+
+  Verify      ──▶  Full suite + plan checklist
+  PR          ──▶  Draft → review → publish
+  Finish      ──▶  Clean up branch + worktree
 ```
 
 ## Human decision gates
@@ -55,22 +66,6 @@ The tdd → review → triage cycle runs a maximum of **3 iterations**. If findi
 
 Three unresolved iterations almost always signal a design issue, not a code issue.
 
-## Individual skills
-
-Each skill in the flow can also be used standalone:
-
-| Skill | Use when |
-|-------|----------|
-| `/mx-brainstorm` | Just need a spec, not the full flow |
-| `/mx-plan` | Already have a spec, need tasks |
-| `/mx-worktree` | Need an isolated workspace |
-| `/mx-tdd` | Already planned, working task by task |
-| `/mx-team-review` | Want a code review at any point |
-| `/mx-review-triage` | Have review findings to triage |
-| `/mx-verify` | Final check before commit |
-| `/mx-commit` | Structured commit message |
-| `/mx-finish` | Clean up after PR is merged |
-
 ## Example
 
 ```
@@ -78,17 +73,25 @@ Each skill in the flow can also be used standalone:
 /mx-flow --gated add Redis caching to the search endpoint
 ```
 
-Agent asks one question at a time — Redis or in-memory? TTL? Invalidation scope? —
-then writes a design spec and ADR, and waits for your approval.
+**Brainstorm** — Agent asks one question at a time: Redis or in-memory? TTL strategy? Invalidation scope? Then writes a design spec and ADR, and waits for your approval.
 
-After approval, it decomposes into tasks, creates an isolated branch, and runs
-red → green → refactor for each task. At the milestone, three reviewers weigh in:
+**Plan** — Decomposes the spec into ordered tasks: cache interface, Redis adapter, handler wiring, integration test.
+
+**Worktree** — Creates an isolated branch and worktree under `~/.mx/<project>/<name>/worktree/`, runs baseline tests to confirm a clean starting point.
+
+**TDD loop** — For each task: writes a failing test, implements the minimum to pass, refactors, and commits with a structured message.
+
+**Review** — Three perspectives weigh in on the full diff:
 
 ```
 Senior Engineer:   "Cache key not normalised — case mismatch will miss."
 SRE:               "No fallback if Redis is down."
 Future Maintainer: "Document why TTL=300."
 ```
+
+**Triage** — Findings are sorted into fix / track / skip. Fixes loop back to TDD. Clean results move on to Verify.
+
+**Verify → PR** — Full test suite passes, plan checklist complete, PR drafted and published.
 
 By default, the agent decides what to fix and publishes the PR automatically. Use `--gated` if you want to approve each step.
 
