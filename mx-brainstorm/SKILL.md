@@ -7,6 +7,8 @@ description: >
   an ADR at .mx/<name>/adr.md.
   Hard gate: no implementation skill may be invoked until the user approves the design spec.
   Use at the start of any new feature, change, or non-trivial fix.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

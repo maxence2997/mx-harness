@@ -7,6 +7,8 @@ description: >
   buckets. Presents report for user approval before executing any changes.
   When invoked without arguments, auto-detects the source or asks the user.
   Use after mx-team-review, or when handling PR feedback before merge.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

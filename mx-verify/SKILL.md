@@ -5,6 +5,8 @@ description: >
   checks every task in the plan is marked complete, and reminds to update
   ~/.mx/<project>/ai-learning.md. No partial checks accepted. Use after the convergent
   review loop is clean and before the final commit and push.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

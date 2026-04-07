@@ -5,6 +5,8 @@ description: >
   Worktree is placed under ~/.mx/<project>/<name>/worktree/ alongside the spec and plan.
   Handles branch naming, base branch resolution, dependency setup, and baseline verification.
   Use before mx-tdd when starting new work.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

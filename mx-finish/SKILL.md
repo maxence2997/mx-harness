@@ -5,6 +5,8 @@ description: >
   the spec, clears related review reports, removes the worktree, and deletes the branch.
   Git's own safety checks prevent accidental deletion of dirty worktrees.
   Use after the PR is merged.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

@@ -7,6 +7,8 @@ description: >
   test and outcome. No vague placeholders allowed.
   Hard gate: no implementation begins until the user approves the task list.
   Use after mx-brainstorm approves the design spec.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

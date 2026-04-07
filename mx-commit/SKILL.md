@@ -7,6 +7,8 @@ description: >
   commit, type prefix, 50-char subject limit, numbered body items in
   "reason → change" format, English only.
   Usage: /mx-commit
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

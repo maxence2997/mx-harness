@@ -5,6 +5,8 @@ description: >
   then publish to the chosen platform (GitHub, GitLab, Bitbucket) — or skip publishing.
   Draft is written to a timestamped temp file to avoid filename collisions.
   Use after mx-verify passes and the branch is pushed.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

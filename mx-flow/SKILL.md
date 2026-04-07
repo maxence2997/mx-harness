@@ -5,6 +5,8 @@ description: >
   convergent loop (mx-tdd → mx-commit → mx-team-review → mx-review-triage) → mx-verify.
   Pauses at human decision gates. Default: 1 hard gate (spec approval), all others
   auto-proceed. Gated mode (--gated): 4 human gates for full control. Use when starting a new feature or significant change from scratch.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

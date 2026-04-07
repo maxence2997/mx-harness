@@ -9,6 +9,8 @@ description: >
   Supports parallel subagents (Claude Code) or single-pass fallback (Copilot, Cursor, etc.).
   Usage: /team-review [diff-spec] or /team-review --repo <path>
   Supported languages: Go (.go), C# .NET 8 (.cs)
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash

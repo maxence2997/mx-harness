@@ -6,6 +6,8 @@ description: >
   implements the minimal code to pass it, refactors, then commits with /mx-commit.
   Uses vertical slices (one test → one impl), never horizontal slicing.
   Use for each task in the plan after /mx-worktree is ready.
+author: Maxence Yang
+github: https://github.com/maxence2997/mx-harness
 user-invocable: true
 allowed-tools:
   - Bash
