@@ -134,6 +134,15 @@ If baseline fails, pause and resolve before continuing.
 
 ---
 
+## Hard guards
+
+These guards are **non-negotiable**. Violating any of them is a workflow failure.
+
+1. **Worktree required before any Edit/Write** — Before making any code change, verify the working directory is a git worktree (`git rev-parse --git-dir` contains `worktrees/`). If not, STOP and run mx-worktree first.
+2. **Review required before verify** — Do not enter Phase 5 (mx-verify) unless mx-team-review and mx-review-triage have run on the current branch diff at least once in this session. If unsure, check for a review report in `~/.mx/<project>/<name>/`.
+
+---
+
 ## Phase 4 — Convergent loop
 
 ### 4a. TDD cycle (repeat per task)
