@@ -10,7 +10,7 @@
 
 ---
 
-## See it in action
+## Quickstart
 
 Just tell the agent your idea — rough or detailed, it will ask what it needs.
 
@@ -130,7 +130,7 @@ These skills also run inside `mx-flow`, but you can use them independently anyti
 
 ---
 
-## Quickstart
+## Installation
 
 **Install or update a single skill:**
 
