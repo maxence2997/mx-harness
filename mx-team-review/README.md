@@ -9,7 +9,7 @@ Multi-perspective code review using three AI review agents (Senior Engineer, SRE
 3. Runs three independent review perspectives (parallel when possible)
 4. Tech Lead synthesizes findings — deduplicates, resolves conflicts, filters noise
 5. Presents interactive report for review
-6. Saves report to `/tmp/review-reports/`
+6. Saves report to `.mx/<name>/tmp/` (or `/tmp/review-reports/` if no active feature)
 
 ## Modes
 
@@ -36,10 +36,10 @@ Extensible via `references/_template.md`.
 
 ## In the workflow
 
-Use after completing a milestone in `/mx-tdd`, before `/mx-review-triage`:
+Use after completing a milestone in the TDD phase, before `/mx-review-triage`:
 
 ```
-mx-tdd (tasks done) → mx-team-review → mx-review-triage --source review
+TDD (tasks done) → mx-team-review → mx-review-triage --source review
 ```
 
-The report is saved to `/tmp/review-reports/` and automatically picked up by `/mx-review-triage --source review`.
+The report is saved to `.mx/<name>/tmp/` and automatically picked up by `/mx-review-triage --source review`.

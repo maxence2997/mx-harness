@@ -409,9 +409,9 @@ If there are no highlights, omit the ✨ Highlights section entirely.
 **Output actions:**
 
 1. Detect active feature:
-   - Resolve MX directory (final component of `git rev-parse --show-toplevel` as `<project>`, then `~/.mx/<project>/` or `%USERPROFILE%\.mx\<project>\`)
-   - Look for any `MX/*/plan.md` — take the first match as the active feature
-   - If found → report directory is `MX/<name>/tmp/` (create if needed)
+   - Resolve repo root: `REPO_ROOT=$(git rev-parse --show-toplevel)`
+   - Look for any `.mx/*/plan.md` under `$REPO_ROOT` — take the first match as the active feature
+   - If found → report directory is `.mx/<name>/tmp/` (create if needed)
    - If not found → report directory is `/tmp/review-reports/` on Unix or `%TEMP%\review-reports\` on Windows (create if needed)
 2. Save the report as `{report-dir}/review-{YYYYMMDD-HHmmss}.md`
 3. Display the full report in the terminal
@@ -444,7 +444,7 @@ Done. Display the saved report path with a reminder:
 
 If saved to `/tmp/review-reports/`, add a note:
 ```
-⚠️  No active feature detected — report saved to /tmp (cleared on reboot). Run from within a feature workflow to save under ~/.mx/<project>/<name>/tmp/ instead.
+⚠️  No active feature detected — report saved to /tmp (cleared on reboot). Run from within a feature workflow to save under .mx/<name>/tmp/ instead.
 ```
 
 ---

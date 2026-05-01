@@ -19,9 +19,17 @@ allowed-tools:
 
 ## Path resolution
 
-Resolve MX base directory before any file operation:
-- Final path component of `git rev-parse --show-toplevel` = `<project>`
-- MX = `~/.mx/<project>/` (Unix/macOS) or `%USERPROFILE%\.mx\<project>\` (Windows)
+Resolve two base directories before any file operation:
+
+```bash
+REPO_ROOT=$(git rev-parse --show-toplevel)
+PROJECT=$(basename "$REPO_ROOT")
+```
+
+| Variable | Path | Used for |
+|----------|------|----------|
+| `GLOBAL_MX` | `~/.mx/<project>/<name>/` | Reading spec.md (permanent) |
+| `LOCAL_MX` | `<repo-root>/.mx/<name>/` | Writing PR drafts to tmp/ (ephemeral) |
 
 ---
 
@@ -36,7 +44,7 @@ Resolve MX base directory before any file operation:
 
 ## Step 1 — Gather context
 
-Read `~/.mx/<project>/<name>/spec.md` for the What/Why/How summary.
+Read `GLOBAL_MX/spec.md` (`~/.mx/<project>/<name>/spec.md`) for the What/Why/How summary.
 
 Get the git log since the branch diverged from the base branch:
 
@@ -81,8 +89,8 @@ Fill each placeholder using the context gathered in Step 1:
 If spec.md does not exist, derive `{{summary}}`, `{{motivation}}`, and `{{notes}}` from the git log only.
 Remove any section whose content is empty and marked optional in the template.
 
-Create `MX/<name>/tmp/` if it does not exist.
-Generate draft path: `MX/<name>/tmp/pr-draft-<YYYYMMDD-HHmmss>.md` using the current timestamp.
+Create `LOCAL_MX/tmp/` (`.mx/<name>/tmp/`) if it does not exist.
+Generate draft path: `.mx/<name>/tmp/pr-draft-<YYYYMMDD-HHmmss>.md` using the current timestamp.
 Write the filled template to the draft file.
 
 ---
@@ -108,7 +116,7 @@ If the user chooses [B], remind them:
 Edit $DRAFT, then run /mx-pr again — it will detect the existing draft.
 ```
 
-If the user runs /mx-pr again and a draft file exists under `~/.mx/<project>/<name>/tmp/`
+If the user runs /mx-pr again and a draft file exists under `.mx/<name>/tmp/`
 (within 24h), offer to reuse it instead of regenerating.
 
 ---
@@ -170,10 +178,10 @@ Display the draft path and content for the user to use manually.
 PR created: <url>          ← if published
 Draft kept at: $DRAFT
 
-Next: after merge, run /mx-finish <name> (will clean up ~/.mx/<project>/<name>/tmp/)
+Next: after merge, run /mx-flow finish <name> (will clean up .mx/<name>/tmp/)
 ```
 
-Do not delete the draft file here. mx-finish handles all `~/.mx/<project>/<name>/tmp/` cleanup.
+Do not delete the draft file here. `/mx-flow finish` handles all `.mx/<name>/tmp/` cleanup.
 
 ---
 
@@ -182,5 +190,5 @@ Do not delete the draft file here. mx-finish handles all `~/.mx/<project>/<name>
 - PR format is defined in `references/pr-template.md` — customize it to match your team's conventions
 - Title is derived from the first bullet of `{{summary}}` — keep it under 72 characters
 - If spec.md does not exist, all content is derived from the git log
-- Draft files live in `MX/<name>/tmp/` — under home directory, no repo permissions or gitignore needed
+- Draft files live in `.mx/<name>/tmp/` — project-local, gitignored
 - The timestamp suffix prevents collisions if mx-pr is run multiple times for the same feature

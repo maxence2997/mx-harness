@@ -7,58 +7,66 @@ Full development workflow orchestrator. One command to run the entire process fr
 ## Usage
 
 ```
-/mx-flow <topic>
-/mx-flow --gated <topic>
+/mx-flow <topic>          # full pipeline: idea to PR
+/mx-flow finish <name>    # post-merge cleanup
 ```
 
 _Rough or detailed — the agent will ask what it needs._
 
-### Gated mode
-
-Add `--gated` for full human control at all 4 gates. By default, mx-flow only requires spec approval — task list, triage, and PR all auto-proceed (reports are still shown for visibility).
-
 ## What it runs
 
 ```
-  Brainstorm  ──▶  Design spec + ADR          [GATE: spec approval]
-  Plan        ──▶  Ordered task list
-  Worktree    ──▶  Isolated branch + baseline pass
+  Phase 1  Brainstorm  ──▶  Design spec + ADR     [GATE: spec approval]
+  Phase 2  Plan        ──▶  Ordered task list
+  Phase 3  Worktree    ──▶  Isolated branch + baseline pass
 
   ┌─ convergent loop (max 3 iterations) ────────────┐
   │                                                 │
   │  ┌─ per task ────────────────────────┐          │
-  │  │  TDD       red → green → refactor │          │
-  │  │  Commit    one structured commit  │          │
+  │  │  Phase 4a  TDD    red → green → refactor │   │
+  │  │            Commit one structured commit  │   │
   │  └──────────────────────────────────-┘          │
   │                                                 │
-  │  Review      3-perspective code review          │
-  │  Triage      fix / track / skip                 │
+  │  Phase 4b  Review   3-perspective code review   │
+  │            Triage   fix / track / skip          │
   │                                                 │
   │  ↺  fixes? → TDD + Commit → Review + Triage     │
   │  ✔  clean? → exit loop                          │
   └─────────────────────────────────────────────────┘
 
-  Verify      ──▶  Full suite + plan checklist
-  PR          ──▶  Draft → review → publish
-  Finish      ──▶  Clean up branch + worktree
+  Phase 5  Verify      ──▶  Full suite + plan checklist
+  Phase 6  PR          ──▶  Draft → review → publish
+  Phase 7  Finish      ──▶  Clean up branch + worktree (post-merge)
 ```
+
+Phases 2, 3, 4a, 5, and 7 are built-in. Phases 1, 4b, and 6 delegate to standalone skills
+(/mx-brainstorm, /mx-team-review + /mx-review-triage, /mx-pr).
+
+## File locations
+
+mx-flow stores files in two places:
+
+| Location | Contains | Lifecycle |
+|----------|----------|-----------|
+| `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
+| `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
+
+`.mx/` is automatically added to `.gitignore` on first run.
 
 ## Human decision gates
 
 mx-flow pauses at key points where your judgement matters. Between gates, it runs automatically.
 
-| Gate | When | Default | Gated |
-|------|------|---------|-------|
-| Spec approval | After brainstorm | Human | Human |
-| Task list approval | After planning | Auto | Human |
-| Triage approval | After each review cycle | Auto | Human |
-| PR review | Before publishing | Auto* | Human |
-
-\* Agent pauses only if it cannot determine how to proceed (no remote, ambiguous platform, etc.)
+| Gate | When | Behaviour |
+|------|------|-----------|
+| Spec approval | After brainstorm | Human — requires explicit approval |
+| Task list | After planning | Auto — shown for visibility |
+| Triage | After each review cycle | Auto — fixes executed immediately |
+| PR | Before publishing | Auto — pauses only if stuck |
 
 ## Convergent loop safety limit
 
-The tdd → review → triage cycle runs a maximum of **3 iterations**. If findings are still unresolved after 3 rounds, mx-flow escalates and presents three options:
+The TDD → review → triage cycle runs a maximum of **3 iterations**. If findings are still unresolved after 3 rounds, mx-flow escalates and presents three options:
 
 - **Continue** — extend the loop manually
 - **Redesign** — return to the spec; the findings indicate a design problem
@@ -70,14 +78,13 @@ Three unresolved iterations almost always signal a design issue, not a code issu
 
 ```
 /mx-flow add Redis caching to the search endpoint
-/mx-flow --gated add Redis caching to the search endpoint
 ```
 
-**Brainstorm** — Agent asks one question at a time: Redis or in-memory? TTL strategy? Invalidation scope? Then writes a design spec and ADR, and waits for your approval.
+**Brainstorm** — Agent asks one question at a time: Redis or in-memory? TTL strategy? Invalidation scope? Then writes a design spec and ADR to `~/.mx/<project>/search-cache/`, and waits for your approval.
 
-**Plan** — Decomposes the spec into ordered tasks: cache interface, Redis adapter, handler wiring, integration test.
+**Plan** — Decomposes the spec into ordered tasks: cache interface, Redis adapter, handler wiring, integration test. Plan saved to `.mx/search-cache/plan.md`.
 
-**Worktree** — Creates an isolated branch and worktree under `~/.mx/<project>/<name>/worktree/`, runs baseline tests to confirm a clean starting point.
+**Worktree** — Creates an isolated branch and worktree at `.mx/search-cache/worktree/`, runs baseline tests to confirm a clean starting point.
 
 **TDD loop** — For each task: writes a failing test, implements the minimum to pass, refactors, and commits with a structured message.
 
@@ -93,9 +100,14 @@ Future Maintainer: "Document why TTL=300."
 
 **Verify → PR** — Full test suite passes, plan checklist complete, PR drafted and published.
 
-By default, the agent decides what to fix and publishes the PR automatically. Use `--gated` if you want to approve each step.
+```
+/mx-flow finish search-cache
+```
+
+**Finish** — After the PR is merged: deletes the plan, clears tmp files, removes the worktree and branch. Design spec and ADRs are preserved permanently.
 
 ## Notes
 
-- Default mode auto-publishes the PR. Use `--gated` for manual control
-- After merge: run `/mx-finish <name>` to clean up
+- Default mode auto-publishes the PR
+- After merge: run `/mx-flow finish <name>` to clean up
+- `.mx/` directory is gitignored automatically

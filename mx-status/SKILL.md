@@ -2,9 +2,10 @@
 name: mx-status
 description: >
   Show the current stage, progress, and next action for all features in the
-  current project's ~/.mx/<project>/ directory. Detects broken or ambiguous
-  states and gives concrete recovery instructions. Use whenever you lose track
-  of where you are in the mx-flow workflow.
+  current project. Scans ~/.mx/<project>/ for specs/ADRs and .mx/ (project-local)
+  for plans, worktrees, and temp files. Detects broken or ambiguous states and
+  gives concrete recovery instructions. Use whenever you lose track of where
+  you are in the mx-flow workflow.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 user-invocable: true
@@ -27,14 +28,19 @@ allowed-tools:
 
 ## Path resolution
 
-Resolve the MX base directory before any file operation:
+Resolve two base directories before any file operation:
 
 ```bash
-git rev-parse --show-toplevel
+REPO_ROOT=$(git rev-parse --show-toplevel)
+PROJECT=$(basename "$REPO_ROOT")
 ```
 
-Take the final path component as `<project>`.
-MX = `~/.mx/<project>/` (Unix/macOS) or `%USERPROFILE%\.mx\<project>\` (Windows).
+| Variable | Path | Contains |
+|----------|------|----------|
+| `GLOBAL_MX` | `~/.mx/<project>/` | `<name>/spec.md`, `<name>/adr.md`, `ai-learning.md` |
+| `LOCAL_MX` | `<repo-root>/.mx/` | `<name>/plan.md`, `<name>/worktree/`, `<name>/tmp/` |
+
+On Windows: `GLOBAL_MX` = `%USERPROFILE%\.mx\<project>\`
 
 If the current directory is not inside a git repo, show all projects under `~/.mx/` and ask the user which one to inspect.
 
@@ -42,19 +48,23 @@ If the current directory is not inside a git repo, show all projects under `~/.m
 
 ## Step 1 — Collect features
 
-List all subdirectories under `~/.mx/<project>/`. Each subdirectory is a feature `<name>`.
+A feature is any `<name>` that appears as a subdirectory in **either** GLOBAL_MX or LOCAL_MX.
+
+1. List all subdirectories under `~/.mx/<project>/` (excluding `ai-learning.md`)
+2. List all subdirectories under `.mx/`
+3. Union the two lists — a feature may appear in one or both locations
 
 For each feature, collect:
 
-| File / path | Meaning |
-|---|---|
-| `spec.md` | Brainstorm complete |
-| `adr.md` | Architecture decision recorded |
-| `plan.md` | Plan written |
-| `worktree/` directory | Worktree created |
-| Task lines `[x]` / `[ ]` in `plan.md` | TDD progress |
-| `tmp/review-*.md` | Review report exists |
-| PR URL in `plan.md` (line matching `https://github.com/` or `https://gitlab.com/`) | PR created |
+| File / path | Location | Meaning |
+|---|---|---|
+| `spec.md` | `~/.mx/<project>/<name>/spec.md` (GLOBAL) | Brainstorm complete |
+| `adr.md` | `~/.mx/<project>/<name>/adr.md` (GLOBAL) | Architecture decision recorded |
+| `plan.md` | `.mx/<name>/plan.md` (LOCAL) | Plan written |
+| `worktree/` directory | `.mx/<name>/worktree/` (LOCAL) | Worktree created |
+| Task lines `[x]` / `[ ]` in `plan.md` | `.mx/<name>/plan.md` (LOCAL) | TDD progress |
+| `tmp/review-*.md` | `.mx/<name>/tmp/review-*.md` (LOCAL) | Review report exists |
+| PR URL in `plan.md` | `.mx/<name>/plan.md` (LOCAL) | PR created |
 
 If `<name>` is given, collect only that feature.
 
@@ -82,12 +92,12 @@ An "active" feature is any feature at Stage 1–5 (not yet at PR stage).
 
 Before showing normal status, check for these anomalies:
 
-**Broken worktree** — `plan.md` references a worktree path (line matching `Worktree:`) but the directory does not exist on disk:
+**Broken worktree** — `plan.md` references a worktree path but `.mx/<name>/worktree/` does not exist on disk:
 ```
-[!] Worktree missing: ~/.mx/<project>/<name>/worktree/
+[!] Worktree missing: .mx/<name>/worktree/
     The plan references a worktree but it no longer exists on disk.
     Recovery:
-      Option A — Recreate: /mx-worktree (from the main repo directory)
+      Option A — Recreate: /mx-flow (worktree phase, from the main repo directory)
       Option B — Proceed without worktree: work directly in the main repo
 ```
 
@@ -95,7 +105,7 @@ Before showing normal status, check for these anomalies:
 ```
 [!] State inconsistency: all tasks marked done but worktree was never created.
     Likely cause: tasks were completed in the main repo, not a worktree.
-    This is fine if intentional — continue to /mx-team-review or /mx-verify.
+    This is fine if intentional — continue to /mx-team-review.
 ```
 
 **Multiple active features** — more than one feature at Stage 1–5:
@@ -113,14 +123,14 @@ For the focused feature (or the single active one if only one exists), output th
 
 | Stage | Next action |
 |---|---|
-| 0 | `/mx-brainstorm <topic>` |
-| 1 | `/mx-plan` |
-| 2 | `/mx-worktree` |
-| 3 | `/mx-tdd` — and name the first `[ ]` task |
+| 0 | `/mx-brainstorm <topic>` or `/mx-flow <topic>` |
+| 1 | `/mx-flow <topic>` (plan phase) |
+| 2 | `/mx-flow <topic>` (worktree phase) |
+| 3 | `/mx-flow <topic>` (TDD phase) — name the first `[ ]` task |
 | 4 | `/mx-team-review` |
 | 5 — review exists, no triage | `/mx-review-triage --source review` |
-| 5 — triage done, no PR | `/mx-verify` then `/mx-pr` |
-| 6 | `/mx-finish <name>` (after merge) |
+| 5 — triage done, no PR | `/mx-pr` |
+| 6 | `/mx-flow finish <name>` (after merge) |
 
 ---
 
@@ -137,7 +147,9 @@ Project  : <project>
 Feature  : <name>
 Stage    : <N> — <label>
 Progress : <done>/<total> tasks  (or "no plan" if Stage 0–1)
-Worktree : <path> [exists | missing | none]
+Spec     : ~/.mx/<project>/<name>/spec.md [exists | missing]
+Plan     : .mx/<name>/plan.md [exists | missing]
+Worktree : .mx/<name>/worktree/ [exists | missing | none]
 Review   : <report filename, or "none">
 
 Next     : <command>
@@ -151,11 +163,11 @@ Next     : <command>
 mx-status — <project>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ● <name>   [ACTIVE] Stage 3 — TDD  4/7 tasks
-  ✓ <name>   PR created — /mx-finish to clean up
+  ✓ <name>   PR created — /mx-flow finish to clean up
   ○ <name>   Stage 1 — awaiting plan
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Active: <name>
-Next  : /mx-tdd  (task 5: <description>)
+Next  : /mx-flow  (TDD phase, task 5: <description>)
 ```
 
 Symbols:

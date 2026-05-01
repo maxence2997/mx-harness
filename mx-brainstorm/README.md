@@ -28,5 +28,5 @@ Both files have lasting value after implementation is done.
 
 - Never asks multiple questions at once
 - Hard gate: no code is written until the user approves the design spec
-- Creates `~/.mx/<project>/<name>/` and adds `~/.mx/<project>/` to `.gitignore` if needed
-- Hand-off: after approval, use `/mx-plan` to decompose into tasks
+- Creates `~/.mx/<project>/<name>/` for permanent spec and ADR storage
+- Hand-off: after approval, use `/mx-flow` to continue the workflow

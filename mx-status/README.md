@@ -1,6 +1,6 @@
 # mx-status
 
-Show the current stage, progress, and next action for features in the current project's `~/.mx/<project>/` directory. Use whenever you lose track of where you are in the mx-flow workflow.
+Show the current stage, progress, and next action for features in the current project. Scans `~/.mx/<project>/` for specs/ADRs and `.mx/` (project-local) for plans, worktrees, and temp files. Use whenever you lose track of where you are in the mx-flow workflow.
 
 ## Usage
 
@@ -15,24 +15,31 @@ Show the current stage, progress, and next action for features in the current pr
 mx-status — <project>
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ● write-timeout-error-propagation  [ACTIVE] Stage 3 — TDD  4/7 tasks
-  ✓ close-transport-drop-nil         PR created — /mx-finish to clean up
+  ✓ close-transport-drop-nil         PR created — /mx-flow finish to clean up
   ○ done-priority-check              Stage 1 — awaiting plan
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 Active: write-timeout-error-propagation
-Next  : /mx-tdd  (task 5: wire handler into router)
+Next  : /mx-flow  (TDD phase, task 5: wire handler into router)
 ```
+
+## File locations
+
+| File | Location |
+|------|----------|
+| spec.md, adr.md | `~/.mx/<project>/<name>/` (permanent) |
+| plan.md, worktree/, tmp/ | `.mx/<name>/` in project root (ephemeral) |
 
 ## Stages
 
 | Stage | Condition | Next action |
 |-------|-----------|-------------|
-| 0 — Nothing | No `spec.md` | `/mx-brainstorm <topic>` |
-| 1 — Spec | `spec.md` exists, no `plan.md` | `/mx-plan` |
-| 2 — Plan | `plan.md` exists, no `worktree/` | `/mx-worktree` |
-| 3 — TDD | `worktree/` exists, tasks pending | `/mx-tdd` (names the next `[ ]` task) |
+| 0 — Nothing | No `spec.md` | `/mx-brainstorm <topic>` or `/mx-flow <topic>` |
+| 1 — Spec | `spec.md` exists, no `plan.md` | `/mx-flow` (plan phase) |
+| 2 — Plan | `plan.md` exists, no `worktree/` | `/mx-flow` (worktree phase) |
+| 3 — TDD | `worktree/` exists, tasks pending | `/mx-flow` (TDD phase, names the next task) |
 | 4 — Review | All tasks `[x]`, no review report | `/mx-team-review` |
-| 5 — Triage | Review report exists, no PR | `/mx-review-triage --source review` then `/mx-verify` + `/mx-pr` |
-| 6 — PR | PR URL found in `plan.md` | `/mx-finish <name>` (after merge) |
+| 5 — Triage | Review report exists, no PR | `/mx-review-triage --source review` then `/mx-pr` |
+| 6 — PR | PR URL found in `plan.md` | `/mx-flow finish <name>` (after merge) |
 
 ## Broken state detection
 
@@ -40,7 +47,7 @@ mx-status checks for three anomalies and gives recovery instructions when found:
 
 | Anomaly | Likely cause | Recovery |
 |---------|-------------|----------|
-| Worktree dir referenced in plan but missing on disk | Worktree was removed or moved | Recreate with `/mx-worktree`, or proceed in main repo |
+| Worktree dir referenced but missing on disk | Worktree was removed or moved | Recreate with `/mx-flow`, or proceed in main repo |
 | All tasks `[x]` but worktree never existed | Work done directly in main repo | Fine if intentional — continue to `/mx-team-review` |
 | Multiple features in progress | Parallel work or stale entries | Run `/mx-status <name>` to focus on one |
 

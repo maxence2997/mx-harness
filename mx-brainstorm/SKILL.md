@@ -150,7 +150,7 @@ Once the design spec and ADR are saved, announce:
 ```
 Design spec saved to ~/.mx/<project>/<name>/spec.md
 ADR saved to ~/.mx/<project>/<name>/adr.md
-Ready for /mx-plan — this will decompose the design spec into tasks.
+Ready for /mx-flow — this will decompose the spec into tasks and continue the workflow.
 ```
 
-Do not invoke mx-plan automatically. The user invokes it.
+Do not invoke mx-flow automatically. The user invokes it.

@@ -18,7 +18,7 @@ Just tell the agent your idea — rough or detailed, it will ask what it needs.
 /mx-flow add Redis caching to the search endpoint
 ```
 
-Brainstorm → spec approval → plan approval → TDD loop → review → triage → verify → PR.  
+Brainstorm → spec approval → plan → TDD loop → review → triage → verify → PR.  
 You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-flow/)
 
 ---
@@ -54,22 +54,19 @@ Agent: [writes 200 lines of code]
 **With mx-harness**
 
 ```
-User:  /mx-brainstorm "Add caching to the search endpoint"
+User:  /mx-flow "Add caching to the search endpoint"
 Agent: → Asks: Redis or in-memory? TTL strategy? Cache invalidation scope?
        → Writes design spec + ADR to ~/.mx/project/search-cache/
        → Waits for approval before touching any code
 
-User:  /mx-plan
-Agent: → Task 1: Cache interface (testable abstraction)
+       → Task 1: Cache interface (testable abstraction)
        → Task 2: Redis adapter
        → Task 3: Wire into search handler
        → Task 4: Integration test with mock Redis
-       → Waits for task list approval
 
        [each task: red → green → refactor → structured commit]
 
-User:  /mx-team-review
-Agent: → Senior Engineer:     "Cache key includes user locale? Edge case."
+       → Senior Engineer:     "Cache key includes user locale? Edge case."
        → SRE:                 "No TTL cap — potential memory leak under load."
        → Future Maintainer:   "Document why TTL=300 was chosen."
 ```
@@ -86,6 +83,7 @@ One command, idea to PR. Brainstorm → spec → plan → TDD loop → review �
 
 ```
 /mx-flow add Redis caching to the search endpoint
+/mx-flow finish search-cache                        # post-merge cleanup
 ```
 
 [How it works →](mx-flow/)
@@ -101,6 +99,7 @@ These skills also run inside `mx-flow`, but you can use them independently anyti
 | [mx-review-triage](mx-review-triage/) | Triage review findings into fix / track / skip buckets              |
 | [mx-commit](mx-commit/)               | Structured commit with enforced message format                      |
 | [mx-pr](mx-pr/)                       | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket      |
+| [mx-status](mx-status/)               | Show current stage, progress, and next action for all features      |
 
 ### How mx-flow fits together
 
@@ -127,6 +126,15 @@ These skills also run inside `mx-flow`, but you can use them independently anyti
   PR          ──▶  Draft → review → publish
   Finish      ──▶  Clean up branch + worktree
 ```
+
+### File locations
+
+| Location | Contains | Lifecycle |
+|----------|----------|-----------|
+| `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
+| `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
+
+`.mx/` is automatically added to `.gitignore` on first run.
 
 ---
 

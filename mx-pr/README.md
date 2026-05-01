@@ -13,11 +13,11 @@ Draft a pull/merge request from the feature spec and git log, review it, then pu
 
 1. Reads `~/.mx/<project>/<name>/spec.md` and the git log since branch creation
 2. Drafts a structured PR description
-3. Saves draft to `~/.mx/<project>/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions)
+3. Saves draft to `.mx/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions)
 4. Shows you the draft — you decide to proceed or edit first
 5. Asks which platform to publish to
 6. Publishes (or lets you handle it manually)
-7. Leaves draft in `~/.mx/<project>/<name>/tmp/` — cleaned up by `/mx-finish`
+7. Leaves draft in `.mx/<name>/tmp/` — cleaned up by `/mx-flow finish`
 
 ## Platforms supported
 
@@ -45,7 +45,7 @@ Default sections and their sources:
 
 ## Notes
 
-- Run after `/mx-verify` passes and the branch is pushed
+- Run after verification passes and the branch is pushed
 - Customize `references/pr-template.md` to add checklists, issue references, screenshots, etc.
 - Draft is never deleted on failure — you can recover and retry
-- After merge: run `/mx-finish <name>` to clean up
+- After merge: run `/mx-flow finish <name>` to clean up
