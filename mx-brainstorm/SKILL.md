@@ -28,6 +28,21 @@ allowed-tools:
 
 ---
 
+## Operating principles
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.** These apply at every step below — not just Step 1.
+
+- **State assumptions explicitly.** If uncertain, ask rather than guess.
+- **Present multiple interpretations.** When the user's request is ambiguous, surface the readings and let the user pick. Do not silently choose one and proceed.
+- **Push back when warranted.** If a simpler approach exists, say so. If a proposed option is over-engineered for the stated problem, name it.
+- **Stop when confused.** Name what is unclear and ask for clarification. Do not paper over confusion with plausible-sounding text.
+
+Applied to this skill specifically:
+- In Step 2, options must be **genuinely distinct** — do not pad to three options by inventing a contrived variant. Two real options beats three fake ones.
+- In Step 2, prefer the **minimum approach that solves the stated problem**. Larger options must justify their extra scope explicitly in `Best when`.
+
+---
+
 ## Step 1 — Understand the idea
 
 Read existing code relevant to the topic (if any) using Glob and Read.

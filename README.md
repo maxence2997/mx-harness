@@ -170,6 +170,12 @@ curl -s https://api.github.com/repos/maxence2997/mx-harness/contents \
 
 ---
 
+## Acknowledgments
+
+The operating principles in `mx-brainstorm`, the planning principles in `mx-flow` Phase 2, and the *Simplicity* / *Surgical Changes* categories in `mx-team-review/references/principles.md` are inspired by [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills), which distills [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls into four behavioural guidelines.
+
+---
+
 ## License
 
 MIT

@@ -154,6 +154,28 @@ Follow mx-brainstorm's full procedure. It owns the spec and ADR output (written 
 
 Decompose the approved spec into a concrete, ordered task list.
 
+### Planning principles
+
+These bind every task you write in this phase. The TDD loop in Phase 4 executes the plan literally — if the plan over-reaches, the implementation will too. Lock scope here, not later.
+
+**Simplicity first — minimum code that satisfies the spec.**
+
+- No tasks beyond what the spec requires.
+- No abstractions, interfaces, or "flexibility" layers the spec did not ask for.
+- No error handling for impossible scenarios.
+- No speculative configuration, feature flags, or extension points "for the future".
+- If a single function would do, do not invent a class. If a class would do, do not invent a package.
+
+**Surgical changes — touch only what the spec requires.**
+
+- Do not plan to "improve" adjacent code, comments, or formatting that the spec did not call out.
+- Do not plan refactors of code that is not broken.
+- Match existing style and structure even if a different style would be your preference.
+- If you notice unrelated dead code or technical debt, mention it once to the user — do not silently add a cleanup task.
+- Orphans your tasks create (now-unused imports, variables, helpers) **must** be cleaned in the same task. Pre-existing dead code is out of scope unless the user approves.
+
+The test for every task: it traces directly to a sentence in the spec. If it does not, drop it or ask the user.
+
 ### 2.1 — Read the design spec
 
 Read `GLOBAL_MX/spec.md` in full.

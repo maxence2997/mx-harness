@@ -14,6 +14,8 @@
 | P0 | Race Condition | Concurrency bugs are nearly impossible to reproduce in test environments |
 | P1 | Component Test | Mock external dependencies, test complete cross-layer scenarios |
 | P1 | Observability / Logging | No logs in production = blind debugging |
+| P1 | Simplicity / Over-engineering | Speculative abstractions and unused flexibility become permanent technical debt |
+| P1 | Surgical Changes / Scope Creep | Unrelated edits inflate diffs, hide intent, and create regressions outside the stated change |
 | P2 | Comment (Why) | Code says What, comments say Why |
 | P2 | Performance | Not premature optimization — obvious performance hazards |
 | P3 | Metrics | Observable production health: counters, gauges, histograms for key operations |
@@ -184,6 +186,62 @@ Good: `TestCreateOrder_WhenAmountIsZero_ShouldReturnValidationError`
 
 - PII (email, phone, address), credentials (passwords, tokens, API keys), financial data (card numbers).
 - Mask or exclude sensitive fields.
+
+---
+
+## P1 — Simplicity / Over-engineering
+
+### Core Rule: Minimum code that solves the stated problem. Nothing speculative.
+
+The reviewer's job here is to ask, for every new abstraction, parameter, branch, or layer: **what concrete requirement made this necessary?** If the answer is "in case we need it later" or "for flexibility", flag it.
+
+### Flag When You See
+
+- **Abstractions with a single caller.** An interface, factory, or strategy pattern wrapping one concrete implementation. If there is no second implementation in the diff or planned, the abstraction has no buyer.
+- **Configurability that was not asked for.** New constructor parameters, config flags, or environment variables that the spec / PR description does not mention.
+- **Error handling for impossible scenarios.** Defensive checks for conditions the type system or upstream contract already guarantees.
+- **Scaffolding for hypothetical future requirements.** Plugin systems, hook points, generic dispatchers added "in case".
+- **Disproportionate size.** A 500-line diff for a problem that a senior engineer would solve in 50. Ask: would removing half this code still satisfy the stated requirement?
+
+### Not Flagged
+
+- Abstractions that already have ≥2 callers in the diff.
+- Error handling for scenarios that demonstrably occur (tests exist, or the boundary is external).
+- Complexity that is inherent to the problem domain (concurrency, distributed state, regulatory rules).
+
+### Severity Calibration
+
+- **High**: a new public interface / package / framework added for one use case.
+- **Medium**: unnecessary config knobs, defensive checks for guaranteed-safe inputs.
+- **Low**: a single helper that could be inlined; small structural redundancy.
+
+---
+
+## P1 — Surgical Changes / Scope Creep
+
+### Core Rule: Every changed line should trace directly to the stated change.
+
+The reviewer's job is to verify the diff stays within the boundary the PR description / spec defines. Edits outside that boundary inflate review surface, hide the intent of the change, and create regression risk in code that no one expected to be touched.
+
+### Flag When You See
+
+- **Drive-by reformatting.** Whitespace, brace style, import reordering in files that have no functional change for this PR.
+- **Refactors not called out.** Renames, extractions, or restructures that the spec / PR description does not mention. These belong in their own PR.
+- **"While I was here" edits.** Comment rewrites, variable renames, or cleanup in code unrelated to the stated change.
+- **Deletion of pre-existing dead code.** Unless the PR is explicitly a cleanup PR, removing pre-existing unused code mixes concerns.
+- **Style normalization across unrelated files.** Converting `var` to `let`, `interface{}` to `any`, etc., in files outside the change boundary.
+
+### Not Flagged
+
+- **Orphans created by the change itself.** Imports, variables, or helpers that became unused *because of* this PR's edits — these must be cleaned up in the same PR.
+- **Edits genuinely required by the change.** Adjacent code that must change for the new behavior to compile or work correctly.
+- **Updates to tests, docs, types, or callers that the change forces.**
+
+### Severity Calibration
+
+- **High**: a structural refactor bundled into a feature / fix PR.
+- **Medium**: multiple unrelated cleanups across several files.
+- **Low**: a single drive-by reformat or rename in one file.
 
 ---
 
