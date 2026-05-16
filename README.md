@@ -3,7 +3,7 @@
 > Your AI agent writes fast. mx-harness makes it engineer properly.
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
-![Works with](https://img.shields.io/badge/works%20with-GitHub%20Copilot%20%7C%20Cursor%20%7C%20Claude-blueviolet)
+![Works with](https://img.shields.io/badge/works%20with-Claude%20%7C%20Codex%20%7C%20Copilot%20%7C%20Cursor-blueviolet)
 
 ---
 
@@ -99,14 +99,14 @@ These skills also run inside `mx-flow`, but you can use them independently anyti
 
 ## Installation
 
-**Install or update a single skill:**
+mx-harness installs via [`npx skills`](https://github.com/vercel-labs/skills) — a CLI that drops skill folders into your agent's global skill directory:
 
-```bash
-# bash / zsh
-npx skills add https://github.com/maxence2997/mx-harness --skill <skill-name> -g -y
-```
+- Claude Code: `~/.claude/skills/`
+- Codex: `~/.codex/skills/`
+- GitHub Copilot: `~/.copilot/skills/`
+- Cursor: `~/.cursor/skills/`
 
-**Install or update everything at once:**
+**Install or update everything:**
 
 ```bash
 # bash / zsh — auto-discovers all mx-* skills
@@ -115,14 +115,24 @@ curl -s https://api.github.com/repos/maxence2997/mx-harness/contents \
   | xargs -I{} npx skills add https://github.com/maxence2997/mx-harness --skill {} -g -y
 ```
 
+<details>
+<summary>PowerShell equivalent</summary>
+
 ```powershell
-# PowerShell
 (Invoke-RestMethod "https://api.github.com/repos/maxence2997/mx-harness/contents") |
   Where-Object { $_.name -like "mx-*" } |
   Select-Object -ExpandProperty name |
   ForEach-Object {
     npx skills add https://github.com/maxence2997/mx-harness --skill $_ -g -y
   }
+```
+
+</details>
+
+**Install or update a single skill:**
+
+```bash
+npx skills add https://github.com/maxence2997/mx-harness --skill <skill-name> -g -y
 ```
 
 > **If you cloned the repo directly:** `git pull` is all you need — your symlinks already point to the repo.
