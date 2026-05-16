@@ -109,25 +109,10 @@ mx-harness installs via [`npx skills`](https://github.com/vercel-labs/skills) �
 **Install or update everything:**
 
 ```bash
-# bash / zsh — auto-discovers all mx-* skills
-curl -s https://api.github.com/repos/maxence2997/mx-harness/contents \
-  | grep '"name"' | grep -o '"mx-[^"]*"' | tr -d '"' \
-  | xargs -I{} npx skills add https://github.com/maxence2997/mx-harness --skill {} -g -y
+curl -sL https://raw.githubusercontent.com/maxence2997/mx-harness/main/install.sh | bash
 ```
 
-<details>
-<summary>PowerShell equivalent</summary>
-
-```powershell
-(Invoke-RestMethod "https://api.github.com/repos/maxence2997/mx-harness/contents") |
-  Where-Object { $_.name -like "mx-*" } |
-  Select-Object -ExpandProperty name |
-  ForEach-Object {
-    npx skills add https://github.com/maxence2997/mx-harness --skill $_ -g -y
-  }
-```
-
-</details>
+Inspect the script first if you'd rather: [install.sh](install.sh).
 
 **Install or update a single skill:**
 
@@ -135,7 +120,7 @@ curl -s https://api.github.com/repos/maxence2997/mx-harness/contents \
 npx skills add https://github.com/maxence2997/mx-harness --skill <skill-name> -g -y
 ```
 
-> **If you cloned the repo directly:** `git pull` is all you need — your symlinks already point to the repo.
+> **If you cloned the repo directly:** `./install.sh` runs the same install locally. `git pull` updates skills installed via symlink.
 
 ---
 
