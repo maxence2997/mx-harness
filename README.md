@@ -4,15 +4,12 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Works with](https://img.shields.io/badge/works%20with-GitHub%20Copilot%20%7C%20Cursor%20%7C%20Claude-blueviolet)
-![Stars](https://img.shields.io/github/stars/maxence2997/mx-harness)
-![Last commit](https://img.shields.io/github/last-commit/maxence2997/mx-harness)
-![Forks](https://img.shields.io/github/forks/maxence2997/mx-harness)
 
 ---
 
-## Quickstart
+## What it looks like
 
-Just tell the agent your idea — rough or detailed, it will ask what it needs.
+Once installed, you tell the agent your idea — rough or detailed, it asks what it needs.
 
 ```
 /mx-flow add Redis caching to the search endpoint
@@ -23,20 +20,18 @@ You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-
 
 ---
 
-## Why?
+## Principles
 
-mx-harness is the engineering harness your agent is missing.
+Without a harness, AI agents skip planning, skip tests, and produce unmaintainable diffs. mx-harness wraps the lifecycle into skills the agent must follow.
 
-Left unchecked, AI agents skip planning, skip tests, and produce unmaintainable diffs. Every session you end up reminding it: write the design doc first, follow TDD, fix the commit message, check the SRE angle...
-
-Plan Mode helps — but it only covers the beginning. What comes after — how to write tests, who reviews, what the commit looks like, how to clean up after merge — it doesn't handle any of that.
-
-mx-harness wraps the entire lifecycle into a set of skills the agent is forced to follow:
-
-- **Spec before code** — brainstorm and lock down a design doc before any implementation
-- **Test-first** — every task follows red → green → refactor
-- **Multi-perspective review** — Senior Engineer, SRE, and Future Maintainer weigh in before merge
-- **Structured commits** — no more "fix stuff" messages
+| Principle                    | Addresses                                           |
+|------------------------------|-----------------------------------------------------|
+| **Spec before code**         | Vague requirements, hidden assumptions, scope creep |
+| **Test-first**               | Tests written after the fact, missed edge cases     |
+| **Multi-perspective review** | Single-reviewer blind spots, missed SRE concerns    |
+| **Structured commits**       | "fix stuff" messages, mixed concerns per commit     |
+| **Surgical changes**         | Drive-by edits, inflated diffs, unrelated refactors |
+| **Don't assume**             | Silent guessing on ambiguous specs                  |
 
 ---
 
@@ -167,12 +162,6 @@ curl -s https://api.github.com/repos/maxence2997/mx-harness/contents \
 ```
 
 > **If you cloned the repo directly:** `git pull` is all you need — your symlinks already point to the repo.
-
----
-
-## Acknowledgments
-
-The operating principles in `mx-brainstorm`, the planning principles in `mx-flow` Phase 2, and the *Simplicity* / *Surgical Changes* categories in `mx-team-review/references/principles.md` are inspired by [multica-ai/andrej-karpathy-skills](https://github.com/multica-ai/andrej-karpathy-skills), which distills [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls into four behavioural guidelines.
 
 ---
 
