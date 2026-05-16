@@ -15,7 +15,6 @@ Once installed, you tell the agent your idea — rough or detailed, it asks what
 /mx-flow add Redis caching to the search endpoint
 ```
 
-Brainstorm → spec approval → plan → TDD loop → review → triage → verify → PR.  
 You make a few decisions. The agent handles the rest. [Full walkthrough →](mx-flow/)
 
 ---
@@ -74,11 +73,11 @@ The first scenario is something most engineers have lived through. The second is
 
 ### `/mx-flow` — the full pipeline
 
-One command, idea to PR. Brainstorm → spec → plan → TDD loop → review → verify → PR.
+One command in. A few decisions from you. PR out.
 
 ```
 /mx-flow add Redis caching to the search endpoint
-/mx-flow finish search-cache                        # post-merge cleanup
+/mx-flow finish search-cache                # post-merge cleanup
 ```
 
 [How it works →](mx-flow/)
@@ -95,41 +94,6 @@ These skills also run inside `mx-flow`, but you can use them independently anyti
 | [mx-commit](mx-commit/)               | Structured commit with enforced message format                      |
 | [mx-pr](mx-pr/)                       | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket      |
 | [mx-status](mx-status/)               | Show current stage, progress, and next action for all features      |
-
-### How mx-flow fits together
-
-```
-  Brainstorm  ──▶  Design spec + ADR
-  Plan        ──▶  Ordered task list
-  Worktree    ──▶  Isolated branch + baseline pass
-
-  ┌─ convergent loop (max 3 iterations) ────────────┐
-  │                                                 │
-  │  ┌─ per task ────────────────────────┐          │
-  │  │  TDD       red → green → refactor │          │
-  │  │  Commit    one structured commit  │          │
-  │  └──────────────────────────────────-┘          │
-  │                                                 │
-  │  Review      3-perspective code review          │
-  │  Triage      fix / track / skip                 │
-  │                                                 │
-  │  ↺  fixes? → TDD + Commit → Review + Triage     │
-  │  ✔  clean? → exit loop                          │
-  └─────────────────────────────────────────────────┘
-
-  Verify      ──▶  Full suite + plan checklist
-  PR          ──▶  Draft → review → publish
-  Finish      ──▶  Clean up branch + worktree
-```
-
-### File locations
-
-| Location | Contains | Lifecycle |
-|----------|----------|-----------|
-| `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
-| `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
-
-`.mx/` is automatically added to `.gitignore` on first run.
 
 ---
 

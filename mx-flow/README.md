@@ -16,31 +16,32 @@ _Rough or detailed — the agent will ask what it needs._
 ## What it runs
 
 ```
-  Phase 1  Brainstorm  ──▶  Design spec + ADR     [GATE: spec approval]
-  Phase 2  Plan        ──▶  Ordered task list
-  Phase 3  Worktree    ──▶  Isolated branch + baseline pass
+  Brainstorm  ──▶  Design spec + ADR
+  Plan        ──▶  Ordered task list
+  Worktree    ──▶  Isolated branch + baseline pass
 
   ┌─ convergent loop (max 3 iterations) ────────────┐
   │                                                 │
   │  ┌─ per task ────────────────────────┐          │
-  │  │  Phase 4a  TDD    red → green → refactor │   │
-  │  │            Commit one structured commit  │   │
+  │  │  TDD       red → green → refactor │          │
+  │  │  Commit    one structured commit  │          │
   │  └──────────────────────────────────-┘          │
   │                                                 │
-  │  Phase 4b  Review   3-perspective code review   │
-  │            Triage   fix / track / skip          │
+  │  Review      3-perspective code review          │
+  │  Triage      fix / track / skip                 │
   │                                                 │
   │  ↺  fixes? → TDD + Commit → Review + Triage     │
   │  ✔  clean? → exit loop                          │
   └─────────────────────────────────────────────────┘
 
-  Phase 5  Verify      ──▶  Full suite + plan checklist
-  Phase 6  PR          ──▶  Draft → review → publish
-  Phase 7  Finish      ──▶  Clean up branch + worktree (post-merge)
+  Verify      ──▶  Full suite + plan checklist
+  PR          ──▶  Draft → review → publish
+  Finish      ──▶  Clean up branch + worktree
 ```
 
-Phases 2, 3, 4a, 5, and 7 are built-in. Phases 1, 4b, and 6 delegate to standalone skills
-(/mx-brainstorm, /mx-team-review + /mx-review-triage, /mx-pr).
+Plan, Worktree, TDD, Verify, and Finish are built-in mx-flow phases. Brainstorm,
+Review + Triage, and PR delegate to standalone skills (/mx-brainstorm,
+/mx-team-review + /mx-review-triage, /mx-pr).
 
 ## File locations
 
@@ -52,17 +53,6 @@ mx-flow stores files in two places:
 | `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
 
 `.mx/` is automatically added to `.gitignore` on first run.
-
-## Human decision gates
-
-mx-flow pauses at key points where your judgement matters. Between gates, it runs automatically.
-
-| Gate | When | Behaviour |
-|------|------|-----------|
-| Spec approval | After brainstorm | Human — requires explicit approval |
-| Task list | After planning | Auto — shown for visibility |
-| Triage | After each review cycle | Auto — fixes executed immediately |
-| PR | Before publishing | Auto — pauses only if stuck |
 
 ## Convergent loop safety limit
 
