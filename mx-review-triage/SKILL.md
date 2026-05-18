@@ -9,6 +9,7 @@ description: >
   Use after mx-team-review, or when handling PR feedback before merge.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-review-triage
 user-invocable: true
 allowed-tools:
   - Bash

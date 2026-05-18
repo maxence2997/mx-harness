@@ -9,6 +9,7 @@ description: >
   Usage: /mx-commit
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-commit
 user-invocable: true
 allowed-tools:
   - Bash

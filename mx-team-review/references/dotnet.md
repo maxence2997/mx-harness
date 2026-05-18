@@ -124,6 +124,35 @@ var expired = await _ctx.Orders
 
 ---
 
+## Brace Style — C# Specifics
+
+**Always use braces `{}` for control flow blocks, even with a single statement:**
+```csharp
+// ❌ no braces — easy to introduce bugs when adding a second statement
+if (order == null)
+    return;
+
+for (var i = 0; i < items.Count; i++)
+    Process(items[i]);
+
+// ✅ always braces
+if (order == null)
+{
+    return;
+}
+
+for (var i = 0; i < items.Count; i++)
+{
+    Process(items[i]);
+}
+```
+
+Applies to: `if`, `else`, `else if`, `for`, `foreach`, `while`, `do`.
+
+> Unlike Go (`gofmt` enforces this automatically), C# does not enforce brace style at the compiler or formatter level — reviewers must catch violations manually.
+
+---
+
 ## Switch / Pattern Matching — C# Specifics
 
 **Prefer switch expression over if-else chains for type/value dispatch:**

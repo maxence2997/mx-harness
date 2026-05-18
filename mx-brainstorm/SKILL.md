@@ -9,6 +9,7 @@ description: >
   Use at the start of any new feature, change, or non-trivial fix.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-brainstorm
 user-invocable: true
 allowed-tools:
   - Bash

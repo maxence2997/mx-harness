@@ -7,6 +7,7 @@ description: >
   Use after mx-verify passes and the branch is pushed.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-pr
 user-invocable: true
 allowed-tools:
   - Bash

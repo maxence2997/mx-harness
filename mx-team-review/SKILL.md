@@ -11,6 +11,7 @@ description: >
   Supported languages: Go (.go), C# .NET 8 (.cs)
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-team-review
 user-invocable: true
 allowed-tools:
   - Bash

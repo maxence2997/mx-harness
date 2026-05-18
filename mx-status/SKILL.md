@@ -8,6 +8,7 @@ description: >
   you are in the mx-flow workflow.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-status
 user-invocable: true
 allowed-tools:
   - Bash

@@ -9,6 +9,7 @@ description: >
   After merge, use /mx-flow finish <name> to clean up.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
+source: https://github.com/maxence2997/mx-harness/tree/main/mx-flow
 user-invocable: true
 allowed-tools:
   - Bash
