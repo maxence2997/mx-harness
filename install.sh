@@ -18,7 +18,13 @@ set -euo pipefail
 REPO="https://github.com/maxence2997/mx-harness"
 LOCK="$HOME/.mx/.mx-harness.lock"
 SKILLS=(mx-flow mx-brainstorm mx-team-review mx-review-triage mx-commit mx-pr mx-status)
-SEARCH_PATHS=("$HOME/.claude/skills" "$HOME/.config/claude/skills")
+SEARCH_PATHS=(
+  "$HOME/.claude/skills"         # Claude Code
+  "$HOME/.config/claude/skills"  # Claude Code (XDG)
+  "$HOME/.codex/skills"          # OpenAI Codex CLI
+  "$HOME/.copilot/skills"        # GitHub Copilot
+  "$HOME/.cursor/skills"         # Cursor
+)
 
 # --- helpers ---
 
@@ -54,6 +60,29 @@ detect_dir() {
   echo ""
 }
 
+# Returns all installed locations for a skill (one per line).
+detect_all_dirs() {
+  local skill=$1
+  local seen=()
+  # Check lock-recorded root first (may be a custom location outside SEARCH_PATHS)
+  local from_lock; from_lock=$(lock_get "$skill" "root")
+  if [[ -n "$from_lock" && -d "$from_lock" ]]; then
+    seen+=("$from_lock")
+    echo "$from_lock"
+  fi
+  for base in "${SEARCH_PATHS[@]}"; do
+    local candidate="$base/$skill"
+    if [[ -d "$candidate" ]]; then
+      local dup=false
+      for d in "${seen[@]+"${seen[@]}"}"; do [[ "$d" == "$candidate" ]] && dup=true; done
+      if ! $dup; then
+        seen+=("$candidate")
+        echo "$candidate"
+      fi
+    fi
+  done
+}
+
 # --- per-skill logic ---
 
 do_fresh_install() {
@@ -76,8 +105,7 @@ do_fresh_install() {
 }
 
 do_update() {
-  local skill=$1 src="$2/$skill"
-  local skill_dir; skill_dir=$(detect_dir "$skill")
+  local skill=$1 src="$2/$skill" skill_dir=$3
   echo "  updating → $skill_dir"
 
   local skipped=()
@@ -130,11 +158,13 @@ echo
 failed=()
 for skill in "${SKILLS[@]}"; do
   echo "==> $skill"
-  skill_dir=$(detect_dir "$skill")
-  if [[ -z "$skill_dir" ]]; then
+  mapfile -t skill_dirs < <(detect_all_dirs "$skill")
+  if [[ ${#skill_dirs[@]} -eq 0 ]]; then
     do_fresh_install "$skill" || failed+=("$skill")
   else
-    do_update "$skill" "$REPO_SRC" || failed+=("$skill")
+    for skill_dir in "${skill_dirs[@]}"; do
+      do_update "$skill" "$REPO_SRC" "$skill_dir" || failed+=("$skill")
+    done
   fi
   echo
 done
