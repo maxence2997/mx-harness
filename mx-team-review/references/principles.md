@@ -256,6 +256,27 @@ Code already tells you WHAT it does. Comments must explain:
 - **Why** a workaround exists (link to issue / external bug)
 - **Why** a business rule is enforced here
 
+### Writing Style
+
+**Comments must be concise and self-contained.** A reader should understand the content and scenario from the comment alone, without scanning surrounding code, prior comments, or unrelated context.
+
+- **Be brief. Hard limit: 3 lines.** If it needs more, the code or design probably needs to change, not the comment.
+- **Lead with WHY.** Describe HOW only when the mechanism is non-obvious and matters for correctness.
+- **No pronouns or vague references.** Avoid "this", "it", "that thing", "the above", "as mentioned". Name the concrete subject (function, field, condition, business rule) explicitly.
+- **State the scenario.** When the comment guards a branch, edge case, or workaround, name the triggering condition — not "handle the case" but "when the upstream API returns 429 during burst traffic".
+
+```
+// ❌ Vague pronouns, no scenario
+// Do this here because of the issue mentioned above.
+
+// ❌ Describes HOW, not WHY
+// Loop through orders and sum their amounts.
+
+// ✅ Concise, names subject + scenario + why
+// Stripe webhook may deliver the same event_id twice within 5 minutes during
+// retry storms; dedupe by event_id to avoid double-charging the customer.
+```
+
 ### Must-Have "Why" Comments
 
 | Situation | Example |
