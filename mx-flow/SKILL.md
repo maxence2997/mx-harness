@@ -407,6 +407,16 @@ Rules:
 - Do not add features not required by the current test
 - Speculative code is forbidden
 
+**Comment policy (enforced while writing, not only at review)** — Canonical source:
+`mx-team-review/references/principles.md` → *P2 — Comment (Why)*. Essentials:
+
+- **Default: no comment.** Add one only when WHY is non-obvious to a future reader.
+- **Forbidden:** comments that restate WHAT the code does, empty doc summaries (`/// Creates an order.`), vague pronouns (`this`, `the above`, `as mentioned`).
+- **Required for:** magic numbers, framework-default overrides, business-rule enforcement, external workarounds (link the issue), TODO/FIXME (link or explain why and when).
+- **Style:** lead with WHY, name the concrete subject + triggering scenario, hard limit **3 lines**. If it needs more, the code probably needs to change instead.
+
+If you find yourself writing a "WHAT" comment, delete it and improve the identifier name instead.
+
 Run the test again — confirm it passes.
 Run the full suite — confirm nothing else broke.
 
@@ -428,6 +438,7 @@ Rules:
 □ RED observed: test failure was seen with actual output (not assumed)
 □ GREEN confirmed: test passes after implementation
 □ Full suite clean: no new failures introduced by this change
+□ Comment policy: no WHAT-comments, no vague pronouns, magic numbers/workarounds explain WHY, every comment ≤3 lines
 □ Plan updated: task marked [x] in .mx/<name>/plan.md
 □ Committed: /mx-commit --auto completed for this task
 ```
