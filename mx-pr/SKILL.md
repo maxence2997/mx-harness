@@ -4,7 +4,8 @@ description: >
   Draft a pull request from the feature spec and git log, let the user review and edit,
   then publish to the chosen platform (GitHub, GitLab, Bitbucket) — or skip publishing.
   Draft is written to a timestamped temp file to avoid filename collisions.
-  Use after mx-verify passes and the branch is pushed.
+  Before pushing, runs a mandatory squash check on local commits to reduce PR noise.
+  Use after mx-verify passes — branch does not need to be pushed yet.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 source: https://github.com/maxence2997/mx-harness/tree/main/mx-pr
@@ -71,7 +72,81 @@ Collect all candidate issue references. If ambiguous, include all candidates and
 
 ---
 
-## Step 2 — Write draft to temp file
+## Step 2 — Check for squashable commits (mandatory)
+
+This check is **required** — never skip it. It runs every time before drafting the PR,
+so the cleaned-up commit history feeds into the PR body and lands cleanly on the remote.
+
+List every commit since the branch diverged from base:
+
+```bash
+git log $(git merge-base HEAD main)..HEAD --pretty=format:'%h %s'
+```
+
+Flag a commit as a squash candidate if its subject matches any of these patterns:
+
+- Starts with `fixup!` or `squash!` (autosquash markers)
+- Mentions `wip`, `tmp`, `temp`, `debug`, `nit`, `typo`, `oops`
+- Mentions `address review`, `address feedback`, `PR feedback`, `code review`, `review comments`
+- Is a near-duplicate of an earlier commit's subject (same scope + verb)
+- Touches only files already changed in an earlier commit on the branch AND has a vague subject (`update`, `fix`, `more changes`)
+
+Group candidates with the parent commit they logically belong to. Present the plan:
+
+```
+Squash check — found <N> candidate(s):
+
+  abc123 feat: add cache layer
+    ↳ def456 fix typo          ← squash into abc123
+    ↳ 789abc address review    ← squash into abc123
+
+  ghi012 refactor: extract handler
+    ↳ jkl345 wip               ← squash into ghi012
+
+Options:
+  [A] Squash as proposed         (runs git rebase with autosquash)
+  [B] Let me edit the plan       (opens interactive rebase — you decide)
+  [C] Keep all commits as-is     (confirm: these commits add signal, not noise)
+```
+
+If **no candidates** are detected, still report the check ran and proceed:
+
+```
+Squash check — no candidates detected across <N> commits. Proceeding.
+```
+
+Wait for the user to choose before continuing. Never rewrite history without explicit approval.
+
+### If [A] — perform the squash
+
+For each candidate, amend its subject to `fixup! <parent-subject>` (or `squash!` if the body matters),
+then run autosquash:
+
+```bash
+git commit --fixup=<parent-sha> ...    # only needed if creating new fixup commits
+GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash $(git merge-base HEAD main)
+```
+
+In practice, since the candidates already exist as regular commits, rewrite their subjects in place
+via `git rebase -i` with a non-interactive sequence editor that reorders and marks them as `fixup`.
+Confirm the rewrite succeeded with `git log --oneline` before moving on. If the rebase fails (conflicts,
+detached HEAD, etc.), abort with `git rebase --abort` and fall back to option [B].
+
+### If [B] — hand off to interactive rebase
+
+```bash
+git rebase -i $(git merge-base HEAD main)
+```
+
+Tell the user to finish the rebase, then re-run `/mx-pr`.
+
+### If [C] — record the override
+
+Note in the conversation that the user confirmed all commits add signal. Proceed to Step 3.
+
+---
+
+## Step 3 — Write draft to temp file
 
 Read `references/pr-template.md` (located in the same directory as this SKILL.md).
 It defines the PR sections and how each placeholder maps to a source.
@@ -96,7 +171,7 @@ Write the filled template to the draft file.
 
 ---
 
-## Step 3 — Show draft and ask for review
+## Step 4 — Show draft and ask for review
 
 Display the full draft content inline.
 
@@ -122,7 +197,7 @@ If the user runs /mx-pr again and a draft file exists under `.mx/<name>/tmp/`
 
 ---
 
-## Step 4 — Select platform
+## Step 5 — Select platform
 
 Ask the user which platform to publish to:
 
@@ -139,7 +214,22 @@ Wait for the user to choose.
 
 ---
 
-## Step 5 — Publish
+## Step 6 — Push and publish
+
+Before invoking the platform CLI, make sure the (possibly rewritten) branch is on the remote:
+
+```bash
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if git rev-parse --verify --quiet "origin/$BRANCH" >/dev/null; then
+  # branch exists on remote — force-with-lease only if Step 2 rewrote history
+  git push --force-with-lease origin "$BRANCH"
+else
+  git push -u origin "$BRANCH"
+fi
+```
+
+Use `--force-with-lease` (never plain `--force`) so a concurrent update on the remote aborts the push
+instead of clobbering someone else's work. If push fails, surface the error and stop — do not retry blindly.
 
 ### GitHub
 
@@ -173,7 +263,7 @@ Display the draft path and content for the user to use manually.
 
 ---
 
-## Step 6 — Report
+## Step 7 — Report
 
 ```
 PR created: <url>          ← if published

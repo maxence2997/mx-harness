@@ -12,12 +12,13 @@ Draft a pull/merge request from the feature spec and git log, review it, then pu
 ## What it does
 
 1. Reads `~/.mx/<project>/<name>/spec.md` and the git log since branch creation
-2. Drafts a structured PR description
-3. Saves draft to `.mx/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions)
-4. Shows you the draft — you decide to proceed or edit first
-5. Asks which platform to publish to
-6. Publishes (or lets you handle it manually)
-7. Leaves draft in `.mx/<name>/tmp/` — cleaned up by `/mx-flow finish`
+2. **Mandatory squash check** — scans local commits for fixup/wip/typo/review-feedback noise, proposes squashes, waits for your decision before continuing
+3. Drafts a structured PR description from the (cleaned-up) history
+4. Saves draft to `.mx/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions)
+5. Shows you the draft — you decide to proceed or edit first
+6. Asks which platform to publish to
+7. Pushes the branch (`--force-with-lease` if history was rewritten) and publishes
+8. Leaves draft in `.mx/<name>/tmp/` — cleaned up by `/mx-flow finish`
 
 ## Platforms supported
 
