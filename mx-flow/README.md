@@ -34,7 +34,7 @@ _Rough or detailed — the agent will ask what it needs._
   │  ✔  clean? → exit loop                          │
   └─────────────────────────────────────────────────┘
 
-  Verify      ──▶  Full suite + plan checklist
+  Verify      ──▶  Tests + plan + content check (cancel + squash, autonomous)
   PR          ──▶  Draft → review → publish
   Finish      ──▶  Clean up branch + worktree
 ```
@@ -88,7 +88,7 @@ Future Maintainer: "Document why TTL=300."
 
 **Triage** — Findings are sorted into fix / track / skip. Fixes loop back to TDD. Clean results move on to Verify.
 
-**Verify → PR** — Full test suite passes, plan checklist complete, PR drafted and published.
+**Verify → PR** — Full test suite passes, plan checklist complete, content check autonomously cleans up review-iteration noise (Pass 1 removes mutually-cancelling changes; Pass 2 squashes fixups into parents; both tree-invariant guarded), PR drafted and published.
 
 ```
 /mx-flow finish search-cache
