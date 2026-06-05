@@ -44,7 +44,7 @@ Plan, Scope, Worktree, TDD, Verify, and Finish are built-in mx-flow phases. Brai
 Review + Triage, and PR delegate to standalone skills (/mx-brainstorm,
 /mx-team-review + /mx-review-triage, /mx-pr).
 
-Scope analysis runs via a read-only Explore sub-agent: it reads spec + plan, pre-scans the repo, and writes `.mx/<name>/scope.yaml` with per-task predicted files, dependencies, complexity (S/M/L), and a derived `parallelizable` flag. Today this is execution metadata; future iterations will use it to fan out independent tasks to parallel sub-agents.
+Scope analysis runs via a read-only Explore sub-agent: it reads spec + plan, pre-scans the repo, and writes `.mx/<name>/scope.yaml` with per-task predicted files, dependencies, complexity (S/M/L), and a derived `parallelizable` flag. Phase 5 consumes this metadata directly: tasks marked `parallelizable: true` are dispatched concurrently — each sub-agent gets its own isolated git worktree (via the Agent tool's `isolation: "worktree"`), runs a full TDD cycle including `/mx-commit`, and the parent cherry-picks the resulting commits back in `task_id` order. Trivial cherry-pick conflicts (additive only) are auto-resolved by the parent; non-trivial conflicts bounce the task to the sequential queue (already-landed tasks stay). The `parallelizable` flag fires only when `total_tasks >= 3 AND depends_on == [] AND complexity in {M, L}` — small plans and S-sized work stay sequential because the worktree spin-up overhead exceeds the wall-clock savings.
 
 ## File locations
 

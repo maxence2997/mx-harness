@@ -5,8 +5,12 @@ description: >
   convergent loop (TDD → commit → review → triage) → verify → PR → finish.
   Plan, scope, worktree, TDD, verify, and finish are built-in phases.
   Scope analysis (read-only Explore sub-agent) emits .mx/<name>/scope.yaml with per-task
-  predicted files, dependencies, complexity (S/M/L), and a parallelizable flag — the
-  foundation for future multi-agent parallel execution.
+  predicted files, dependencies, complexity (S/M/L), and a parallelizable flag. Phase 5
+  consumes this directly: independent M/L tasks in plans of 3+ tasks are dispatched to
+  concurrent sub-agents — each in its own isolated git worktree — and the parent
+  cherry-picks their commits back in task-id order. Cherry-pick conflicts triage to
+  trivial (parent auto-resolves) or non-trivial (task bounces to sequential). Falls
+  back to fully sequential on integration-test failure or scope-analyzer failure.
   Verify includes an autonomous content check (cancellation cleanup + squash-into-parent,
   tree-invariant guarded) before handing off to the PR phase.
   Pauses at one human gate (spec approval), all others auto-proceed.
@@ -250,7 +254,7 @@ Allow the user to add, remove, reorder, or rewrite tasks if they intervene befor
 
 Read the spec, the plan, and the repo, then produce machine-readable per-task metadata that downstream phases use to reason about dependencies and complexity. The output is `.mx/<name>/scope.yaml`. This phase runs **autonomously via a read-only sub-agent** — no user gate; the parent prints a one-line summary at the end for visibility.
 
-Today this metadata informs only the loop's planning surface (TDD still executes tasks sequentially). It is the foundation for the future multi-agent parallel execution; do not skip it just because Phase 5 is still sequential.
+This metadata drives Phase 5's execution mode: tasks marked `parallelizable: true` are dispatched to concurrent sub-agents in a batch (5a-parallel); the rest run sequentially (5a-sequential). Never skip this phase — without `scope.yaml`, every task falls back to sequential execution.
 
 ### 3.1 — Spawn the scope analyzer sub-agent
 
@@ -267,7 +271,8 @@ The sub-agent must:
 1. Read spec.md and plan.md
 2. Pre-scan the repo: list likely target directories, grep for similar modules / patterns the tasks will extend, identify which existing files are obvious candidates
 3. For each task in plan.md, infer the schema fields below
-4. Compute `parallelizable = (depends_on == []) AND (complexity in {M, L})`
+4. Compute `parallelizable = (total_tasks >= 3) AND (depends_on == []) AND (complexity in {M, L})`
+   - The `total_tasks >= 3` gate suppresses parallel dispatch on tiny plans, where sub-agent spin-up overhead exceeds the wall-clock savings. The parent passes the total task count to the sub-agent as part of the brief.
 5. Write `.mx/<name>/scope.yaml` and return a short summary to the parent (counts of vague tasks, parallel batches, sequential tasks)
 
 ### 3.2 — Schema
@@ -459,7 +464,145 @@ These guards are **non-negotiable**. Violating any of them is a workflow failure
 
 ## Phase 5 — Convergent loop
 
-### 5a. TDD cycle (repeat per task)
+### 5a — Task execution (mode selection)
+
+Read `.mx/<name>/scope.yaml`. Partition the still-`[ ]` tasks in `plan.md`:
+
+1. **Ready-set**: tasks whose `depends_on` are all marked `[x]`.
+2. **Parallel batch**: ready-set ∩ `parallelizable: true`. If this batch has **≥ 2** tasks, dispatch them concurrently via **5a-parallel**. If it has 0 or 1 tasks, fold the lone task (if any) into the sequential queue — a one-task batch has no parallelism to exploit.
+3. **Sequential queue**: everything else in the ready-set, processed one at a time via **5a-sequential**.
+
+When both a parallel batch and a sequential queue exist, drain the **parallel batch first** so independent work overlaps with subsequent batches' planning. After each batch (parallel or sequential), recompute the ready-set — completing tasks unblocks new ones.
+
+The **Iron Law** (no production code without a failing test first) and the **vertical-slice TDD philosophy** apply in both modes. Parallel mode parallelizes *across* tasks, never *within* a task's RED→GREEN→REFACTOR cycle.
+
+If `scope.yaml` is missing or every task is marked `parallelizable: false` (fallback path from Phase 3.5), skip 5a-parallel entirely — drive every task through 5a-sequential.
+
+---
+
+### 5a-parallel — Parallel batch execution
+
+Each task in the batch runs in its **own isolated git worktree**. Sub-agents work freely — full TDD cycle, commits via `/mx-commit`, full test suite — with no shared state to race against. The parent reconciles by cherry-picking each sub-branch back onto the feature branch in `task_id` order.
+
+#### Pre-flight
+
+```bash
+git status --porcelain          # must be empty — abort otherwise
+BATCH_BASE=$(git rev-parse HEAD)
+```
+
+Record `BATCH_BASE` in conversation context. It is the rollback anchor and the merge base for every cherry-pick in this batch.
+
+#### Dispatch
+
+Issue one `Agent` call **per task in a single message** so all sub-agents run concurrently. For each task:
+
+- **subagent_type**: omit (default catch-all) — sub-agents need Edit/Write/Bash.
+- **isolation**: `"worktree"` — the harness creates a temporary worktree branched from the parent's current HEAD (= `BATCH_BASE`) and surfaces the branch name + path on completion.
+- **Brief contents:**
+  - "You are running one task of a parallel TDD batch in mx-flow. You are isolated in your own git worktree — work freely; you cannot collide with sibling sub-agents."
+  - Task ID and full task body copied from `plan.md` (What, Test, Files).
+  - `predicted_files` and `predicted_touches` for this task — **advisory only**, not a constraint. Touch whatever the implementation actually needs.
+  - One-line summaries of sibling tasks in the batch (awareness only — "if you find yourself doing a sibling's work, stop and return `status: failed` with reason").
+  - Iron Law, vertical-slice TDD philosophy, comment policy — copy the same wording 5a-sequential uses, do not paraphrase.
+  - **Sub-agent workflow (verbatim in the brief):**
+    1. Read existing code relevant to your task.
+    2. Iron Law: write a failing test before any production code.
+    3. RED → GREEN → REFACTOR, one slice at a time.
+    4. Honor the comment policy.
+    5. Run the full project test suite — your worktree is isolated, this is safe.
+    6. Run `/mx-commit` to commit your changes (one or more commits). Do not push.
+    7. Return the YAML block below as the final content of your last message.
+  - **Required return shape:**
+    ```yaml
+    status: success | failed
+    task_id: task-<N>
+    branch: <result of `git rev-parse --abbrev-ref HEAD`; the harness also surfaces this>
+    worktree_path: <result of `git rev-parse --show-toplevel`>
+    commits: [<commit hashes you created, oldest first>]
+    files_changed: [<repo-relative paths>]
+    test_summary: "<all tests passed | N failed — details>"
+    failure_reason: "<populated when status: failed; empty otherwise>"
+    ```
+
+#### Reconcile (parent runs serially after **all** sub-agents return)
+
+1. **Status triage:**
+   - `status: failed` → leave the sub-worktree intact for inspection, enqueue this task into the sequential queue. Do not cherry-pick anything for failed tasks.
+   - `status: success` → proceed to cherry-pick.
+
+2. **Cherry-pick successful tasks in `task_id` ascending order.** For each task:
+   ```bash
+   git cherry-pick <BATCH_BASE>..<sub-branch>
+   ```
+   - **Clean apply** → continue with next task.
+   - **Conflict** → conflict triage (step 3).
+
+3. **Conflict triage** — parent judges each conflict:
+   - **Trivial conflict** — both sides added independent, non-overlapping content to the same region (e.g., two new imports in the same import block, two appended test cases at the end of a file, two new entries in a registry slice). Parent resolves by combining both sides preserving order, then:
+     ```bash
+     git add <resolved files>
+     git cherry-pick --continue
+     ```
+   - **Non-trivial conflict** — both sides semantically modified the same region, or it is unclear how to combine. Parent aborts the in-flight cherry-pick:
+     ```bash
+     git cherry-pick --abort
+     ```
+     Enqueue this task into the sequential queue. Continue with the **next** task in cherry-pick order — already-applied tasks stay on the feature branch (incremental progress; no full rollback).
+
+   Calibration:
+   - "Two imports added to the same import group" → trivial.
+   - "Two new test cases appended to the same test file" → trivial.
+   - "Both sides renamed the same function" → non-trivial.
+   - "Both sides changed the signature of the same function" → non-trivial.
+   - "Side A renamed X, Side B added a call site for X" → non-trivial (semantic — cherry-pick won't catch the broken call).
+
+4. **Integration test:** after all cherry-picks complete (clean or aborted), run the full project test suite on the feature branch (priority order from 5a-sequential — Makefile → package.json → language default).
+   - **Pass** → batch done; proceed to step 5.
+   - **Fail** → batch-scoped rollback (Abort path below). An integration failure that wasn't seen in any sub-agent's isolated full-suite run means the tasks were not truly independent. Enqueue **all** in-flight batch tasks (including the cleanly cherry-picked ones) back into the sequential queue.
+
+5. **Update `plan.md`:** mark each successfully cherry-picked + integration-passing task `[x]`. Single writer (parent) — no race.
+
+6. **Cleanup** sub-worktrees and sub-branches for tasks that landed cleanly (per Agent-tool docs, worktrees with changes are not auto-cleaned):
+   ```bash
+   git worktree remove <worktree_path>
+   git branch -D <branch>
+   ```
+   **Keep** the sub-worktree and sub-branch intact when the task was bounced to sequential — the user (or sequential-mode rerun) may want to inspect what the sub-agent produced before discarding.
+
+7. **Announce:** `Parallel batch B<n>: <K> cherry-picked, <C> bounced to sequential, <wall-time>s.`
+
+#### Abort path (batch-scoped rollback — fires only on integration-test failure after merge)
+
+```bash
+# Safety: only reset if every commit between BATCH_BASE and HEAD was made by the parent's cherry-picks.
+EXPECTED_PICKS=<count of successful cherry-picks the parent ran>
+ACTUAL_AHEAD=$(git rev-list --count $BATCH_BASE..HEAD)
+if [ "$ACTUAL_AHEAD" -ne "$EXPECTED_PICKS" ]; then
+  STOP and ask the user. Do not run git reset.
+fi
+
+git reset --hard $BATCH_BASE
+```
+
+Then push all batch tasks (cherry-picked and not) back to the sequential queue. Cleanup sub-worktrees as in step 6 above.
+
+Report:
+```
+Parallel batch B<n> aborted at integration test: <failure summary>. Re-running <K> tasks sequentially.
+```
+
+#### When to skip 5a-parallel entirely
+
+Drain everything via 5a-sequential when **any** of:
+- The user has uncommitted work in the worktree before the batch starts.
+- A prior batch in this flow was aborted at the integration-test step — fall back to sequential for the remainder; do not re-attempt parallel in the same flow.
+
+---
+
+### 5a-sequential — Sequential TDD cycle (per task)
+
+This is the original single-threaded TDD loop. Use it for every task in the sequential queue, plus all tasks bounced from a failed parallel batch.
 
 #### Iron Law
 
@@ -559,7 +702,7 @@ Rules:
 
 If any item is unchecked, do not advance to the next task.
 
-Continue until all tasks are done or a milestone is reached.
+After each task completes, return to **5a (Task execution)** to recompute the ready-set — a finished task may have unblocked a parallel batch. Exit the loop when all tasks are done or a milestone is reached.
 
 ### 5b. Review (at milestone)
 
