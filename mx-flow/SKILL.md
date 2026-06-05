@@ -1,9 +1,14 @@
 ---
 name: mx-flow
 description: >
-  Full development workflow orchestrator. Brainstorm → plan → worktree → convergent loop
-  (TDD → commit → review → triage) → verify → PR → finish.
-  Plan, worktree, TDD, verify, and finish are built-in phases.
+  Full development workflow orchestrator. Brainstorm → plan → scope analysis → worktree →
+  convergent loop (TDD → commit → review → triage) → verify → PR → finish.
+  Plan, scope, worktree, TDD, verify, and finish are built-in phases.
+  Scope analysis (read-only Explore sub-agent) emits .mx/<name>/scope.yaml with per-task
+  predicted files, dependencies, complexity (S/M/L), and a parallelizable flag — the
+  foundation for future multi-agent parallel execution.
+  Verify includes an autonomous content check (cancellation cleanup + squash-into-parent,
+  tree-invariant guarded) before handing off to the PR phase.
   Pauses at one human gate (spec approval), all others auto-proceed.
   Use when starting a new feature or significant change from scratch.
   After merge, use /mx-flow finish <name> to clean up.

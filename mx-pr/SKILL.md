@@ -4,7 +4,10 @@ description: >
   Draft a pull request from the feature spec and git log, let the user review and edit,
   then publish to the chosen platform (GitHub, GitLab, Bitbucket) — or skip publishing.
   Draft is written to a timestamped temp file to avoid filename collisions.
-  Before pushing, runs a mandatory squash check on local commits to reduce PR noise.
+  Before pushing, runs an autonomous content check (Pass 1 cancellation cleanup with
+  rule-based whole-commit inverse pairs and semantically-judged partial cancellations,
+  Pass 2 squash-into-parent), each pass guarded by a tree-invariant check that reverts
+  the rewrite if the working tree hash changes.
   Use after mx-verify passes — branch does not need to be pushed yet.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
