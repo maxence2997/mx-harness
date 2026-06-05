@@ -18,6 +18,7 @@ _Rough or detailed — the agent will ask what it needs._
 ```
   Brainstorm  ──▶  Design spec + ADR
   Plan        ──▶  Ordered task list
+  Scope       ──▶  Per-task files + complexity DAG (Explore sub-agent)
   Worktree    ──▶  Isolated branch + baseline pass
 
   ┌─ convergent loop (max 3 iterations) ────────────┐
@@ -39,9 +40,11 @@ _Rough or detailed — the agent will ask what it needs._
   Finish      ──▶  Clean up branch + worktree
 ```
 
-Plan, Worktree, TDD, Verify, and Finish are built-in mx-flow phases. Brainstorm,
+Plan, Scope, Worktree, TDD, Verify, and Finish are built-in mx-flow phases. Brainstorm,
 Review + Triage, and PR delegate to standalone skills (/mx-brainstorm,
 /mx-team-review + /mx-review-triage, /mx-pr).
+
+Scope analysis runs via a read-only Explore sub-agent: it reads spec + plan, pre-scans the repo, and writes `.mx/<name>/scope.yaml` with per-task predicted files, dependencies, complexity (S/M/L), and a derived `parallelizable` flag. Today this is execution metadata; future iterations will use it to fan out independent tasks to parallel sub-agents.
 
 ## File locations
 
@@ -50,7 +53,7 @@ mx-flow stores files in two places:
 | Location | Contains | Lifecycle |
 |----------|----------|-----------|
 | `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
-| `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
+| `.mx/<name>/` (project root) | plan.md, scope.yaml, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
 
 `.mx/` is automatically added to `.gitignore` on first run.
 

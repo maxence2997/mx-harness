@@ -74,7 +74,7 @@ Collect all candidate issue references. If ambiguous, include all candidates and
 
 ## Step 2 — Autonomous content check (mandatory)
 
-This check is **required** — never skip it. It runs every time before drafting the PR, so the cleaned-up commit history feeds the PR body and lands cleanly on the remote. It is also the final safety net: mx-flow's Phase 5 may have already done this check, but mx-pr can be invoked standalone, so this still runs unconditionally. After a prior Phase 5 run, the typical outcome here is a no-op.
+This check is **required** — never skip it. It runs every time before drafting the PR, so the cleaned-up commit history feeds the PR body and lands cleanly on the remote. It is also the final safety net: mx-flow's Phase 6 may have already done this check, but mx-pr can be invoked standalone, so this still runs unconditionally. After a prior Phase 6 run, the typical outcome here is a no-op.
 
 Two passes run autonomously — no user prompt:
 
@@ -91,7 +91,7 @@ PRE_TREE=$(git rev-parse HEAD^{tree})
 BASE=$(git merge-base HEAD <base-branch>)
 ```
 
-`<base-branch>` is the PR's target branch — `develop` if it exists, otherwise `main`. Resolve with the same logic as mx-flow Phase 3.2.
+`<base-branch>` is the PR's target branch — `develop` if it exists, otherwise `main`. Resolve with the same logic as mx-flow Phase 4.2.
 
 ### 2.1 — Pass 1: cancellation cleanup
 

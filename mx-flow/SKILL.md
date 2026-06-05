@@ -25,7 +25,7 @@ allowed-tools:
 
 ```
 /mx-flow <topic>          ← full pipeline: idea to PR
-/mx-flow finish <name>    ← post-merge cleanup (skip to Phase 7)
+/mx-flow finish <name>    ← post-merge cleanup (skip to Phase 8)
 ```
 
 mx-flow pauses at **one human gate** (spec approval). All other gates auto-proceed —
@@ -52,18 +52,19 @@ Between gates, each phase runs in sequence without interruption.
 Phase 1  Brainstorm  →  Design spec + ADR        (/mx-brainstorm)
            [GATE 1] Spec approval                 ← human (only hard gate)
 Phase 2  Plan        →  Ordered task list         (built-in)
-Phase 3  Worktree    →  Isolated branch + baseline (built-in)
+Phase 3  Scope     →  Per-task DAG + complexity   (built-in, Explore sub-agent)
+Phase 4  Worktree    →  Isolated branch + baseline (built-in)
 
 ── convergent loop (max 3 iterations) ──────────────
-  Phase 4a  TDD (per task) → Commit              (built-in + /mx-commit)
-  Phase 4b  Review → Triage                      (/mx-team-review + /mx-review-triage)
+  Phase 5a  TDD (per task) → Commit              (built-in + /mx-commit)
+  Phase 5b  Review → Triage                      (/mx-team-review + /mx-review-triage)
   → if fixes: back to TDD
   → if clean: exit loop
 ────────────────────────────────────────────────────
 
-Phase 5  Verify      →  Tests + plan + content check (built-in)
-Phase 6  PR          →  Draft → publish            (/mx-pr)
-Phase 7  Finish      →  Clean up branch + worktree (built-in, post-merge)
+Phase 6  Verify      →  Tests + plan + content check (built-in)
+Phase 7  PR          →  Draft → publish            (/mx-pr)
+Phase 8  Finish      →  Clean up branch + worktree (built-in, post-merge)
 ```
 
 ---
@@ -93,7 +94,7 @@ PROJECT=$(basename "$REPO_ROOT")
 | Variable | Path | Contains |
 |----------|------|----------|
 | `GLOBAL_MX` | `~/.mx/<project>/<name>/` | spec.md, adr.md (permanent) |
-| `LOCAL_MX` | `<repo-root>/.mx/<name>/` | plan.md, worktree/, tmp/ (ephemeral) |
+| `LOCAL_MX` | `<repo-root>/.mx/<name>/` | plan.md, scope.yaml, worktree/, tmp/ (ephemeral) |
 
 - `~/.mx/<project>/ai-learning.md` is also in GLOBAL (project-level, not per-feature)
 - Create directories as needed: `mkdir -p` for both GLOBAL_MX and LOCAL_MX
@@ -157,7 +158,7 @@ Decompose the approved spec into a concrete, ordered task list.
 
 ### Planning principles
 
-These bind every task you write in this phase. The TDD loop in Phase 4 executes the plan literally — if the plan over-reaches, the implementation will too. Lock scope here, not later.
+These bind every task you write in this phase. The TDD loop in Phase 5 executes the plan literally — if the plan over-reaches, the implementation will too. Lock scope here, not later.
 
 **Simplicity first — minimum code that satisfies the spec.**
 
@@ -240,11 +241,119 @@ Allow the user to add, remove, reorder, or rewrite tasks if they intervene befor
 
 ---
 
-## Phase 3 — Worktree
+## Phase 3 — Scope analysis
+
+Read the spec, the plan, and the repo, then produce machine-readable per-task metadata that downstream phases use to reason about dependencies and complexity. The output is `.mx/<name>/scope.yaml`. This phase runs **autonomously via a read-only sub-agent** — no user gate; the parent prints a one-line summary at the end for visibility.
+
+Today this metadata informs only the loop's planning surface (TDD still executes tasks sequentially). It is the foundation for the future multi-agent parallel execution; do not skip it just because Phase 5 is still sequential.
+
+### 3.1 — Spawn the scope analyzer sub-agent
+
+Invoke the Agent tool with `subagent_type: Explore` — read-only repo-scanning is exactly its profile. Brief the sub-agent with:
+
+- Path to `~/.mx/<project>/<name>/spec.md`
+- Path to `.mx/<name>/plan.md`
+- Repo root (`git rev-parse --show-toplevel`)
+- The schema spec (section 3.2) and complexity rubric (section 3.3)
+- A directive: write only `.mx/<name>/scope.yaml`; do not modify code, plan, or spec
+
+The sub-agent must:
+
+1. Read spec.md and plan.md
+2. Pre-scan the repo: list likely target directories, grep for similar modules / patterns the tasks will extend, identify which existing files are obvious candidates
+3. For each task in plan.md, infer the schema fields below
+4. Compute `parallelizable = (depends_on == []) AND (complexity in {M, L})`
+5. Write `.mx/<name>/scope.yaml` and return a short summary to the parent (counts of vague tasks, parallel batches, sequential tasks)
+
+### 3.2 — Schema
+
+```yaml
+- id: task-1                                   # matches plan.md ordering: task-1, task-2, ...
+  task: "<verbatim copy of plan.md bullet>"
+  predicted_files:                             # repo-relative paths
+    - internal/cache/adapter.go
+    - internal/cache/adapter_test.go
+  predicted_touches:                           # symbols, functions, endpoints
+    - RedisClient.Get
+    - RedisClient.Set
+  depends_on: []                               # ids of tasks that must finish first; [] if independent
+  complexity: M                                # S | M | L
+  complexity_reason: "two new files, ~80 LOC, follows existing adapter pattern"
+  vague: false                                 # true only when sub-agent could not reliably infer
+  vague_reason: ""                             # populated only when vague: true
+  parallelizable: false                        # derived field; computed by the sub-agent
+```
+
+`depends_on` should reflect either **shared files** (two tasks edit the same file → ordering matters) or **logical preconditions** (task B calls a symbol introduced by task A). When unsure, add the dependency rather than omit it.
+
+### 3.3 — Complexity rubric
+
+| Level | Criteria |
+|-------|----------|
+| **S** | ≤ ~30 LOC, single file, predicted 1 TDD round, no external integration |
+| **M** | ~30–150 LOC, 2–3 files, predicted 1–2 TDD rounds, may touch one integration boundary |
+| **L** | > 150 LOC, multi-module, ≥ 2 TDD rounds expected, or non-trivial external integration (DB / network / filesystem / external API) |
+
+When signals are ambiguous, bias toward **higher** complexity and **more** dependencies. Over-estimating costs nothing (parent falls back to sequential); under-estimating creates merge collisions later.
+
+### 3.4 — Refinement loop (max 2 rounds)
+
+After the sub-agent returns, the parent reads `scope.yaml` and inspects for `vague: true` entries.
+
+**Round 1 → Round 2.** If any task has `vague: true`, the parent rewrites those specific bullets in `plan.md` using the sub-agent's `vague_reason` as guidance — name the file(s), the function/endpoint, the interface contract. Then re-invoke the sub-agent. Tasks that were not vague stay untouched.
+
+**After Round 2.** Whatever the sub-agent returns is final. Any task still marked `vague: true` keeps its conservative defaults (`complexity: L`, `parallelizable: false`) and proceeds. Bouncing further has diminishing returns — the task is one that requires hands-on discovery during TDD.
+
+Cap is **2 rounds**. Never loop indefinitely.
+
+### 3.5 — Fallback on failure
+
+If the sub-agent fails (timeout, crash, invalid YAML, missing file after invocation), the parent writes a minimal `scope.yaml` directly:
+
+```yaml
+- id: task-N
+  task: "<copy from plan.md>"
+  predicted_files: []
+  predicted_touches: []
+  depends_on: []
+  complexity: L
+  complexity_reason: "scope analyzer failed; conservative default applied"
+  vague: true
+  vague_reason: "scope analyzer failed; safe fallback applied"
+  parallelizable: false
+```
+
+Every task gets the same shape. Downstream phases see zero parallelizable tasks and run fully sequential. The flow does not block.
+
+### 3.6 — Summary
+
+Print one line to the user for visibility (not a gate):
+
+```
+Scope analysis: <N> tasks → <K> parallel batches (B1: T1+T3, B2: T4), <S> sequential (T2, T5).
+```
+
+If everything sequential:
+
+```
+Scope analysis: <N> tasks, all sequential (no independent batches identified).
+```
+
+If the fallback fired:
+
+```
+Scope analysis: failed → conservative defaults applied, all tasks sequential.
+```
+
+Then auto-proceed to Phase 4.
+
+---
+
+## Phase 4 — Worktree
 
 Create an isolated git worktree for the feature branch.
 
-### 3.1 — Determine branch name
+### 4.1 — Determine branch name
 
 Apply branch naming convention:
 
@@ -258,7 +367,7 @@ Apply branch naming convention:
 If the user provided a name without a prefix, ask which prefix applies.
 If the name already has a correct prefix, proceed.
 
-### 3.2 — Create the worktree
+### 4.2 — Create the worktree
 
 First, resolve the base branch in this order:
 
@@ -286,7 +395,7 @@ Verify it was created:
 git worktree list
 ```
 
-### 3.3 — Run project setup
+### 4.3 — Run project setup
 
 From within the worktree directory, auto-detect and run setup:
 
@@ -311,7 +420,7 @@ if [ -f pyproject.toml ]; then poetry install; fi
 if [ -f Cargo.toml ]; then cargo build; fi
 ```
 
-### 3.4 — Verify baseline
+### 4.4 — Verify baseline
 
 Run the full test suite to confirm the worktree starts clean.
 
@@ -324,7 +433,7 @@ Auto-detect priority:
 Report the failures and ask the user whether to proceed or investigate first.
 Do not proceed silently with a failing baseline.
 
-### 3.5 — Report
+### 4.5 — Report
 
 ```
 Worktree ready at .mx/<name>/worktree/
@@ -338,14 +447,14 @@ Baseline: <N> tests passing
 
 These guards are **non-negotiable**. Violating any of them is a workflow failure.
 
-1. **Worktree required before any Edit/Write** — Before making any code change, verify the working directory is a git worktree (`git rev-parse --git-dir` contains `worktrees/`). If not, STOP and run Phase 3 first.
-2. **Review required before verify** — Do not enter Phase 5 unless mx-team-review and mx-review-triage have run on the current branch diff at least once in this session. If unsure, check for a review report in `.mx/<name>/tmp/`.
+1. **Worktree required before any Edit/Write** — Before making any code change, verify the working directory is a git worktree (`git rev-parse --git-dir` contains `worktrees/`). If not, STOP and run Phase 4 first.
+2. **Review required before verify** — Do not enter Phase 6 unless mx-team-review and mx-review-triage have run on the current branch diff at least once in this session. If unsure, check for a review report in `.mx/<name>/tmp/`.
 
 ---
 
-## Phase 4 — Convergent loop
+## Phase 5 — Convergent loop
 
-### 4a. TDD cycle (repeat per task)
+### 5a. TDD cycle (repeat per task)
 
 #### Iron Law
 
@@ -447,7 +556,7 @@ If any item is unchecked, do not advance to the next task.
 
 Continue until all tasks are done or a milestone is reached.
 
-### 4b. Review (at milestone)
+### 5b. Review (at milestone)
 
 Run /mx-team-review on the diff since the branch was created:
 ```bash
@@ -459,7 +568,7 @@ Run /mx-review-triage with `--source review` directly (no auto-detect).
 **GATE 3**: Show the triage summary, auto-approve all "fix" items, execute immediately. Announce: `Triage auto-approved — executing <N> fixes.`
 
 After fixes are applied:
-- If fixes were made → run the test suite → back to 4a for any new tasks, increment iteration counter
+- If fixes were made → run the test suite → back to 5a for any new tasks, increment iteration counter
 - If clean (no fixes needed) → exit the loop
 
 ### Loop safety limit
@@ -487,15 +596,15 @@ Do not continue automatically. Wait for the user to choose.
 
 ---
 
-## Phase 5 — Verify and commit
+## Phase 6 — Verify and commit
 
 Final verification gate. No partial checks accepted.
 
-### 5.1 — Run full test suite
+### 6.1 — Run full test suite
 
 Run the complete test suite. No partial runs.
 
-Auto-detect runner (same priority as Phase 4a):
+Auto-detect runner (same priority as Phase 5a):
 1. Makefile: `make check` → `make test`
 2. `package.json`: `npm test` / `yarn test` / `pnpm test`
 3. Language: `go test ./...` / `cargo test` / `pytest` / `dotnet test` / `swift test`
@@ -505,7 +614,7 @@ Read the full output. Count failures.
 **If any test fails:** report the failures with output, stop. Do not proceed.
 **If all pass:** state the count explicitly: `N tests passing, 0 failures`.
 
-### 5.2 — Check plan completion
+### 6.2 — Check plan completion
 
 Read `LOCAL_MX/plan.md`.
 
@@ -516,7 +625,7 @@ For every task line, verify its status:
 If any task is still `[ ]`, list them and stop. Do not claim completion with open tasks.
 If all tasks are `[x]`, report: `All N tasks complete.`
 
-### 5.3 — Remind ai-learning
+### 6.3 — Remind ai-learning
 
 Show this reminder:
 
@@ -532,7 +641,7 @@ Record at least one entry — even if no mistakes were made.
 Acceptable entries: techniques confirmed, observations, rules verified.
 ```
 
-### 5.4 — Gate result
+### 6.4 — Gate result
 
 Only if 5.1 and 5.2 both pass:
 
@@ -546,7 +655,7 @@ Ready to commit and push.
 
 If verification passes, run /mx-commit --auto for any remaining staged changes.
 
-### 5.5 — Content check (autonomous cleanup)
+### 6.5 — Content check (autonomous cleanup)
 
 Multiple TDD → review → triage iterations leave behind two kinds of history noise:
 
@@ -555,7 +664,7 @@ Multiple TDD → review → triage iterations leave behind two kinds of history 
 
 **Both passes run autonomously — no user prompt.** Safety comes from a tree-invariant check, not user confirmation: the working-tree hash before and after each pass MUST match. If they differ for any reason, revert that pass to its starting HEAD and continue. Each pass is its own transaction.
 
-#### 5.5.0 — Capture pre-state
+#### 6.5.0 — Capture pre-state
 
 ```bash
 PRE_HEAD=$(git rev-parse HEAD)
@@ -563,9 +672,9 @@ PRE_TREE=$(git rev-parse HEAD^{tree})
 BASE=$(git merge-base HEAD <base-branch>)
 ```
 
-`<base-branch>` is the same one resolved in Phase 3.2.
+`<base-branch>` is the same one resolved in Phase 4.2.
 
-#### 5.5.1 — Pass 1: cancellation cleanup
+#### 6.5.1 — Pass 1: cancellation cleanup
 
 Read every commit's diff in `BASE..HEAD` (`git show --format= <sha>`). Look for hunks that mutually cancel and remove them so they leave no trace in the PR.
 
@@ -636,7 +745,7 @@ PRE_HEAD=$(git rev-parse HEAD)
 PRE_TREE=$(git rev-parse HEAD^{tree})    # must still equal the original PRE_TREE
 ```
 
-#### 5.5.2 — Pass 2: squash-into-parent
+#### 6.5.2 — Pass 2: squash-into-parent
 
 List commits with `git log $BASE..HEAD --pretty=format:'%h %s'` and inspect each diff with `git show --stat <sha>`.
 
@@ -663,7 +772,7 @@ GIT_SEQUENCE_EDITOR=true git rebase -i --autosquash $BASE
 
 Verify the tree invariant the same way as Pass 1. On any failure: `git rebase --abort 2>/dev/null && git reset --hard "$PRE_HEAD"`, log `Pass 2 aborted (tree/rebase mismatch), squashes kept as-is`, proceed.
 
-#### 5.5.3 — Report
+#### 6.5.3 — Report
 
 ```
 Content check:
@@ -672,7 +781,7 @@ Content check:
   Tree unchanged. <N before> → <N after> commits on branch.
 ```
 
-Phase 5 ends here. Proceed to Phase 6.
+Phase 6 ends here. Proceed to Phase 7.
 
 ### Abort path
 
@@ -683,10 +792,10 @@ When verification fails, present three recovery options:
   <specific failure: test output / open tasks>
 
 Recovery options:
-  [A] Investigate — return to Phase 4a to fix the failing test or task
+  [A] Investigate — return to Phase 5a to fix the failing test or task
         Re-entry: specify which task or failing test to address first
   [B] Adjust plan — the failure reveals that a task definition was wrong
-        Re-entry: edit .mx/<name>/plan.md, then re-run Phase 4a for that task
+        Re-entry: edit .mx/<name>/plan.md, then re-run Phase 5a for that task
   [C] Abort branch — this branch is not recoverable
         Will preserve: ~/.mx/<project>/<name>/spec.md and adr.md (design spec)
         Will discard:  .mx/<name>/plan.md
@@ -697,7 +806,7 @@ Wait for the user to choose. Do not attempt to fix anything automatically.
 
 ---
 
-## Phase 6 — PR
+## Phase 7 — PR
 
 Run /mx-pr. It will:
 - Draft the PR description from the spec and git log
@@ -721,31 +830,31 @@ After merge: /mx-flow finish <name>
 
 ---
 
-## Phase 7 — Finish (post-merge cleanup)
+## Phase 8 — Finish (post-merge cleanup)
 
 Triggered by `/mx-flow finish <name>`. This phase runs independently from the main pipeline.
 
-### 7.1 — Confirm the PR is merged
+### 8.1 — Confirm the PR is merged
 
 Ask the user to confirm the PR is merged before proceeding.
 If running from within a worktree, remind the user to switch back to the main branch first — worktree removal must be run from outside the worktree.
 
-### 7.2 — Delete the plan file
+### 8.2 — Delete the plan and scope files
 
 ```bash
-rm .mx/<name>/plan.md
+rm -f .mx/<name>/plan.md .mx/<name>/scope.yaml
 ```
 
-The plan has no value after all tasks are done. Report: `Deleted .mx/<name>/plan.md`
+Both files describe in-flight work — they have no value after all tasks are done. Report: `Deleted .mx/<name>/plan.md and scope.yaml`
 
-### 7.3 — Preserve design spec and ADRs
+### 8.3 — Preserve design spec and ADRs
 
 Do **not** delete `~/.mx/<project>/<name>/spec.md` or `~/.mx/<project>/<name>/adr.md`.
 The design spec records what was built, the ADRs record why — both have lasting documentation value.
 
 Report: `Kept ~/.mx/<project>/<name>/spec.md and adr.md (preserved)`
 
-### 7.4 — Clean up temp files
+### 8.4 — Clean up temp files
 
 List all files in `.mx/<name>/tmp/` with timestamps:
 
@@ -756,7 +865,7 @@ ls -lt .mx/<name>/tmp/ 2>/dev/null
 Show the list to the user and ask which to delete. Delete the selected ones.
 If `.mx/<name>/tmp/` is empty after deletion, remove the directory.
 
-### 7.5 — Remove the worktree
+### 8.5 — Remove the worktree
 
 ```bash
 git worktree remove .mx/<name>/worktree
@@ -777,7 +886,7 @@ Either:
 
 Do not force-remove automatically. Wait for the user to decide.
 
-### 7.6 — Delete the branch
+### 8.6 — Delete the branch
 
 ```bash
 git branch -d <branch-name>
@@ -797,18 +906,18 @@ To force delete:
 
 Do not force-delete automatically. Wait for the user to confirm.
 
-### 7.7 — Clean up local .mx directory
+### 8.7 — Clean up local .mx directory
 
 If `.mx/<name>/` is now empty, remove it:
 ```bash
 rmdir .mx/<name>/ 2>/dev/null
 ```
 
-### 7.8 — Summary
+### 8.8 — Summary
 
 ```
 Finished <name>:
-  ✓ Plan deleted (.mx/<name>/plan.md)
+  ✓ Plan and scope deleted (.mx/<name>/plan.md, scope.yaml)
   ✓ Design spec and ADRs preserved at ~/.mx/<project>/<name>/
   ✓ Temp files cleared (.mx/<name>/tmp/)
   ✓ Worktree removed
