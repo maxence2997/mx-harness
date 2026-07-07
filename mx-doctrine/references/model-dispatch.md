@@ -1,0 +1,164 @@
+# Model dispatch — who does what, at which tier
+
+> Shipped with mx-harness. Written 2026-07-07; environment facts in §1 were
+> verified against Claude Code docs and live tool schemas that day. **If your
+> session's tool schema disagrees with §1, trust the schema, then update this
+> file** (procedure: `maintenance.md`, same directory).
+>
+> Referenced by the mx-* SKILL.md files wherever they spawn sub-agents.
+> Companion files: `judgment-rubrics.md` (when to escalate/stop/ask),
+> `delegation-templates.md` (fill-in-the-blank prompts).
+
+## §0 First: which kind of harness are you in?
+
+Check your own tool schema for a subagent-spawning tool (`Agent`, or its
+legacy alias `Task`).
+
+- **Present** → you are an orchestrator-capable harness (Claude Code).
+  Everything below applies.
+- **Absent** → you are a single-context harness (Codex CLI, Copilot,
+  Cursor) **or you are yourself a subagent**. Every delegation rule in this
+  file is void for you: do the work inline, use each skill's single-pass
+  fallback where one is defined (e.g. mx-team-review Step 4B), label any
+  self-checked verification as single-context (§5), and keep your final
+  report terse.
+
+## §1 Verified environment facts (Claude Code, 2026-07-07)
+
+- Subagents spawn via the **Agent** tool (renamed from `Task` in v2.1.63;
+  `Task` still works as an alias). Common types: `Explore` (read-only
+  search — cannot edit), `Plan` (read-only architecture planning),
+  `general-purpose` (full tools), plus a default catch-all. Check the
+  types listed in your own session; do not assume this list.
+- Agent accepts a **`model` override**. Tiers available 2026-07-07:
+  `haiku` | `sonnet` | `opus` (a higher limited-availability tier may
+  appear in some environments — never depend on it). Model names WILL
+  drift; read the enum in your schema, map by tier: *small/cheap*,
+  *mid/default*, *strongest available*.
+- The Agent tool has **no effort parameter** — tier choice IS the effort
+  knob. (Per-agent effort exists only inside Claude Code's opt-in Workflow
+  orchestration tool; mx-* skills do not require it.)
+- Independent Agent calls placed in ONE message run in parallel — that is
+  how mx-team-review's three reviewers and mx-flow's 5a-parallel batches
+  get their concurrency.
+- `allowed-tools` in SKILL.md frontmatter is a **permission pre-grant, not
+  a whitelist**: unlisted tools remain callable (with permission prompts).
+- `${CLAUDE_SKILL_DIR}` expands to the directory containing the running
+  SKILL.md — the base for `references/` and sibling-skill paths.
+
+## §2 Commander doesn't descend
+
+The orchestrating conversation's context is the scarcest resource in the
+session. It is for decisions, small load-bearing edits, and talking to the
+user — protect it.
+
+**Delegate (don't do inline):**
+
+| Work | Route to |
+|---|---|
+| Reading >3 files or >~400 lines to answer a question | `Explore` |
+| Repo-wide grep/sweep with unpredictable hit count | `Explore` |
+| Web research beyond one page | `general-purpose` — synthesis only comes back |
+| Batch mechanical edits across >5 files | `general-purpose` with an exact recipe |
+| Log/CI output analysis >200 lines | any worker — the 5-line verdict comes back |
+| Verification of your own deliverable | fresh-context agent (§5) — never yourself |
+
+**Do inline (delegation would be waste):**
+- A single lookup in a file you can name.
+- The core edit the whole task is about — the judgment IS the work.
+- Anything where writing the delegation prompt costs more than doing it.
+- Reading back subagent reports; talking to the user.
+
+## §3 Every delegation carries three things
+
+1. **Goal + motivation** — what and why, so the agent resolves ambiguity in
+   the right direction instead of guessing.
+2. **Acceptance criteria** — enumerable checks the agent must satisfy and
+   self-report against, one by one.
+3. **Report format** — exactly what to return.
+
+The report contract (canonical block in `delegation-templates.md`, top):
+conclusions + `file:line` only; quoted excerpts capped at ±5 lines; any
+output beyond ~50 lines goes to a file, and the agent returns the path plus
+a ≤10-line summary. A subagent's final message is data for the
+orchestrator, not prose for a human.
+
+## §4 Routing table
+
+Default worker is the **mid tier (`sonnet`)**. Escalate on signal (§6), not
+on vibes. Set `model` explicitly on every Agent call; omitting it inherits
+the main-loop model — do that only deliberately, not as a shortcut.
+
+| Tier | Route here | Never route here |
+|---|---|---|
+| small (`haiku`) | Batch-apply of an exact, already-proven recipe (rename sweep, import fix); trivial lookups whose answer gets independently verified | Anything needing repo-idiom judgment, debugging, API design |
+| mid (`sonnet`) | Searches (Explore), scope analysis, well-specified implementation where the failing test already exists, first-pass reviews, read-back verification, research summarization | Ambiguous design work; a subtask that already failed twice at this tier (§6) |
+| strongest (`opus`) | Design/architecture decisions, gnarly debugging, adversarial review of risky diffs, spec writing, second opinions on high-risk judgment, anything mid tier failed at twice | Mechanical bulk work (pure waste) |
+
+**Where the mx-* skills dispatch (defaults, override on signal):**
+
+| Dispatch site | Type / tier |
+|---|---|
+| mx-flow Phase 3 scope analyzer | `Explore`, mid |
+| mx-flow 5a-parallel task agents | default type (needs Edit/Write/Bash), mid; a task scoped `complexity: L` that also touches concurrency or public API → strongest |
+| mx-team-review reviewers ×3 | mid |
+| mx-team-review tech-lead synthesizer | mid; strongest when the diff touches concurrency, auth/security, data migration, or public API |
+| Read-back verification (any skill) | mid, fresh context |
+| Escalation target after two failed rounds | strongest, with the full failure trail |
+
+## §5 Verification is never self-verification
+
+The context that produced a change may not be the one that approves it.
+Strength order — use the strongest available:
+
+1. **Mechanical evidence** (strongest): the test suite actually run with
+   output shown; the tree-hash invariant compared; `jq empty` on JSON.
+   "It should pass" is not a result. Tests not runnable → say so explicitly.
+2. **Fresh-context read-back**: for prose deliverables (spec, plan, PR
+   body, docs), spawn a fresh agent with the acceptance criteria; it reads
+   the file cold and returns PASS/FAIL per criterion, each with one line of
+   quoted evidence. FAIL → fix → re-verify (counts as a round, §6).
+3. **Second opinion on high-risk judgment** (irreversible ops, public API
+   shape, schema, concurrency model): an independent agent at the strongest
+   tier prompted to **REFUTE** your conclusion — or 2–3 candidate solutions
+   plus a judge agent choosing with reasons. Skeptic can't refute with
+   specifics → proceed. Skeptic refutes → treat as a failed round.
+4. **Single-context self-check** (weakest — only when §0 says no subagent
+   tool exists): re-read your own output against the criteria and **label
+   the result** "self-checked, single-context" in the report. Never present
+   it as independent verification.
+
+## §6 Escalation / de-escalation ladder
+
+**Counting rule (canonical — every other file defers here):** a *round* =
+one attempt whose verification failed. Rounds count **per subtask at a
+given tier, regardless of approach** — switching approach does NOT reset
+the count. Budgets: small tier 1 round, mid 2, strongest 2. Absolute cap:
+**4 failed rounds on one subtask across all tiers → stop and ask the
+user.** The absolute cap always wins over per-tier budgets: a subtask that
+already burned 3 rounds at lower tiers gets only 1 round at the strongest
+tier before stopping.
+
+- **Small tier errs once** → redo at mid immediately. No second attempt.
+- **Mid tier fails the same subtask twice** → escalate to strongest **with
+  the full failure trail**: what was tried, exact diffs/prompts, exact
+  error output. Escalating without the trail wastes the stronger model —
+  it will repeat attempt #1.
+- **Strongest tier fails twice** → no longer a capability problem. Stop.
+  Apply `judgment-rubrics.md` §4 (wrong-direction signals): change the
+  approach or ask the user with concrete options.
+- **De-escalate after solving**: when a hard instance cracks, extract the
+  recipe (exact steps, exact pattern) and batch-apply the remaining
+  instances at the small/mid tier. Don't keep paying top-tier prices for
+  stamped-out work.
+- A retry only counts as *new information* (not a burned round) when it
+  feeds the agent something it demonstrably lacked — an unread spec, a
+  missing constraint — not a rephrased prompt.
+
+## §7 Cost discipline
+
+Escalation is cheap insurance on load-bearing work and pure waste on
+mechanical work. In doubt between mid and strongest for a *decision* →
+take strongest. In doubt between mid and small for *execution* → take mid.
+Never run parallel agents just to look thorough: each must have a distinct
+job and a distinct report you will actually read.

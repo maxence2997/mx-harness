@@ -94,6 +94,7 @@ These skills also run inside `mx-flow`, but you can use them independently anyti
 | [mx-commit](mx-commit/)               | Structured commit with enforced message format                      |
 | [mx-pr](mx-pr/)                       | Draft, review, and publish a PR to GitHub / GitLab / Bitbucket      |
 | [mx-status](mx-status/)               | Show current stage, progress, and next action for all features      |
+| [mx-doctrine](mx-doctrine/)           | Shared execution doctrine: model dispatch, escalation, verification, judgment rubrics |
 
 ---
 

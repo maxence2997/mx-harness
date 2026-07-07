@@ -2,6 +2,10 @@
 
 A collection of user-invocable agent skills (slash commands) that wrap the engineering lifecycle: spec → plan → TDD → review → commit → PR. Not an app. Nothing to build, nothing to test in the runtime sense.
 
+## Before editing anything here
+
+Read `mx-doctrine/references/maintenance.md` first — it defines what you may change autonomously vs. what needs the user, the lesson write-back format, and the compaction triggers. `mx-doctrine/references/diagnosis.md` records why the suite is structured this way (2026-07-07 restructure) and includes a 60-second re-audit procedure. Two rules worth restating even here: keep every SKILL.md `description:` ≤ 50 words (it loads into every session on every installed machine), and never state the same rule in two places — point at the canonical copy instead.
+
 ## Repo layout
 
 Each top-level directory is **one skill**. The contract per skill:
