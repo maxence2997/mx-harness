@@ -1,12 +1,10 @@
 ---
 name: mx-brainstorm
 description: >
-  Turn a rough idea into an approved design spec before any code is written.
-  Asks one focused question at a time, proposes 2-3 approaches with trade-offs,
-  writes the approved design spec to .mx/<name>/spec.md, and automatically records
-  an ADR at .mx/<name>/adr.md.
-  Hard gate: no implementation skill may be invoked until the user approves the design spec.
-  Use at the start of any new feature, change, or non-trivial fix.
+  Turn a rough idea into an approved design spec before any code is written:
+  one question at a time, 2-3 distinct approaches with trade-offs, spec
+  and ADR written to ~/.mx/<project>/<name>/. Hard gate: no implementation until
+  the user approves the spec. Use at the start of any feature or non-trivial fix.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 source: https://github.com/maxence2997/mx-harness/tree/main/mx-brainstorm
@@ -16,6 +14,7 @@ allowed-tools:
   - Read
   - Glob
   - Grep
+  - Write
 ---
 
 # mx-brainstorm
@@ -31,16 +30,38 @@ allowed-tools:
 
 ## Operating principles
 
-**Don't assume. Don't hide confusion. Surface tradeoffs.** These apply at every step below — not just Step 1.
+**Don't assume. Don't hide confusion. Surface tradeoffs.** These apply at
+every step below — not just Step 1.
 
 - **State assumptions explicitly.** If uncertain, ask rather than guess.
-- **Present multiple interpretations.** When the user's request is ambiguous, surface the readings and let the user pick. Do not silently choose one and proceed.
-- **Push back when warranted.** If a simpler approach exists, say so. If a proposed option is over-engineered for the stated problem, name it.
-- **Stop when confused.** Name what is unclear and ask for clarification. Do not paper over confusion with plausible-sounding text.
+- **Present multiple interpretations.** When the user's request is
+  ambiguous, surface the readings and let the user pick. Do not silently
+  choose one and proceed.
+- **Push back when warranted.** If a simpler approach exists, say so. If a
+  proposed option is over-engineered for the stated problem, name it.
+- **Stop when confused.** Name what is unclear and ask for clarification.
+  Do not paper over confusion with plausible-sounding text.
 
 Applied to this skill specifically:
-- In Step 2, options must be **genuinely distinct** — do not pad to three options by inventing a contrived variant. Two real options beats three fake ones.
-- In Step 2, prefer the **minimum approach that solves the stated problem**. Larger options must justify their extra scope explicitly in `Best when`.
+- In Step 2, options must be **genuinely distinct** — do not pad to three
+  options by inventing a contrived variant. Two real options beats three
+  fake ones.
+- In Step 2, prefer the **minimum approach that solves the stated
+  problem**. Larger options must justify their extra scope explicitly in
+  `Best when`.
+
+### Side requests
+
+At any step, the user may ask for something mid-conversation (e.g. "open
+an issue", "add a comment", "check a file"). When this happens:
+
+- Execute **exactly** what was requested — nothing more
+- Do not make additional code changes, file edits, or actions that were
+  not asked for
+- After completing the side request, return to the brainstorm conversation
+
+Example: "go open an issue describing this" → open the issue, stop. Do not
+also edit source files.
 
 ---
 
@@ -57,8 +78,11 @@ Then ask the user **one question at a time** to clarify:
 Rules:
 - One question per message — never bundle multiple questions
 - Prefer multiple-choice over open-ended where possible
-- There is no question limit — keep asking until the picture is genuinely clear
-- If invoked from mx-flow, the topic is already provided — begin with the first clarifying question immediately, do not ask if the user wants to start
+- There is no question limit — keep asking until the picture is genuinely
+  clear
+- If invoked from mx-flow, the topic is already provided — begin with the
+  first clarifying question immediately, do not ask if the user wants to
+  start
 
 When you believe you have enough context, ask before proposing approaches:
 
@@ -68,16 +92,6 @@ or shall we move on to exploring approaches?
 ```
 
 Do not proceed to Step 2 until the user confirms.
-
-### Side requests
-
-The user may ask for something mid-conversation (e.g. "open an issue", "add a comment", "check a file"). When this happens:
-
-- Execute **exactly** what was requested — nothing more
-- Do not make additional code changes, file edits, or actions that were not asked for
-- After completing the side request, return to the brainstorm conversation
-
-Example: "go open an issue describing this" → open the issue, stop. Do not also edit source files.
 
 ---
 
@@ -93,33 +107,27 @@ Best when: <the condition that makes this the right choice>
 ```
 
 Do not recommend one option as "best" — let the user decide.
-If you have a strong preference based on the context, state the reason once, briefly.
+If you have a strong preference based on the context, state the reason
+once, briefly.
 
 ---
 
 ## Step 3 — Refine
 
-Ask follow-up questions one at a time if the user's choice reveals new ambiguities.
-Iterate until the design is unambiguous.
+Ask follow-up questions one at a time if the user's choice reveals new
+ambiguities. Iterate until the design is unambiguous.
 
-**Hard gate: do not proceed to Step 4 until the user explicitly approves the design spec.**
-
-### Side requests during brainstorm
-
-The user may ask for something while the brainstorm conversation is in progress (e.g. "open an issue", "add a comment", "check a file"). When this happens:
-
-- Execute **exactly** what was requested — nothing more
-- Do not make additional code changes, file edits, or actions that were not asked for
-- After completing the side request, return to the brainstorm conversation
-
-Example: "go open an issue describing this" → open the issue, stop. Do not also edit source files.
+**Hard gate: do not proceed to Step 4 until the user explicitly approves
+the design spec.** This gate stays human even when invoked from an
+orchestrator — it is mx-flow's GATE 1.
 
 ---
 
 ## Step 4 — Write the design spec
 
 Resolve the MX directory:
-- Get the repo root name: final path component of `git rev-parse --show-toplevel`
+- Get the repo root name: final path component of
+  `git rev-parse --show-toplevel`
 - MX = `~/.mx/<project>/` (Unix) or `%USERPROFILE%\.mx\<project>\` (Windows)
 - Create `MX/<name>/` if it does not exist
 
@@ -151,9 +159,9 @@ Show the design spec to the user for final review. Allow adjustments.
 
 After the spec is confirmed, automatically write the ADR without asking.
 
-Read `references/adr-format.md` (located in the same directory as this SKILL.md)
-for the format and rules. Populate from the brainstorm conversation and append to
-`MX/<name>/adr.md`.
+Read `references/adr-format.md` (located in the same directory as this
+SKILL.md) for the format and rules. Populate from the brainstorm
+conversation and append to `MX/<name>/adr.md`.
 
 Report: `ADR saved to ~/.mx/<project>/<name>/adr.md`
 

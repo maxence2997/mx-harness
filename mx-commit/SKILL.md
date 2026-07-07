@@ -2,11 +2,11 @@
 name: mx-commit
 description: >
   Commit all pending changes following the project's commit message convention.
-  Inspects both staged and unstaged changes, groups them by logical concern,
+  Inspects staged and unstaged changes, groups them by logical concern,
   stages and commits each group separately. Enforces: one logical change per
   commit, type prefix, 50-char subject limit, numbered body items in
   "reason → change" format, English only.
-  Usage: /mx-commit
+  Usage: /mx-commit [--auto]
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 source: https://github.com/maxence2997/mx-harness/tree/main/mx-commit
@@ -27,7 +27,7 @@ allowed-tools:
 /mx-commit --auto   # non-interactive — commits all groups immediately without confirmation
 ```
 
-Use `--auto` when invoked from an orchestrating skill (mx-tdd, mx-flow). Use the default when invoked directly by the user.
+Use `--auto` when invoked from an orchestrating skill (e.g. mx-flow). Use the default when invoked directly by the user.
 
 ---
 

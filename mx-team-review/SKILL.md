@@ -1,14 +1,11 @@
 ---
 name: mx-team-review
 description: >
-  Multi-perspective code review for local changes or entire files.
-  Reviews git diffs (staged, commit ranges, branch comparisons) or whole files/directories.
-  Three parallel review perspectives (Senior Engineer, SRE Guardian, Future Maintainer)
-  feed into a Tech Lead who synthesizes the final report with noise filtering and conflict resolution.
-  Auto-detects language from file extensions and loads language-specific review standards.
-  Supports parallel subagents (Claude Code) or single-pass fallback (Copilot, Cursor, etc.).
-  Usage: /team-review [diff-spec] or /team-review --repo <path>
-  Supported languages: Go (.go), C# .NET 8 (.cs)
+  Multi-perspective code review for git diffs or whole files: three parallel
+  reviewers (Senior Engineer, SRE Guardian, Future Maintainer) synthesized by a
+  Tech Lead, with language-specific standards (Go, C#). Use to review local
+  changes before commit/merge. Usage: /mx-team-review [diff-spec] or
+  /mx-team-review --repo <path>
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 source: https://github.com/maxence2997/mx-harness/tree/main/mx-team-review
@@ -27,9 +24,17 @@ allowed-tools:
 ## Trigger
 
 ```
-/team-review [diff-spec]
-/team-review --repo <path>
+/mx-team-review [diff-spec]
+/mx-team-review --repo <path>
 ```
+
+## Orchestrated mode
+
+Step 6 (interactive review of the report) pauses for the user. **When
+invoked from an orchestrator that declares auto-proceed (e.g. mx-flow
+Phase 5b), skip the pause**: save and display the report, then return
+control — triage happens in the orchestrator's next step. When invoked
+directly by the user, Step 6 applies as written.
 
 ---
 
@@ -39,19 +44,20 @@ Parse the user's argument to determine the review mode:
 
 | Invocation | Mode | Action |
 |---|---|---|
-| `/team-review` (no args) | diff | `git diff --cached` (staged changes) |
-| `/team-review HEAD~3` | diff | `git diff HEAD~3..HEAD` |
-| `/team-review main..HEAD` | diff | `git diff main..HEAD` |
-| `/team-review abc..def` | diff | `git diff abc..def` |
-| `/team-review --repo src/service/` | repo | Read all code files in directory |
-| `/team-review --repo src/service/order.go` | repo | Read specific file(s) |
+| `/mx-team-review` (no args) | diff | `git diff --cached` (staged changes) |
+| `/mx-team-review HEAD~3` | diff | `git diff HEAD~3..HEAD` |
+| `/mx-team-review main..HEAD` | diff | `git diff main..HEAD` |
+| `/mx-team-review abc..def` | diff | `git diff abc..def` |
+| `/mx-team-review --repo src/service/` | repo | Read all code files in directory |
+| `/mx-team-review --repo src/service/order.go` | repo | Read specific file(s) |
 
 **Argument parsing:**
 1. If argument starts with `--repo` → repo mode. The path(s) follow.
 2. Otherwise → diff mode. If no argument, default to `--cached`.
 
 **Validation:**
-- Diff mode: run the git diff command. If output is empty, print `No changes to review.` and stop.
+- Diff mode: run the git diff command. If output is empty, print
+  `No changes to review.` and stop.
 - Repo mode: check if path exists. If not, print error and stop.
 
 Display: `📋 Reviewing: {description of what is being reviewed}`
@@ -60,7 +66,8 @@ Display: `📋 Reviewing: {description of what is being reviewed}`
 
 ## Step 2: Language Detection
 
-Scan file extensions from the diff output (file paths in diff headers) or the target file paths:
+Scan file extensions from the diff output (file paths in diff headers) or
+the target file paths:
 
 | Extension | Language Spec |
 |-----------|--------------|
@@ -68,11 +75,12 @@ Scan file extensions from the diff output (file paths in diff headers) or the ta
 | `.cs` | `references/dotnet.md` |
 | other | skip (no language spec loaded) |
 
-**Always load** `references/principles.md` (cross-language core principles).
-Then load the matched language-specific spec file(s).
+**Always load** `references/principles.md` (cross-language core
+principles). Then load the matched language-specific spec file(s).
 If multiple languages detected, load all matched specs.
 
-Reference files are located relative to this SKILL.md file (sibling `references/` directory).
+Reference files are located relative to this SKILL.md file (sibling
+`references/` directory).
 
 Display: `🔍 Detected: {language list}`
 
@@ -82,253 +90,57 @@ Display: `🔍 Detected: {language list}`
 
 ### Diff Mode
 
-Run the git diff command determined in Step 1. The diff output is the review material.
+Run the git diff command determined in Step 1. The diff output is the
+review material.
 
 ### Repo Mode
 
-Use Glob to list files matching the path. Use Read to load each file's content.
+Use Glob to list files matching the path. Use Read to load each file's
+content.
 
 **Skip these files/directories:**
 - Binary files (images, compiled assets)
 - Lock files (`go.sum`, `package-lock.json`, `yarn.lock`)
 - Vendor directories (`vendor/`, `node_modules/`)
 - Generated files (`*.pb.go`, `*.generated.cs`)
-- Config/data files (`.json`, `.yaml`, `.yml`, `.toml`, `.xml`) unless explicitly targeted
+- Config/data files (`.json`, `.yaml`, `.yml`, `.toml`, `.xml`) unless
+  explicitly targeted
 
 ---
 
 ## Step 4: Multi-Perspective Review
 
-This step has two execution modes. **Choose based on available capabilities:**
+**First, read `references/prompts.md`** (sibling `references/` directory).
+It contains the reviewer output schema, the line-number rules, the three
+reviewer prompts, and the Tech Lead synthesizer prompt used below.
 
-- **Step 4A** — If the **Agent tool** (or **Task tool**) is available (e.g., Claude Code): dispatch four subagents (three reviewers in parallel, then one synthesizer).
-- **Step 4B** — If neither tool is available (e.g., Copilot, Cursor, or other platforms): perform all four perspectives sequentially in a single pass.
+This step has two execution modes. **Choose based on available
+capabilities:**
+
+- **Step 4A** — If the **Agent tool** (or its legacy alias **Task**) is
+  available (e.g., Claude Code): dispatch four subagents (three reviewers
+  in parallel, then one synthesizer).
+- **Step 4B** — If neither is available (e.g., Copilot, Cursor, or other
+  platforms): perform all four perspectives sequentially in a single pass.
 
 Both modes produce the **same final output**, so Step 5 works identically.
-
----
-
-### Shared: Reviewer Output Schema (Agents 1-3)
-
-Each reviewer must produce a JSON object with this structure:
-
-```json
-{
-  "agent": "<agent-id>",
-  "issues": [
-    {
-      "file": "relative/path/to/File.go",
-      "line": 42,
-      "severity": "error | warning | suggestion",
-      "category": "logging | race-condition | testing | comment | exception | performance | async | di | architecture",
-      "message": "Description of the issue",
-      "suggestion": "Concrete improvement, may include a code snippet"
-    }
-  ],
-  "highlights": [
-    {
-      "message": "What was done well — design decision, pattern, or implementation worth noting"
-    }
-  ]
-}
-```
-
-`highlights` are positive observations only. They are informational and will **not** be triaged.
-
-### Shared: Line Number Rules
-
-**Diff mode:**
-- The `line` field must be the **new-side line number** from the diff hunk header.
-- A diff hunk like `@@ -10,5 +12,8 @@` means new-side lines start at 12.
-- Only lines prefixed with `+` or ` ` (context) in the diff have valid new-side line numbers.
-- Parse the diff hunk headers (`@@ ... +N,M @@`) to determine valid line ranges.
-- Count lines from the `+N` start: context lines (` `) and added lines (`+`) increment the new-side counter; removed lines (`-`) do not.
-
-**Repo mode:**
-- The `line` field is the actual line number in the file.
-
-**Both modes:**
-- If the issue is about a **missing** element (e.g., missing logging, missing test) that cannot be pinpointed to a specific line, use `0`.
-- Never guess line numbers. If you cannot determine the exact line, use `0`.
-
----
-
-### Shared: Three Reviewer Perspectives
-
-#### Agent 1 — Senior Engineer
-
-```
-You are a Senior Engineer conducting a code review.
-You focus on design quality and implementation correctness.
-
-Focus areas (issues):
-- SRP: constructor only does dependency injection — no logic, no I/O, no side effects
-- Is business logic leaking into the infrastructure layer? Are dependency directions correct (infrastructure → application → domain)?
-- Is there a simpler, more direct implementation? Is this over-engineered?
-- Are error handling design choices correct (wrap with context, sentinel errors, custom types)?
-- Does this follow the language's idiomatic patterns and existing codebase conventions?
-- Are there unnecessary abstractions or premature generalizations?
-
-Focus areas (highlights):
-- Clean separation of concerns or layering done well
-- Idiomatic patterns applied correctly
-- Good abstraction that makes the code easier to extend or test
-- Error handling that is explicit and well-structured
-- Any design decision that shows clear thinking
-
-Core principles:
-{PRINCIPLES_CONTENT}
-
-Language-specific spec:
-{LANGUAGE_SPEC_CONTENT}
-
-Review material:
-{CODE_CONTENT}
-
-Output your findings as a JSON object matching the required schema.
-Set "agent" to "senior-engineer".
-Output JSON only. No prose, no markdown, no explanation outside the JSON.
-```
-
-#### Agent 2 — SRE Guardian
-
-```
-You are an SRE responsible for production stability, conducting a code review.
-Your only concern: what will go wrong when this hits production?
-
-Focus areas (issues):
-- Is there enough logging to debug an incident? Are logs structured with context?
-- Can errors propagate silently? Are all catch/error paths explicitly handled?
-- Are there race conditions under concurrent load?
-- Are resources (connections, streams, goroutines) properly released?
-- Is there an obvious performance hazard (N+1, missing cache, blocking async)?
-
-Focus areas (highlights):
-- Logging that provides genuinely useful incident context
-- Defensive patterns that prevent silent failures
-- Proper resource cleanup or lifecycle management
-- Timeout and retry logic that is well-reasoned
-- Any operational detail that makes this safer to run in production
-
-Core principles:
-{PRINCIPLES_CONTENT}
-
-Language-specific spec:
-{LANGUAGE_SPEC_CONTENT}
-
-Review material:
-{CODE_CONTENT}
-
-Output your findings as a JSON object matching the required schema.
-Set "agent" to "sre-guardian".
-Output JSON only. No prose, no markdown, no explanation outside the JSON.
-```
-
-#### Agent 3 — Future Maintainer
-
-```
-You are an engineer who will inherit this code in 6 months, conducting a code review.
-You have no context beyond what is written.
-
-Focus areas (issues):
-- Do comments explain WHY, not just what? (What is already in the code.)
-- Do log messages carry enough context to understand what happened without reading the code?
-- Are business rules documented where they are enforced?
-- Are test scenarios comprehensive enough to understand expected behavior?
-- Is naming semantically clear without requiring internal knowledge?
-
-Focus areas (highlights):
-- Comments that explain non-obvious decisions or trade-offs clearly
-- Naming that communicates intent without requiring internal knowledge
-- Tests that double as documentation of expected behaviour
-- Any structure or pattern that makes the code easy to navigate for someone new
-
-Core principles:
-{PRINCIPLES_CONTENT}
-
-Language-specific spec:
-{LANGUAGE_SPEC_CONTENT}
-
-Review material:
-{CODE_CONTENT}
-
-Output your findings as a JSON object matching the required schema.
-Set "agent" to "future-maintainer".
-Output JSON only. No prose, no markdown, no explanation outside the JSON.
-```
-
----
-
-### Agent 4 — Tech Lead (Synthesizer)
-
-The Tech Lead receives all three reviewers' outputs and produces the **final review**.
-
-```
-You are a Tech Lead. You just received independent code review findings from three senior engineers, each reviewing from a different perspective (design quality, production stability, maintainability).
-
-Your job is to synthesize ONE final review — not to relay their opinions.
-
-Rules for issues:
-1. DEDUPLICATE: Multiple findings about the same location and issue → merge into one entry. Pick the clearest message and most actionable suggestion.
-2. CONFIDENCE WEIGHTING: If multiple reviewers independently flagged the same issue, you should be more confident it is a real problem. This may justify raising severity. But do NOT tell the reader how many reviewers flagged it.
-3. RESOLVE CONFLICTS: If reviewers disagree, make the final call. Give one clear recommendation.
-4. FILTER NOISE: Remove false positives, overly speculative suggestions, and findings that don't apply to the actual code context.
-5. SEVERITY ASSIGNMENT: Use your judgment. error = will cause bugs/crashes/data loss. warning = creates tech debt or operational risk. suggestion = improvement opportunity.
-6. SORT: Group by file, then sort by severity (error → warning → suggestion).
-
-Rules for highlights:
-7. DEDUPLICATE: Merge highlights about the same thing into one clear statement.
-8. KEEP GENUINE: Only include highlights that reflect a real, specific strength — not generic praise.
-9. NO TRIAGE: Highlights are informational only. Do not assign severity or suggest changes.
-
-Input — Reviewer findings:
-{AGENT_1_JSON}
-{AGENT_2_JSON}
-{AGENT_3_JSON}
-
-Original code for cross-verification:
-{CODE_CONTENT}
-
-Core principles (for severity calibration):
-{PRINCIPLES_CONTENT}
-
-Output a single JSON object:
-{
-  "issues": [
-    {
-      "file": "relative/path",
-      "line": 42,
-      "severity": "error | warning | suggestion",
-      "category": "logging | race-condition | testing | comment | exception | performance | async | di | architecture",
-      "message": "Clear description of the issue",
-      "suggestion": "Concrete improvement, may include a code snippet"
-    }
-  ],
-  "highlights": [
-    {
-      "message": "What was done well"
-    }
-  ]
-}
-
-Output JSON only. No prose, no markdown, no explanation outside the JSON.
-```
-
----
 
 ### Step 4A: Parallel Dispatch (Agent/Task tool available)
 
 **Phase 1 — Three Reviewers (parallel):**
 
-Dispatch Agent 1, Agent 2, and Agent 3 simultaneously as parallel subagents.
+Dispatch Agent 1 (Senior Engineer), Agent 2 (SRE Guardian), and Agent 3
+(Future Maintainer) simultaneously — all three Agent calls in a single
+message.
 
 Each subagent receives:
 - Full diff or file content from Step 3
 - Full content of `references/principles.md`
 - Full content of matched language spec files
-- Its own perspective prompt (from above)
+- Its own perspective prompt plus the shared schema and line-number rules
+  (all from `references/prompts.md`)
 
-If using Claude Code's Agent tool, set `model: "sonnet"` to optimize token cost.
+Model: set `model: "sonnet"` (mid tier) for the three reviewers.
 
 Wait for all three to complete. Collect their JSON outputs.
 
@@ -339,35 +151,43 @@ Dispatch Agent 4 (Tech Lead) with:
 - The original diff/code content (for cross-verification)
 - The `references/principles.md` content (for severity calibration)
 
-If using Claude Code's Agent tool, set `model: "sonnet"` to optimize token cost.
+Model: `model: "sonnet"` by default. **Escalate the Tech Lead to the
+strongest available tier** (e.g. `opus`) when the diff touches any of:
+concurrency primitives, auth/security, data migration, or a public API
+surface — synthesis quality there is worth the cost (see
+`../mx-doctrine/references/model-dispatch.md` §4; if missing, apply this
+sentence as written).
 
-Collect the final merged JSON array.
-
----
+Collect the final merged JSON.
 
 ### Step 4B: Single-Pass Fallback (no Agent/Task tool)
 
-Perform all four perspectives yourself, sequentially.
+Perform all four perspectives yourself, sequentially, using the prompts
+from `references/prompts.md`:
 
-You have access to:
-- Full diff or file content from Step 3
-- Full content of `references/principles.md`
-- Full content of matched language spec files
+1. Adopt the **Senior Engineer** perspective. Analyze the entire code.
+   Produce its JSON output (`"agent": "senior-engineer"`).
+2. Adopt the **SRE Guardian** perspective. Analyze independently — do not
+   skip areas already covered. Produce its JSON output
+   (`"agent": "sre-guardian"`).
+3. Adopt the **Future Maintainer** perspective. Analyze independently.
+   Produce its JSON output (`"agent": "future-maintainer"`).
+4. Adopt the **Tech Lead** perspective. Take all three JSON outputs and
+   synthesize the final merged JSON.
 
-**Execution:**
+**Important:** Each perspective must be treated as an independent review.
+Do not let findings from one perspective influence another. Duplicates are
+expected — the Tech Lead handles merging.
 
-1. Adopt the **Senior Engineer** perspective. Analyze the entire code. Produce its JSON output (`"agent": "senior-engineer"`).
-2. Adopt the **SRE Guardian** perspective. Analyze independently — do not skip areas already covered. Produce its JSON output (`"agent": "sre-guardian"`).
-3. Adopt the **Future Maintainer** perspective. Analyze independently. Produce its JSON output (`"agent": "future-maintainer"`).
-4. Adopt the **Tech Lead** perspective. Take all three JSON outputs and synthesize the final merged JSON array.
-
-**Important:** Each perspective must be treated as an independent review. Do not let findings from one perspective influence another. Duplicates are expected — the Tech Lead handles merging.
+Single-pass reviews share one context — genuinely useful, but weaker than
+independent reviewers. Note `(single-pass mode)` in the report header so
+readers calibrate their trust.
 
 ---
 
 ## Step 5: Report Generation
 
-Take the Tech Lead's final JSON array and format the report.
+Take the Tech Lead's final JSON and format the report.
 
 **Report format:**
 
@@ -411,15 +231,23 @@ If there are no highlights, omit the ✨ Highlights section entirely.
 
 1. Detect active feature:
    - Resolve repo root: `REPO_ROOT=$(git rev-parse --show-toplevel)`
-   - Look for any `.mx/*/plan.md` under `$REPO_ROOT` — take the first match as the active feature
+   - If running inside a linked worktree, `.mx/` lives in the MAIN
+     repository, not the worktree — resolve it too:
+     `MAIN_ROOT=$(dirname "$(git rev-parse --git-common-dir)")`
+     (in a normal checkout `MAIN_ROOT` equals `REPO_ROOT`)
+   - Look for any `.mx/*/plan.md` under `$REPO_ROOT`, then under
+     `$MAIN_ROOT` — take the first match as the active feature
    - If found → report directory is `.mx/<name>/tmp/` (create if needed)
-   - If not found → report directory is `/tmp/review-reports/` on Unix or `%TEMP%\review-reports\` on Windows (create if needed)
+   - If not found → report directory is `/tmp/review-reports/` on Unix or
+     `%TEMP%\review-reports\` on Windows (create if needed)
 2. Save the report as `{report-dir}/review-{YYYYMMDD-HHmmss}.md`
 3. Display the full report in the terminal
 
 ---
 
 ## Step 6: Interactive Review
+
+(Skipped in orchestrated mode — see "Orchestrated mode" above.)
 
 After displaying the report, ask:
 
@@ -454,7 +282,8 @@ If saved to `/tmp/review-reports/`, add a note:
 
 To add a new language spec:
 1. Create `references/{lang}.md` using `references/_template.md` as a base
-2. Only include language-specific patterns — cross-language principles are in `references/principles.md`
+2. Only include language-specific patterns — cross-language principles are
+   in `references/principles.md`
 3. Add a row to the language detection table in Step 2:
    ```
    | `.ext` | `references/{lang}.md` |

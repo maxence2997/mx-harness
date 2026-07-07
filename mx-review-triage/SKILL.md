@@ -1,12 +1,11 @@
 ---
 name: mx-review-triage
 description: >
-  Triage review findings from two sources: local mx-team-review reports (--source review)
-  or GitHub/GitLab PR comments (--source pr <id|url>). Classifies each finding by
-  validity, severity (P0-P3), and implementation cost, then sorts into fix / track / skip
-  buckets. Presents report for user approval before executing any changes.
-  When invoked without arguments, auto-detects the source or asks the user.
-  Use after mx-team-review, or when handling PR feedback before merge.
+  Triage review findings — from local mx-team-review reports or GitHub/GitLab PR
+  comments — into fix / track / skip buckets by validity, severity (P0-P3), and
+  cost, then execute approved decisions. Use after mx-team-review or when
+  handling PR feedback before merge.
+  Usage: /mx-review-triage [--source review | --source pr <id|url>]
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 source: https://github.com/maxence2997/mx-harness/tree/main/mx-review-triage
@@ -16,6 +15,8 @@ allowed-tools:
   - Read
   - Glob
   - Grep
+  - Edit
+  - Write
 ---
 
 # mx-review-triage
@@ -28,14 +29,26 @@ allowed-tools:
 /mx-review-triage --source pr <id|url>  ← GitHub / GitLab PR comments
 ```
 
+## Orchestrated mode
+
+Step 5 pauses for user approval of the triage table. **When invoked from
+an orchestrator that declares auto-proceed for its triage gate (e.g.
+mx-flow GATE 3), skip that pause**: show the full triage table, treat all
+"Fix now" items as approved, and execute them immediately. "Track" and
+"Skip" buckets behave as written. When invoked directly by the user, the
+pause applies as written.
+
 ---
 
 ## Step 1 — Determine source
 
 ### If `--source review`
 Find the most recent review report:
-1. Resolve repo root: `REPO_ROOT=$(git rev-parse --show-toplevel)`
-2. Check `.mx/*/tmp/review-*.md` under `$REPO_ROOT` (project-local active feature path)
+1. Resolve repo root: `REPO_ROOT=$(git rev-parse --show-toplevel)`. If
+   running inside a linked worktree, also resolve the main repository root
+   (`.mx/` lives there): `MAIN_ROOT=$(dirname "$(git rev-parse --git-common-dir)")`
+2. Check `.mx/*/tmp/review-*.md` under `$REPO_ROOT` and `$MAIN_ROOT`
+   (project-local active feature path)
 3. Fall back to `/tmp/review-reports/` (Unix) or `%TEMP%\review-reports\` (Windows)
 
 Pick the file with the latest modification time across both locations.
@@ -120,7 +133,8 @@ Briefly explain any non-obvious triage decisions after the table.
 After user reviews and approves (adjusting bucket assignments as needed):
 
 **Fix now** — make the code change, then:
-- `--source review`: commit with `/mx-commit`
+- `--source review`: commit with `/mx-commit` (pass `--auto` when running
+  under an orchestrator's auto-proceed gate; default interactive otherwise)
 - `--source pr`: commit then reply on the PR/MR:
   `Fixed in {hash}. {what changed and why}`
 

@@ -3,8 +3,8 @@ name: mx-status
 description: >
   Show the current stage, progress, and next action for all features in the
   current project. Scans ~/.mx/<project>/ for specs/ADRs and .mx/ (project-local)
-  for plans, worktrees, and temp files. Detects broken or ambiguous states and
-  gives concrete recovery instructions. Use whenever you lose track of where
+  for plans, worktrees, and temp files. Detects broken states and gives
+  concrete recovery instructions. Use whenever you lose track of where
   you are in the mx-flow workflow.
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
