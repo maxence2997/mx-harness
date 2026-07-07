@@ -49,7 +49,8 @@ Default sections and their sources:
 
 ## Notes
 
-- Run after verification passes and the branch is pushed
+- Run after verification passes — the branch does not need to be pushed yet (Step 6 pushes it)
+- The content check's full procedure lives in `references/content-check.md` — it is the single canonical copy, also invoked by mx-flow Phase 6.5
 - Customize `references/pr-template.md` to add checklists, issue references, screenshots, etc.
 - Draft is never deleted on failure — you can recover and retry
 - After merge: run `/mx-flow finish <name>` to clean up

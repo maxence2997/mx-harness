@@ -34,6 +34,12 @@ Multi-perspective code review using three AI review agents (Senior Engineer, SRE
 
 Extensible via `references/_template.md`.
 
+## Customization
+
+The reviewer prompts and output schema live in `references/prompts.md`;
+cross-language review standards in `references/principles.md`. Both are
+yours to edit — the installer preserves local changes to `references/*`.
+
 ## In the workflow
 
 Use after completing a milestone in the TDD phase, before `/mx-review-triage`:
