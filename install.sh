@@ -3,8 +3,11 @@
 # Install or update all mx-harness skills into Claude Code's global skill directory.
 #
 # Usage:
-#   curl -sL https://raw.githubusercontent.com/maxence2997/mx-harness/main/install.sh | bash
+#   curl -fsSL --retry 3 https://raw.githubusercontent.com/maxence2997/mx-harness/main/install.sh -o /tmp/mx-install.sh && bash /tmp/mx-install.sh
 #   ./install.sh
+#
+# (Do NOT pipe curl straight into bash: raw.githubusercontent.com intermittently
+#  returns 429, and without -f the error page gets executed as a script.)
 #
 # Behavior:
 #   - First run: installs all skills via npx, records file hashes in ~/.mx/.mx-harness.lock
@@ -151,14 +154,27 @@ TMP=$(mktemp -d)
 trap 'rm -rf "$TMP"' EXIT
 
 echo "Fetching latest from $REPO..."
-curl -sL "$REPO/archive/refs/heads/main.tar.gz" | tar -xz -C "$TMP"
+# -f: fail on HTTP errors instead of piping an error page into tar;
+# --retry: raw.githubusercontent.com intermittently returns 429
+if ! curl -fsSL --retry 3 --retry-delay 2 "$REPO/archive/refs/heads/main.tar.gz" | tar -xz -C "$TMP"; then
+  echo "error: failed to download $REPO (rate-limited or offline). Retry in a minute." >&2
+  exit 1
+fi
 REPO_SRC="$TMP/mx-harness-main"
+if [[ ! -d "$REPO_SRC" ]]; then
+  echo "error: unexpected archive layout — $REPO_SRC not found" >&2
+  exit 1
+fi
 echo
 
 failed=()
 for skill in "${SKILLS[@]}"; do
   echo "==> $skill"
-  mapfile -t skill_dirs < <(detect_all_dirs "$skill")
+  # mapfile requires bash 4+; macOS ships bash 3.2
+  skill_dirs=()
+  while IFS= read -r line; do
+    [[ -n "$line" ]] && skill_dirs+=("$line")
+  done < <(detect_all_dirs "$skill")
   if [[ ${#skill_dirs[@]} -eq 0 ]]; then
     do_fresh_install "$skill" || failed+=("$skill")
   else
