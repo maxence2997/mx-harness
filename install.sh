@@ -3,11 +3,13 @@
 # Install or update all mx-harness skills into Claude Code's global skill directory.
 #
 # Usage:
-#   curl -fsSL --retry 3 https://raw.githubusercontent.com/maxence2997/mx-harness/main/install.sh -o /tmp/mx-install.sh && bash /tmp/mx-install.sh
+#   curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh
 #   ./install.sh
 #
-# (Do NOT pipe curl straight into bash: raw.githubusercontent.com intermittently
-#  returns 429, and without -f the error page gets executed as a script.)
+# (The tarball URL is served by codeload.github.com — deliberately NOT
+#  raw.githubusercontent.com, whose per-IP rate limit 429s on shared/corporate
+#  IPs. -f makes curl fail cleanly on HTTP errors instead of feeding the
+#  error page to tar.)
 #
 # Behavior:
 #   - First run: installs all skills via npx, records file hashes in ~/.mx/.mx-harness.lock

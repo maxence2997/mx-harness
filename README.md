@@ -110,7 +110,7 @@ mx-harness installs via [`npx skills`](https://github.com/vercel-labs/skills) â€
 **Install or update everything:**
 
 ```bash
-curl -fsSL --retry 3 https://raw.githubusercontent.com/maxence2997/mx-harness/main/install.sh -o /tmp/mx-install.sh && bash /tmp/mx-install.sh
+curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh
 ```
 
 Inspect the script first if you'd rather: [install.sh](install.sh).
