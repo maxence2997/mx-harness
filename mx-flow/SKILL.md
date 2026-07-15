@@ -108,7 +108,7 @@ the Non-negotiables above literally.
 Phase 1  Brainstorm  →  Design spec + ADR        (/mx-brainstorm)
            [GATE 1] Spec approval                 ← human (only hard gate)
 Phase 2  Plan        →  Ordered task list         (built-in)
-Phase 3  Scope       →  Per-task DAG + complexity (built-in)
+Phase 3  Scope       →  Plan audit: order, split, complexity (built-in)
 Phase 4  Worktree    →  Isolated branch + baseline (built-in)
 
 ── convergent loop (max 3 iterations) ──────────────
@@ -308,9 +308,11 @@ before auto-proceed.
 
 ## Phase 3 — Scope analysis
 
-Read the spec, the plan, and the repo, then produce machine-readable
-per-task metadata that downstream phases use to reason about dependencies
-and complexity. The output is `.mx/<name>/scope.yaml`. This phase runs
+Audit the plan before any code is written: read the spec, the plan, and
+the repo, then verify every task is grounded in real files and symbols,
+correctly ordered, and cut at the right granularity — fixing `plan.md`
+where it is not. The audit's machine-readable record is
+`.mx/<name>/scope.yaml`. This phase runs
 **inline in the parent, autonomously** — no sub-agent by default, no user
 gate; print a one-line summary at the end for visibility.
 
@@ -320,13 +322,13 @@ to rebuild all of it from disk, and the dispatch round-trips were
 observed to cost more wall-clock than the analysis itself. Canonical
 rule: mx-doctrine model-dispatch §2 (do inline).
 
-This metadata drives Phase 5's execution mode: tasks marked
-`parallelizable: true` are dispatched to concurrent sub-agents in a batch
-(5a-parallel); the rest run sequentially (5a-sequential). Never skip this
-phase — without `scope.yaml`, every task falls back to sequential
-execution.
+Never skip this phase — it is the last cheap place to catch a bad task
+split. A vague or oversized task found here costs one plan edit; found
+in Phase 5 it costs TDD rounds against the retry budget. Phase 5 also
+reads `scope.yaml` per task as advisory context (where to look first,
+how much effort to expect).
 
-### 3.1 — Analyze (inline)
+### 3.1 — Audit (inline)
 
 Work from what Phases 1–2 already put in context. Re-read
 `GLOBAL_MX/spec.md` or `LOCAL_MX/plan.md` only if they are no longer in
@@ -338,13 +340,20 @@ context (compacted or resumed session).
    broad reading; do not start repo-wide exploration here.
 2. For each task in plan.md, infer the schema fields below (3.2), scoring
    complexity against the rubric (3.3)
-3. Compute `parallelizable = (total_tasks >= 3) AND (depends_on == [])
-   AND (complexity in {M, L})`
-   - The `total_tasks >= 3` gate suppresses parallel dispatch on tiny
-     plans, where sub-agent spin-up overhead exceeds the wall-clock
-     savings.
-4. Write `.mx/<name>/scope.yaml` directly, keeping the counts (vague
-   tasks, parallel batches, sequential tasks) for the 3.6 summary.
+3. Audit the split, and fix `plan.md` directly where it fails — rewriting
+   and renumbering is safe here, nothing has executed yet:
+   - **Ordering**: every `depends_on` must point to an earlier task. A
+     forward dependency → reorder the plan.
+   - **Too big**: one task hiding several behaviors (an L whose
+     `predicted_touches` don't relate, or a What that needs "and") →
+     split it into one-behavior tasks per the Phase 2.2 rules.
+   - **Overlap**: two tasks predicting the same file+symbol with no
+     `depends_on` between them → add the missing dependency, or merge
+     them if they are really one behavior.
+   - **Vague**: cannot pin the task to files/symbols → mark `vague: true`;
+     the refinement pass (3.4) handles it.
+4. Write `.mx/<name>/scope.yaml` directly, keeping the counts (vague,
+   reordered, split, merged) for the 3.6 summary.
 
 **Escape hatch — delegate only on context loss.** If the spec and plan
 are NOT in context AND re-acquiring the repo picture would exceed the
@@ -354,7 +363,8 @@ sub-agent (mid tier) briefed with: the spec path, the plan path, the repo
 root, the schema (3.2), the rubric (3.3), and a directive — read-only
 analysis, return the complete scope YAML as your final message. The
 parent writes `.mx/<name>/scope.yaml` from that returned YAML (Explore
-sub-agents cannot write files). One dispatch maximum; the refinement pass
+sub-agents cannot write files) and applies step 3's plan fixes itself
+from the returned metadata. One dispatch maximum; the refinement pass
 (3.4) never re-dispatches.
 
 ### 3.2 — Schema
@@ -371,9 +381,8 @@ sub-agents cannot write files). One dispatch maximum; the refinement pass
   depends_on: []                               # ids of tasks that must finish first; [] if independent
   complexity: M                                # S | M | L
   complexity_reason: "two new files, ~80 LOC, follows existing adapter pattern"
-  vague: false                                 # true only when sub-agent could not reliably infer
+  vague: false                                 # true only when the fields above could not be reliably inferred
   vague_reason: ""                             # populated only when vague: true
-  parallelizable: false                        # derived field; computed by the sub-agent
 ```
 
 `depends_on` should reflect either **shared files** (two tasks edit the
@@ -390,8 +399,9 @@ omit it.
 | **L** | > 150 LOC, multi-module, ≥ 2 TDD rounds expected, or non-trivial external integration (DB / network / filesystem / external API) |
 
 When signals are ambiguous, bias toward **higher** complexity and **more**
-dependencies. Over-estimating costs nothing (parent falls back to
-sequential); under-estimating creates merge collisions later.
+dependencies. Over-estimating costs nothing; under-estimating hides a
+task that should have been split and burns TDD rounds against the retry
+budget.
 
 ### 3.4 — Refinement pass (max 2 passes)
 
@@ -404,9 +414,9 @@ the open question is fine. Then re-infer those tasks only. Tasks that
 were not vague stay untouched.
 
 **After Pass 2.** The result is final. Any task still marked `vague: true`
-keeps its conservative defaults (`complexity: L`, `parallelizable: false`)
-and proceeds. Bouncing further has diminishing returns — the task is one
-that requires hands-on discovery during TDD.
+keeps its conservative default (`complexity: L`) and proceeds. Bouncing
+further has diminishing returns — the task is one that requires hands-on
+discovery during TDD.
 
 Cap is **2 passes**. Never loop indefinitely, and never re-dispatch the
 escape-hatch sub-agent for refinement — resolve vagueness inline or apply
@@ -428,30 +438,29 @@ invalid YAML), write a minimal `scope.yaml` directly:
   complexity_reason: "scope analysis failed; conservative default applied"
   vague: true
   vague_reason: "scope analysis failed; safe fallback applied"
-  parallelizable: false
 ```
 
-Every task gets the same shape. Downstream phases see zero parallelizable
-tasks and run fully sequential. The flow does not block.
+Every task gets the same shape. Downstream phases treat the plan as
+unaudited and proceed in plan order. The flow does not block.
 
 ### 3.6 — Summary
 
 Print one line to the user for visibility (not a gate):
 
 ```
-Scope analysis: <N> tasks → <K> parallel batches (B1: T1+T3, B2: T4), <S> sequential (T2, T5).
+Scope audit: <N> tasks — <V> rewritten (vague), <R> reordered, <P> split, <G> merged; complexity <a>S/<b>M/<c>L.
 ```
 
-If everything sequential:
+If the plan needed no fixes:
 
 ```
-Scope analysis: <N> tasks, all sequential (no independent batches identified).
+Scope audit: <N> tasks, split confirmed — no fixes needed; complexity <a>S/<b>M/<c>L.
 ```
 
 If the fallback fired:
 
 ```
-Scope analysis: failed → conservative defaults applied, all tasks sequential.
+Scope audit: failed → conservative defaults recorded, plan proceeds unaudited.
 ```
 
 Then auto-proceed to Phase 4.
@@ -557,40 +566,21 @@ Baseline: <N> tests passing
 
 ## Phase 5 — Convergent loop
 
-### 5a — Task execution (mode selection)
+### 5a — TDD cycle (per task, serial in the parent)
 
-Read `.mx/<name>/scope.yaml`. Partition the still-`[ ]` tasks in `plan.md`:
+Execute the plan one task at a time, in plan order, in the parent — do
+not dispatch tasks to sub-agents. A task sub-agent rebuilds context the
+parent already holds warm, and parallel local execution only overlaps
+model time while multiplying machine costs (per-worktree setup, full
+test suites contending for the same cores); its failure paths re-ran
+tasks serially anyway. Parallel batch dispatch was removed 2026-07-15 —
+lesson recorded in mx-doctrine model-dispatch §2.
 
-1. **Ready-set**: tasks whose `depends_on` are all marked `[x]`.
-2. **Parallel batch**: ready-set ∩ `parallelizable: true`. If this batch
-   has **≥ 2** tasks, dispatch it via **5a-parallel**: read
-   `${CLAUDE_SKILL_DIR}/references/parallel-dispatch.md` and follow it in
-   full (if that file is missing, fold everything into the sequential
-   queue instead). If the batch has 0 or 1 tasks, fold the lone task (if
-   any) into the sequential queue — a one-task batch has no parallelism to
-   exploit.
-3. **Sequential queue**: everything else in the ready-set, processed one
-   at a time via **5a-sequential**.
-
-When both a parallel batch and a sequential queue exist, drain the
-**parallel batch first** so independent work overlaps with subsequent
-batches' planning. After each batch (parallel or sequential), recompute
-the ready-set — completing tasks unblocks new ones.
-
-The **Iron Law** and the **vertical-slice TDD philosophy** apply in both
-modes. Parallel mode parallelizes *across* tasks, never *within* a task's
-RED→GREEN→REFACTOR cycle.
-
-If `scope.yaml` is missing or every task is marked `parallelizable: false`
-(fallback path from Phase 3.5), skip 5a-parallel entirely — drive every
-task through 5a-sequential.
-
----
-
-### 5a-sequential — Sequential TDD cycle (per task)
-
-The single-threaded TDD loop. Use it for every task in the sequential
-queue, plus all tasks bounced from a failed parallel batch.
+Phase 3's audit validated the ordering, so plan order satisfies every
+`depends_on`. Before starting a task, read its `scope.yaml` entry as
+advisory context: `predicted_files`/`predicted_touches` say where to
+look first, `complexity` sets the effort expectation. If `scope.yaml`
+is missing, proceed in plan order without the hints.
 
 #### Philosophy: Vertical Slices Only
 
@@ -697,9 +687,8 @@ six conditions:
 
 If any item is unchecked, do not advance to the next task.
 
-After each task completes, return to **5a (Task execution)** to recompute
-the ready-set — a finished task may have unblocked a parallel batch. Exit
-the loop when all tasks are done or a milestone is reached.
+After each task completes, take the next `[ ]` task in plan order. Exit
+to 5b when all tasks are done or a milestone is reached.
 
 ### 5b — Review (at milestone)
 

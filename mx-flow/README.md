@@ -18,7 +18,7 @@ _Rough or detailed — the agent will ask what it needs._
 ```
   Brainstorm  ──▶  Design spec + ADR
   Plan        ──▶  Ordered task list
-  Scope       ──▶  Per-task files + complexity DAG (inline)
+  Scope       ──▶  Plan audit: order, split, complexity (inline)
   Worktree    ──▶  Isolated branch + baseline pass
 
   ┌─ convergent loop (max 3 iterations) ────────────┐
@@ -44,7 +44,7 @@ Plan, Scope, Worktree, TDD, Verify, and Finish are built-in mx-flow phases. Brai
 Review + Triage, and PR delegate to standalone skills (/mx-brainstorm,
 /mx-team-review + /mx-review-triage, /mx-pr).
 
-Scope analysis runs inline in the parent — by the end of planning the spec, plan, and relevant code are already in its context, and dispatching a sub-agent to rebuild that from disk proved slower. Targeted lookups confirm each task's files, and the resulting per-task metadata (predicted files, dependencies, complexity S/M/L, and a derived `parallelizable` flag) is written to `.mx/<name>/scope.yaml`. Phase 5 consumes this metadata directly: tasks marked `parallelizable: true` are dispatched concurrently — each sub-agent gets its own isolated git worktree (via the Agent tool's `isolation: "worktree"`), runs a full TDD cycle including `/mx-commit`, and the parent cherry-picks the resulting commits back in `task_id` order. Trivial cherry-pick conflicts (additive only) are auto-resolved by the parent; non-trivial conflicts bounce the task to the sequential queue (already-landed tasks stay). The `parallelizable` flag fires only when `total_tasks >= 3 AND depends_on == [] AND complexity in {M, L}` — small plans and S-sized work stay sequential because the worktree spin-up overhead exceeds the wall-clock savings.
+Scope analysis is a plan audit, run inline in the parent — by the end of planning the spec, plan, and relevant code are already in its context, and dispatching a sub-agent to rebuild that from disk proved slower. Targeted lookups ground every task in real files and symbols, then the audit fixes the plan where the split is wrong: forward dependencies get reordered, tasks hiding several behaviors get split, overlapping tasks get merged or explicitly ordered, and vague tasks get rewritten (max 2 passes, then conservative defaults). The audited metadata (predicted files, dependencies, complexity S/M/L) lands in `.mx/<name>/scope.yaml`, which Phase 5 reads per task as advisory context. Execution itself is strictly serial in the parent: parallel task sub-agents were removed 2026-07-15 — each one rebuilt context the parent already had, multiplied machine costs (per-worktree setup, test suites contending for the same cores), and their failure paths (merge conflicts, integration failures) re-ran tasks sequentially anyway.
 
 ## File locations
 
@@ -104,9 +104,8 @@ Future Maintainer: "Document why TTL=300."
 - Default mode auto-publishes the PR
 - After merge: run `/mx-flow finish <name>` to clean up
 - `.mx/` directory is gitignored automatically
-- Branch-specific procedures live in `references/` (parallel dispatch,
-  finish phase); the content check's canonical copy is
-  `mx-pr/references/content-check.md`
+- Branch-specific procedures live in `references/` (finish phase); the
+  content check's canonical copy is `mx-pr/references/content-check.md`
 - Sub-agent model choice, escalation after repeated failures, and
   verification rules come from the sibling [mx-doctrine](../mx-doctrine/)
   skill

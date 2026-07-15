@@ -39,8 +39,7 @@ legacy alias `Task`).
   knob. (Per-agent effort exists only inside Claude Code's opt-in Workflow
   orchestration tool; mx-* skills do not require it.)
 - Independent Agent calls placed in ONE message run in parallel — that is
-  how mx-team-review's three reviewers and mx-flow's 5a-parallel batches
-  get their concurrency.
+  how mx-team-review's three reviewers get their concurrency.
 - `allowed-tools` in SKILL.md frontmatter is a **permission pre-grant, not
   a whitelist**: unlisted tools remain callable (with permission prompts).
 - `${CLAUDE_SKILL_DIR}` expands to the directory containing the running
@@ -75,6 +74,15 @@ user — protect it.
   only when it saves parent context or buys real parallelism.
   ✅ scope the plan you just wrote, inline / ❌ spawn Explore to re-read
   the spec+plan you wrote one phase earlier
+- (2026-07-15, from removing mx-flow's 5a-parallel batch execution):
+  parallel sub-agents overlap model time only — machine costs multiply
+  instead (per-worktree setup, full test suites contending for the same
+  cores), and execution failure paths (merge conflicts, integration
+  failures) fall back to serial re-runs that turn the parallel attempt
+  into pure overhead. Parallel fan-out pays for read-only work
+  (reviewers, searches); execution belongs serial in the warm parent.
+  ✅ mx-team-review's three read-only reviewers in one message / ❌ three
+  TDD task agents in three worktrees, each running the full suite
 
 ## §3 Every delegation carries three things
 
@@ -107,7 +115,6 @@ the main-loop model — do that only deliberately, not as a shortcut.
 | Dispatch site | Type / tier |
 |---|---|
 | mx-flow Phase 3 scope analysis | inline in the parent (2026-07-15, see §2 do-inline list); `Explore` mid only as the context-loss escape hatch |
-| mx-flow 5a-parallel task agents | default type (needs Edit/Write/Bash), mid; a task scoped `complexity: L` that also touches concurrency or public API → strongest |
 | mx-team-review reviewers ×3 | mid |
 | mx-team-review tech-lead synthesizer | mid; strongest when the diff touches concurrency, auth/security, data migration, or public API |
 | Read-back verification (any skill) | mid, fresh context |

@@ -200,6 +200,15 @@ the old name before finishing.
   to `model-dispatch.md`.
 - README drift: minimal (verified by sweep 2026-07-07). Keep it that way
   via the three-places-sync rule in the repo CLAUDE.md.
+- (2026-07-15) mx-flow's 5a-parallel batch execution was **removed**
+  (observed slower than parent-serial: only model time overlaps, machine
+  costs multiply, failure paths re-ran serially anyway — lesson in
+  `model-dispatch.md` §2). `parallel-dispatch.md` no longer exists;
+  Leak 3's ~120-line 5a-parallel figure above is a historical example
+  from before the removal. Phase 3 was reframed the same day: scope
+  analysis now runs inline in the parent and audits the plan's task
+  split (ordering, granularity, overlap) instead of computing
+  parallel-dispatch metadata.
 
 ## Honest limits of this diagnosis
 
