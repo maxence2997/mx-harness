@@ -108,7 +108,7 @@ the Non-negotiables above literally.
 Phase 1  Brainstorm  →  Design spec + ADR        (/mx-brainstorm)
            [GATE 1] Spec approval                 ← human (only hard gate)
 Phase 2  Plan        →  Ordered task list         (built-in)
-Phase 3  Scope       →  Per-task DAG + complexity (built-in, Explore sub-agent)
+Phase 3  Scope       →  Per-task DAG + complexity (built-in)
 Phase 4  Worktree    →  Isolated branch + baseline (built-in)
 
 ── convergent loop (max 3 iterations) ──────────────
@@ -311,8 +311,14 @@ before auto-proceed.
 Read the spec, the plan, and the repo, then produce machine-readable
 per-task metadata that downstream phases use to reason about dependencies
 and complexity. The output is `.mx/<name>/scope.yaml`. This phase runs
-**autonomously via a read-only sub-agent** — no user gate; the parent
-prints a one-line summary at the end for visibility.
+**inline in the parent, autonomously** — no sub-agent by default, no user
+gate; print a one-line summary at the end for visibility.
+
+Why inline (2026-07-15): by the end of Phase 2 the spec, the plan, and
+the relevant code are already in the parent's context — a sub-agent has
+to rebuild all of it from disk, and the dispatch round-trips were
+observed to cost more wall-clock than the analysis itself. Canonical
+rule: mx-doctrine model-dispatch §2 (do inline).
 
 This metadata drives Phase 5's execution mode: tasks marked
 `parallelizable: true` are dispatched to concurrent sub-agents in a batch
@@ -320,35 +326,36 @@ This metadata drives Phase 5's execution mode: tasks marked
 phase — without `scope.yaml`, every task falls back to sequential
 execution.
 
-### 3.1 — Spawn the scope analyzer sub-agent
+### 3.1 — Analyze (inline)
 
-Invoke the Agent tool with `subagent_type: Explore`, model mid tier —
-read-only repo-scanning is exactly its profile. Brief the sub-agent with:
+Work from what Phases 1–2 already put in context. Re-read
+`GLOBAL_MX/spec.md` or `LOCAL_MX/plan.md` only if they are no longer in
+context (compacted or resumed session).
 
-- Path to `~/.mx/<project>/<name>/spec.md`
-- Path to `.mx/<name>/plan.md`
-- Repo root (`git rev-parse --show-toplevel`)
-- The schema spec (section 3.2) and complexity rubric (section 3.3)
-- A directive: read-only analysis; return the scope YAML as your final
-  message; do not modify code, plan, or spec
-
-The sub-agent must:
-
-1. Read spec.md and plan.md
-2. Pre-scan the repo: list likely target directories, grep for similar
-   modules / patterns the tasks will extend, identify which existing files
-   are obvious candidates
-3. For each task in plan.md, infer the schema fields below
-4. Compute `parallelizable = (total_tasks >= 3) AND (depends_on == [])
+1. Confirm, don't explore: per task, use targeted Glob/Grep to pin down
+   the files and symbols it will touch — verify a predicted path exists,
+   locate the module that owns a function. Phase 2.1 already did the
+   broad reading; do not start repo-wide exploration here.
+2. For each task in plan.md, infer the schema fields below (3.2), scoring
+   complexity against the rubric (3.3)
+3. Compute `parallelizable = (total_tasks >= 3) AND (depends_on == [])
    AND (complexity in {M, L})`
    - The `total_tasks >= 3` gate suppresses parallel dispatch on tiny
      plans, where sub-agent spin-up overhead exceeds the wall-clock
-     savings. The parent passes the total task count to the sub-agent as
-     part of the brief.
-5. Return the complete YAML content plus a short summary (counts of vague
-   tasks, parallel batches, sequential tasks) as its final message.
-   **The parent then writes `.mx/<name>/scope.yaml` from that returned
-   YAML** — Explore sub-agents are read-only and cannot write files.
+     savings.
+4. Write `.mx/<name>/scope.yaml` directly, keeping the counts (vague
+   tasks, parallel batches, sequential tasks) for the 3.6 summary.
+
+**Escape hatch — delegate only on context loss.** If the spec and plan
+are NOT in context AND re-acquiring the repo picture would exceed the
+inline-reading limits in model-dispatch §2's delegate table (the
+`Explore` rows), dispatch ONE `Explore`
+sub-agent (mid tier) briefed with: the spec path, the plan path, the repo
+root, the schema (3.2), the rubric (3.3), and a directive — read-only
+analysis, return the complete scope YAML as your final message. The
+parent writes `.mx/<name>/scope.yaml` from that returned YAML (Explore
+sub-agents cannot write files). One dispatch maximum; the refinement pass
+(3.4) never re-dispatches.
 
 ### 3.2 — Schema
 
@@ -386,28 +393,30 @@ When signals are ambiguous, bias toward **higher** complexity and **more**
 dependencies. Over-estimating costs nothing (parent falls back to
 sequential); under-estimating creates merge collisions later.
 
-### 3.4 — Refinement loop (max 2 rounds)
+### 3.4 — Refinement pass (max 2 passes)
 
-After the sub-agent returns, the parent reads `scope.yaml` and inspects
-for `vague: true` entries.
+After the first pass, inspect `scope.yaml` for `vague: true` entries.
 
-**Round 1 → Round 2.** If any task has `vague: true`, the parent rewrites
-those specific bullets in `plan.md` using the sub-agent's `vague_reason`
-as guidance — name the file(s), the function/endpoint, the interface
-contract. Then re-invoke the sub-agent. Tasks that were not vague stay
-untouched.
+**Pass 1 → Pass 2.** If any task is vague, rewrite those specific bullets
+in `plan.md` using `vague_reason` as guidance — name the file(s), the
+function/endpoint, the interface contract; a targeted Read/Grep to settle
+the open question is fine. Then re-infer those tasks only. Tasks that
+were not vague stay untouched.
 
-**After Round 2.** Whatever the sub-agent returns is final. Any task still
-marked `vague: true` keeps its conservative defaults (`complexity: L`,
-`parallelizable: false`) and proceeds. Bouncing further has diminishing
-returns — the task is one that requires hands-on discovery during TDD.
+**After Pass 2.** The result is final. Any task still marked `vague: true`
+keeps its conservative defaults (`complexity: L`, `parallelizable: false`)
+and proceeds. Bouncing further has diminishing returns — the task is one
+that requires hands-on discovery during TDD.
 
-Cap is **2 rounds**. Never loop indefinitely.
+Cap is **2 passes**. Never loop indefinitely, and never re-dispatch the
+escape-hatch sub-agent for refinement — resolve vagueness inline or apply
+the defaults.
 
 ### 3.5 — Fallback on failure
 
-If the sub-agent fails (timeout, crash, invalid or missing YAML in its
-reply), the parent writes a minimal `scope.yaml` directly:
+If the analysis cannot produce valid YAML for every task (unparseable
+plan, or the escape-hatch sub-agent timed out, crashed, or returned
+invalid YAML), write a minimal `scope.yaml` directly:
 
 ```yaml
 - id: task-N
@@ -416,9 +425,9 @@ reply), the parent writes a minimal `scope.yaml` directly:
   predicted_touches: []
   depends_on: []
   complexity: L
-  complexity_reason: "scope analyzer failed; conservative default applied"
+  complexity_reason: "scope analysis failed; conservative default applied"
   vague: true
-  vague_reason: "scope analyzer failed; safe fallback applied"
+  vague_reason: "scope analysis failed; safe fallback applied"
   parallelizable: false
 ```
 

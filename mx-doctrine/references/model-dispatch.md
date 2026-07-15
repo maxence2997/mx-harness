@@ -68,6 +68,13 @@ user — protect it.
 - The core edit the whole task is about — the judgment IS the work.
 - Anything where writing the delegation prompt costs more than doing it.
 - Reading back subagent reports; talking to the user.
+- (2026-07-15, from mx-flow Phase 3 scope analysis running slower via
+  sub-agent): analysis whose inputs are already in your context — a
+  sub-agent must rebuild the spec/plan/repo picture from disk, and the
+  round-trips cost more wall-clock than the inference. Delegate analysis
+  only when it saves parent context or buys real parallelism.
+  ✅ scope the plan you just wrote, inline / ❌ spawn Explore to re-read
+  the spec+plan you wrote one phase earlier
 
 ## §3 Every delegation carries three things
 
@@ -92,14 +99,14 @@ the main-loop model — do that only deliberately, not as a shortcut.
 | Tier | Route here | Never route here |
 |---|---|---|
 | small (`haiku`) | Batch-apply of an exact, already-proven recipe (rename sweep, import fix); trivial lookups whose answer gets independently verified | Anything needing repo-idiom judgment, debugging, API design |
-| mid (`sonnet`) | Searches (Explore), scope analysis, well-specified implementation where the failing test already exists, first-pass reviews, read-back verification, research summarization | Ambiguous design work; a subtask that already failed twice at this tier (§6) |
+| mid (`sonnet`) | Searches (Explore), well-specified implementation where the failing test already exists, first-pass reviews, read-back verification, research summarization | Ambiguous design work; a subtask that already failed twice at this tier (§6) |
 | strongest (`opus`) | Design/architecture decisions, gnarly debugging, adversarial review of risky diffs, spec writing, second opinions on high-risk judgment, anything mid tier failed at twice | Mechanical bulk work (pure waste) |
 
 **Where the mx-* skills dispatch (defaults, override on signal):**
 
 | Dispatch site | Type / tier |
 |---|---|
-| mx-flow Phase 3 scope analyzer | `Explore`, mid |
+| mx-flow Phase 3 scope analysis | inline in the parent (2026-07-15, see §2 do-inline list); `Explore` mid only as the context-loss escape hatch |
 | mx-flow 5a-parallel task agents | default type (needs Edit/Write/Bash), mid; a task scoped `complexity: L` that also touches concurrency or public API → strongest |
 | mx-team-review reviewers ×3 | mid |
 | mx-team-review tech-lead synthesizer | mid; strongest when the diff touches concurrency, auth/security, data migration, or public API |

@@ -18,7 +18,7 @@ _Rough or detailed — the agent will ask what it needs._
 ```
   Brainstorm  ──▶  Design spec + ADR
   Plan        ──▶  Ordered task list
-  Scope       ──▶  Per-task files + complexity DAG (Explore sub-agent)
+  Scope       ──▶  Per-task files + complexity DAG (inline)
   Worktree    ──▶  Isolated branch + baseline pass
 
   ┌─ convergent loop (max 3 iterations) ────────────┐
@@ -44,7 +44,7 @@ Plan, Scope, Worktree, TDD, Verify, and Finish are built-in mx-flow phases. Brai
 Review + Triage, and PR delegate to standalone skills (/mx-brainstorm,
 /mx-team-review + /mx-review-triage, /mx-pr).
 
-Scope analysis runs via a read-only Explore sub-agent: it reads spec + plan, pre-scans the repo, and returns per-task metadata (predicted files, dependencies, complexity S/M/L, and a derived `parallelizable` flag) which the parent writes to `.mx/<name>/scope.yaml`. Phase 5 consumes this metadata directly: tasks marked `parallelizable: true` are dispatched concurrently — each sub-agent gets its own isolated git worktree (via the Agent tool's `isolation: "worktree"`), runs a full TDD cycle including `/mx-commit`, and the parent cherry-picks the resulting commits back in `task_id` order. Trivial cherry-pick conflicts (additive only) are auto-resolved by the parent; non-trivial conflicts bounce the task to the sequential queue (already-landed tasks stay). The `parallelizable` flag fires only when `total_tasks >= 3 AND depends_on == [] AND complexity in {M, L}` — small plans and S-sized work stay sequential because the worktree spin-up overhead exceeds the wall-clock savings.
+Scope analysis runs inline in the parent — by the end of planning the spec, plan, and relevant code are already in its context, and dispatching a sub-agent to rebuild that from disk proved slower. Targeted lookups confirm each task's files, and the resulting per-task metadata (predicted files, dependencies, complexity S/M/L, and a derived `parallelizable` flag) is written to `.mx/<name>/scope.yaml`. Phase 5 consumes this metadata directly: tasks marked `parallelizable: true` are dispatched concurrently — each sub-agent gets its own isolated git worktree (via the Agent tool's `isolation: "worktree"`), runs a full TDD cycle including `/mx-commit`, and the parent cherry-picks the resulting commits back in `task_id` order. Trivial cherry-pick conflicts (additive only) are auto-resolved by the parent; non-trivial conflicts bounce the task to the sequential queue (already-landed tasks stay). The `parallelizable` flag fires only when `total_tasks >= 3 AND depends_on == [] AND complexity in {M, L}` — small plans and S-sized work stay sequential because the worktree spin-up overhead exceeds the wall-clock savings.
 
 ## File locations
 
