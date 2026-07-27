@@ -141,6 +141,17 @@ Every tested unit should cover:
 - Verify critical side effects (e.g., was the error logged? was the notification sent?).
 - Avoid over-mocking — if a function has no external dependency, don't mock it.
 
+### Deterministic Time (no wall-clock in tests)
+
+Time is an external dependency — treat it like one. A test that reads the real clock is nondeterministic by construction.
+
+- Code under test must not read the system clock directly (`time.Now()`, `DateTime.UtcNow`) when the value affects behavior — inject a clock the test controls (per-language pattern in `golang.md` / `dotnet.md`).
+- Never use real sleeps to synchronize with concurrent work — `sleep(100ms)` is a bet on scheduler timing and flakes on slow CI. Synchronize on an observable signal (channel, event, callback) or advance a fake clock.
+- Never assert on real elapsed time (`elapsed < 50ms`) — that measures machine speed, not behavior.
+- Real-time timeouts in tests are allowed only as a failure backstop (catching a deadlock), never as the synchronization mechanism.
+
+Flag violations as P1 — flaky tests erode trust in the whole suite and mask real races.
+
 ### Test Naming Convention
 
 Use descriptive names that express intent:

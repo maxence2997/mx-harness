@@ -214,3 +214,41 @@ for _, item := range items {
     process(ctx, item)
 }
 ```
+
+---
+
+## Test Determinism — Go Specifics
+
+> Canonical rule: `principles.md` → *P1 — Component Test* → *Deterministic Time*.
+
+### Inject the clock, don't read it
+```go
+// ❌ time.Now() buried in logic — tests can't control expiry
+func (s *Session) Expired() bool {
+    return time.Now().After(s.expiresAt)
+}
+
+// ✅ injected now() — tests set the clock; prod wires time.Now
+type Session struct {
+    now func() time.Time
+}
+func (s *Session) Expired() bool {
+    return s.now().After(s.expiresAt)
+}
+```
+
+### No `time.Sleep` for synchronization
+```go
+// ❌ bets on scheduler timing — flakes on loaded CI
+go worker.Start()
+time.Sleep(100 * time.Millisecond)
+require.True(t, worker.Running())
+
+// ✅ wait on an observable signal; real time only as deadlock backstop
+go worker.Start()
+select {
+case <-worker.Ready():
+case <-time.After(5 * time.Second):
+    t.Fatal("worker never became ready")
+}
+```

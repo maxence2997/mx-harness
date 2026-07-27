@@ -616,6 +616,10 @@ Test quality rules:
 - Tests verify **behavior through public interfaces**, not implementation
   details
 - A good test reads like a specification: "user can do X given Y"
+- Tests must not depend on **wall-clock / real time** — inject the clock,
+  synchronize on signals, never `sleep`. Canonical:
+  `${CLAUDE_SKILL_DIR}/../mx-team-review/references/principles.md` →
+  *P1 — Component Test* → *Deterministic Time*
 - The test must **fail** before any production code is written
 - Run the test and **observe the failure** — if it passes immediately, the
   test is wrong

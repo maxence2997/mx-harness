@@ -273,4 +273,34 @@ public OrderService(IRepository<Order> repo, ILogger<OrderService> logger)
 }
 ```
 
+---
+
+## Test Determinism — C# Specifics
+
+> Canonical rule: `principles.md` → *P1 — Component Test* → *Deterministic Time*.
+
+### Inject `TimeProvider` (.NET 8), don't read the clock
+```csharp
+// ❌ DateTime.UtcNow buried in logic — tests can't control expiry
+public bool IsExpired() => DateTime.UtcNow > _expiresAt;
+
+// ✅ injected TimeProvider — FakeTimeProvider drives time in tests
+public OrderSession(TimeProvider clock) => _clock = clock;
+public bool IsExpired() => _clock.GetUtcNow() > _expiresAt;
+
+// test (Microsoft.Extensions.TimeProvider.Testing):
+var clock = new FakeTimeProvider();
+clock.Advance(TimeSpan.FromHours(2));
+```
+
+### No `Task.Delay` for synchronization
+```csharp
+// ❌ bets on scheduler timing — flakes on loaded CI
+await Task.Delay(100);
+Assert.True(worker.IsRunning);
+
+// ✅ await an observable signal; real time only as deadlock backstop
+await worker.Started.WaitAsync(TimeSpan.FromSeconds(5));
+```
+
 > See `principles.md` for general Separation of Concerns / Single Responsibility rules.
