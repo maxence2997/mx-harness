@@ -40,7 +40,8 @@ pauses apply as written.
 Because auto-proceed removes the human review of the draft, add one check
 in its place: if a subagent tool (Agent/Task) is available, spawn a fresh
 read-back agent on the draft before Step 6 — criteria: every factual claim
-traces to spec.md or the git log; every referenced issue number exists.
+traces to spec.md or the git log; every referenced issue number exists;
+the body names no local-only files (Step 3's committed-files-only rule).
 Fix findings before pushing. If no subagent tool exists, re-check the
 draft yourself against those criteria and label the result "self-checked,
 single-context" in the output.
@@ -149,6 +150,15 @@ Fill each placeholder using the context gathered in Step 1:
 | `{{test_plan}}` | completed tasks from plan.md |
 | `{{notes}}` | spec.md — Out of scope, known trade-offs; omit if empty |
 | `{{issues}}` | Related issues found in Step 1 — use `Closes #N` if this PR resolves the issue, `Relates to #N` if partial; omit section if none found |
+
+**Committed-files-only rule.** The published body is read by people who
+can see only the repository — every file or path it names must exist in
+the repo at the branch's HEAD (verifiable:
+`git cat-file -e "HEAD:<path>"`). spec.md, plan.md, the draft file, and
+anything under `~/.mx/` or `<repo-root>/.mx/` are local-only: use them as
+sources for the content, but never name them or their paths in the body.
+For `{{test_plan}}` this means stating the verification itself (tests
+added, commands run, results) rather than pointing at plan.md.
 
 If spec.md does not exist, derive `{{summary}}`, `{{motivation}}`, and
 `{{notes}}` from the git log only.
