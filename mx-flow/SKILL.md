@@ -67,7 +67,7 @@ opportunities, not "y/n continue" prompts.
 
 | Gate | Behaviour |
 |------|-----------|
-| **GATE 1 — Spec** | **Human.** Show the draft spec; discuss and adjust until the user explicitly confirms. Do not proceed without approval. |
+| **GATE 1 — Spec** | **Human.** Show the draft spec; discuss and adjust until the user explicitly confirms. Do not proceed without approval. With the approval, also collect the Phase 5a execution mode (inline / delegated) — one extra question, same gate. |
 | **GATE 2 — Task list** | Auto. Show the task list for visibility, then proceed immediately. |
 | **GATE 3 — Triage** | Auto. Show the triage report, auto-approve all "fix" items, execute immediately. |
 | **GATE 4 — PR** | Auto. Draft and publish the PR autonomously; show the draft for visibility. Pause only if the agent cannot determine how to proceed (no remote, ambiguous platform, missing credentials). |
@@ -199,6 +199,19 @@ Follow mx-brainstorm's full procedure. It owns the spec and ADR output
 
 **GATE 1**: Present the draft spec. Do not proceed until the user
 explicitly confirms.
+
+With the spec approval, ask one more question — who executes the TDD
+tasks in Phase 5a:
+
+- **inline** — the parent does the TDD cycle itself. Fastest; costliest
+  when the main-loop model is a premium tier.
+- **delegated** — one executor sub-agent per task, strictly serial (mid
+  tier for S complexity, strongest for M/L); the parent verifies and
+  commits. Cheaper; adds dispatch round-trips.
+
+Recommend delegated when the main-loop model is above the strongest tier
+the Agent tool can dispatch, inline otherwise — but the user's choice
+wins. Record it for Phase 5a. No answer, or no Agent tool → inline.
 
 ---
 
@@ -566,15 +579,42 @@ Baseline: <N> tests passing
 
 ## Phase 5 — Convergent loop
 
-### 5a — TDD cycle (per task, serial in the parent)
+### 5a — TDD cycle (per task, strictly serial)
 
-Execute the plan one task at a time, in plan order, in the parent — do
-not dispatch tasks to sub-agents. A task sub-agent rebuilds context the
-parent already holds warm, and parallel local execution only overlaps
-model time while multiplying machine costs (per-worktree setup, full
-test suites contending for the same cores); its failure paths re-ran
-tasks serially anyway. Parallel batch dispatch was removed 2026-07-15 —
-lesson recorded in mx-doctrine model-dispatch §2.
+Execute the plan one task at a time, in plan order, in the execution
+mode chosen at GATE 1 (no recorded choice → inline):
+
+- **Inline** — the parent does the TDD cycle itself.
+- **Delegated** — dispatch each task to ONE `general-purpose` executor:
+  mid tier for S complexity, strongest for M/L or unknown (from
+  `scope.yaml`). Use the TDD TASK template (mx-doctrine
+  delegation-templates §6). The executor writes tests and code only;
+  the parent keeps verification, plan bookkeeping, and commits.
+
+Either mode is **strictly serial — one task in flight, ever**. Parallel
+dispatch stays removed (mx-doctrine model-dispatch §2). The user may
+switch modes between tasks; their instruction always wins.
+
+All rules in this phase bind whoever types — parent or executor.
+
+#### Delegated mode — per-task protocol (parent side)
+
+1. Pick the executor tier from the task's scope.yaml entry.
+2. Dispatch one executor with the TDD TASK template: absolute worktree
+   path, the task's What/Test/Files verbatim, scope hints, and the
+   runner command from Phase 4.4.
+3. Verify mechanically yourself: run the full suite and read `git diff`
+   for blast radius and comment policy. The executor's pasted output is
+   a claim, not evidence (model-dispatch §5).
+4. Verified green → mark the task `[x]` in plan.md, run
+   /mx-commit --auto, walk the exit-condition checklist below.
+   Failed → a burned round at the executor's tier. Apply the
+   model-dispatch §6 ladder with the parent as the tier above
+   strongest: mid fails twice → strongest executor with the full
+   failure trail; strongest executor fails twice → the parent takes
+   the task inline (this satisfies Non-negotiable 5's escalation).
+   The §6 absolute cap always wins over further escalation: 4 failed
+   rounds on one task across all tiers → stop and ask the user.
 
 Phase 3's audit validated the ordering, so plan order satisfies every
 `depends_on`. Before starting a task, read its `scope.yaml` entry as

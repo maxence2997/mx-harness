@@ -11,7 +11,7 @@ before declaring work done, before editing the harness itself.
 |---|---|
 | [references/model-dispatch.md](references/model-dispatch.md) | Which model tier does what; commander-doesn't-descend rules; the delegation contract; verification-is-never-self-verification; the escalation/de-escalation ladder with its counting rule |
 | [references/judgment-rubrics.md](references/judgment-rubrics.md) | Checklists with ✅/❌ examples: when to escalate, when "done" is real, when to stop and ask the user, wrong-direction signals, the quality floor per change type, honest limits of process |
-| [references/delegation-templates.md](references/delegation-templates.md) | Fill-in-the-blank sub-agent prompts: search, implement, refactor, research, review, plus a read-back verification stub and the shared report contract |
+| [references/delegation-templates.md](references/delegation-templates.md) | Fill-in-the-blank sub-agent prompts: search, implement, refactor, research, review, TDD task execution, plus a read-back verification stub and the shared report contract |
 | [references/maintenance.md](references/maintenance.md) | How to update mx-harness safely: repo vs installed copies, what may change autonomously vs needs the user, lesson write-back format, compaction triggers |
 | [references/diagnosis.md](references/diagnosis.md) | The measured 2026-07-07 diagnosis (token leaks, focus risks, error sources) that motivated the current structure, plus a 60-second re-audit procedure |
 

@@ -83,6 +83,15 @@ user — protect it.
   (reviewers, searches); execution belongs serial in the warm parent.
   ✅ mx-team-review's three read-only reviewers in one message / ❌ three
   TDD task agents in three worktrees, each running the full suite
+- (2026-08-19, from mx-flow TDD execution under a premium main loop):
+  who types during execution is a speed/cost tradeoff the user owns, not
+  a rule. Inline in the parent is fastest; a serial executor sub-agent
+  per task (tier per §4) is cheaper when the main loop sits above the
+  strongest dispatchable tier. mx-flow asks at GATE 1 and records the
+  choice — recommend delegation on a tier gap, but the user's pick wins.
+  Serial either way; parallel execution stays removed.
+  ✅ ask once at GATE 1, then one `opus` executor per task / ❌ silently
+  hard-coding either mode because a heuristic says so
 
 ## §3 Every delegation carries three things
 
@@ -115,6 +124,7 @@ the main-loop model — do that only deliberately, not as a shortcut.
 | Dispatch site | Type / tier |
 |---|---|
 | mx-flow Phase 3 scope analysis | inline in the parent (2026-07-15, see §2 do-inline list); `Explore` mid only as the context-loss escape hatch |
+| mx-flow Phase 5a TDD execution | user's choice at GATE 1 — inline, or one serial `general-purpose` executor per task (mid for S, strongest for M/L/unknown); recommend delegation when the main loop is above the strongest dispatchable tier; escalation per §6 with the parent as the tier above strongest — the §6 absolute cap always wins |
 | mx-team-review reviewers ×3 | mid |
 | mx-team-review tech-lead synthesizer | mid; strongest when the diff touches concurrency, auth/security, data migration, or public API |
 | Read-back verification (any skill) | mid, fresh context |

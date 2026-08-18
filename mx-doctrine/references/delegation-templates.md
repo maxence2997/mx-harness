@@ -130,6 +130,45 @@ ACCEPTANCE:
 > `/mx-team-review`, which already dispatches three perspectives plus a
 > synthesizer.
 
+## 6. TDD TASK  (type: `general-purpose`; model: mid for S-complexity, strongest for M/L; ONE at a time, never parallel — mx-flow Phase 5a delegated mode)
+
+```
+GOAL: Complete ONE TDD task in an existing worktree.
+TASK (verbatim from plan.md): {{What / Test / Files block}}.
+Motivation: {{the spec sentence this task traces to}}.
+CONTEXT: Work ONLY inside {{absolute worktree path}}. Test runner:
+{{runner command}}. Advisory scope hints: predicted files {{list}},
+symbols {{list}}, complexity {{S|M|L}}.
+Read the relevant existing code before writing anything.
+HARD RULES (violating any = failed task):
+1. Iron Law — write the failing test FIRST, run the runner, and OBSERVE
+   the failure output before any production code exists.
+2. Vertical slices — one test → its minimal implementation → next test.
+   Never batch tests up front.
+3. Minimal GREEN — only enough code to pass the current test; no
+   speculative features, abstractions, or config.
+4. Refactor only after GREEN; re-run tests after each refactor step.
+5. Never weaken a gate: no skipped/deleted tests, no relaxed assertions,
+   no lint suppressions, no widened timeouts, no rewriting a RED test to
+   match broken behavior.
+6. Comment policy — WHY-comments only, ≤3 lines, no WHAT-comments.
+   Canonical: {{absolute path to mx-team-review/references/principles.md}}
+   → P2.
+7. Do NOT commit, do NOT touch plan.md or scope.yaml, do NOT edit files
+   outside this task's blast radius.
+ACCEPTANCE:
+- RED shown: paste the failing-test output (before any implementation).
+- GREEN shown: paste the passing output AND the tail of the full suite.
+- Every changed file listed; diff confined to the task's Files — explain
+  any file beyond them.
+[REPORT block]
+```
+
+> Parent-side contract: the orchestrator re-runs the full suite itself and
+> reads the diff before accepting — the executor's pasted output is a
+> claim, not evidence (`model-dispatch.md` §5). The parent owns plan
+> bookkeeping and `/mx-commit --auto`.
+
 ---
 
 ## Read-back verification stub  (pair with any of the above; fresh agent; model: mid)
