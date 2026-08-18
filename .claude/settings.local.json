@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(cp ~/.claude/playbooks/letter-to-future-sessions.md ~/.claude/playbooks/backups/letter-to-future-sessions.md.2026-07-07.bak && echo backed-up)",
-      "Skill(mx-commit)",
-      "Skill(mx-commit:*)"
-    ]
-  }
-}
