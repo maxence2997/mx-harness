@@ -209,6 +209,14 @@ the old name before finishing.
   analysis now runs inline in the parent and audits the plan's task
   split (ordering, granularity, overlap) instead of computing
   parallel-dispatch metadata.
+- (2026-08-19) `install.sh` installs from the **remote main tarball**, not
+  the local checkout — and on a dev machine where `~/.claude/skills/mx-*`
+  are symlinks into the repo, an update copies the remote files *through
+  the symlinks into the repo working tree*. Running it with unpushed
+  commits reverted the working tree to remote main (recovered via
+  `git checkout` — commits were unaffected). Rule: **push before running
+  `install.sh`**; on symlinked installs the script is only needed for
+  real-directory targets (e.g. `~/.codex/skills`).
 
 ## Honest limits of this diagnosis
 
