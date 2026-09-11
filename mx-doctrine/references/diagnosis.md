@@ -209,14 +209,14 @@ the old name before finishing.
   analysis now runs inline in the parent and audits the plan's task
   split (ordering, granularity, overlap) instead of computing
   parallel-dispatch metadata.
-- (2026-08-19) `install.sh` installs from the **remote main tarball**, not
-  the local checkout — and on a dev machine where `~/.claude/skills/mx-*`
-  are symlinks into the repo, an update copies the remote files *through
-  the symlinks into the repo working tree*. Running it with unpushed
-  commits reverted the working tree to remote main (recovered via
-  `git checkout` — commits were unaffected). Rule: **push before running
-  `install.sh`**; on symlinked installs the script is only needed for
-  real-directory targets (e.g. `~/.codex/skills`).
+- (2026-08-19, historical installer behavior; superseded 2026-09-11):
+  `install.sh` fetched the remote main tarball and copied files through
+  development skill symlinks into the repo working tree. Running it with
+  unpushed commits reverted the working tree to remote main (recovered via
+  `git checkout` — commits were unaffected). The former push-before-install
+  workaround is superseded by the
+  [installation contract](https://github.com/maxence2997/mx-harness#updates-and-migration):
+  updates replace individual links without writing their checkout targets.
 - (2026-09-06) Full-suite re-audit against Provencher's "Rethinking skills
   and prompts for GPT-6 Astra" (2026-09-04): 83 findings; report, data and
   raw agent reports at `~/.mx/mx-harness/skill-audit-2026-09-06/` on the
@@ -242,6 +242,19 @@ the old name before finishing.
   so loading them on entry costs one Read and saves ~600 always-loaded
   lines; guards and gates stay in SKILL.md per Focus 2. Line counts:
   `maintenance.md` §6.
+- (2026-09-11, installer review): Keep checkout targets separate from
+  installed files while making installation and updates reach the same
+  agent-visible copy. The initial rewrite left development links untouched,
+  so those agents kept reading their checkout instead of the updated copy.
+  The revised [installation contract](https://github.com/maxence2997/mx-harness#updates-and-migration)
+  backs up individual links and repoints them; canonical links are copied
+  into real files before updates. The review also found lost custom edits
+  across multiple installations, an abandoned legacy XDG destination, and
+  successful exit status after prune failures. The contract now covers
+  reference conflicts, legacy migration, and retryable removal failures.
+  ✅ Repoint an individual skill link after backing up the link itself.
+  ❌ Write updated files through a skill or parent link into a checkout.
+  Regression fixtures are run with the [installer checks](https://github.com/maxence2997/mx-harness#installer-checks).
 
 ## Honest limits of this diagnosis
 
@@ -250,9 +263,11 @@ the old name before finishing.
   matter more than the snapshot numbers.
 - Claude Code behavior (descriptions always loaded; `allowed-tools`
   semantics) was verified only by direct observation in one session, not
-  against a versioned spec. Other harnesses (Codex, Copilot, Cursor) were
-  not measured; the skills must keep degrading gracefully there
-  (single-pass fallbacks, no hard dependency on subagent tools).
+  against a versioned spec. The 2026-09-11 Codex check covered skill
+  discovery in CLI 0.144.3, not all workflow semantics or live refresh.
+  Copilot and Cursor were not measured; the skills must keep degrading
+  gracefully across harnesses (single-pass fallbacks, no hard dependency
+  on subagent tools).
 - This diagnosis cannot see how *users other than the author* invoke these
   skills; trigger-phrase tuning is based on the author's usage.
 

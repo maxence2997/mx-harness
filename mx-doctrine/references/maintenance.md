@@ -11,7 +11,7 @@ mx-harness files exist in two places with different rules:
 | Location | Role | Editing rule |
 |---|---|---|
 | The git repo (`mx-harness/`) | Canonical source | All durable changes go here, through git. The clean working tree + history IS the backup. |
-| Installed copies (`~/.claude/skills/mx-*/`, `~/.codex/skills/…`) | Deployment | Treat as read-only. `install.sh` **overwrites SKILL.md and README.md unconditionally** on update; `references/*` survive only if the user modified them (hash lock in `~/.mx/.mx-harness.lock`). An edit made only to an installed SKILL.md will be silently lost. |
+| Installed copies (`~/.agents/skills/mx-*/`, reached through agent skill links) | Deployment | Treat as read-only. Follow the [installation and update contract](https://github.com/maxence2997/mx-harness#updates-and-migration), updated 2026-09-11; it defines repository-owned files, preserved references, migration backups, and failure handling. |
 
 If you find yourself improving an installed copy: stop, make the change in
 the repo instead, and tell the user to re-run `install.sh`. Exception: the
@@ -117,7 +117,7 @@ Compaction removes repetition, dead references, and superseded facts
 (a) every path/skill name you wrote exists — `ls` / grep it;
 (b) after a rename or renumber, grep the whole repo for the old name —
     zero hits or you're not done;
-(c) `bash -n install.sh` still parses if you touched it;
+(c) if you touched the installer, run the [installer checks](https://github.com/maxence2997/mx-harness#installer-checks) (updated 2026-09-11);
 (d) run the description-budget check from `diagnosis.md`'s re-audit block
     if you touched frontmatter.
 

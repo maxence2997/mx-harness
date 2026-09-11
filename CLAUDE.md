@@ -1,6 +1,6 @@
 # mx-harness
 
-A collection of user-invocable agent skills (slash commands) that wrap the engineering lifecycle: spec → plan → TDD → review → commit → PR. Not an app. Nothing to build, nothing to test in the runtime sense.
+A collection of user-invocable agent skills (slash commands) that wrap the engineering lifecycle: spec → plan → TDD → review → commit → PR. Not an app. The Bash installer has isolated filesystem regression tests; see the checks below.
 
 ## Before editing anything here
 
@@ -8,7 +8,7 @@ Read `mx-doctrine/references/maintenance.md` first — it defines what you may c
 
 ## Repo layout
 
-Each top-level directory is **one skill**. The contract per skill:
+Each top-level `mx-*` directory is **one skill**; `tests/` holds installer regression fixtures. The contract per skill:
 
 ```
 <skill>/
@@ -44,17 +44,15 @@ Three places must stay in sync — change them together or the repo lies:
 2. **`<skill>/README.md`** — user-facing "what it does" list
 3. **`README.md`** (root) — skills table, if the one-liner changed
 
-When **adding** a new skill, also append it to `install.sh`'s `SKILLS=(...)` array (line ~25) or it won't ship. When **removing** one, drop it from that array, delete its directory, and remove the installed copies by hand (`~/.claude/skills/<skill>`, `~/.codex/skills/<skill>`, its lines in `~/.mx/.mx-harness.lock`) — `install.sh` never deletes.
+When **adding** a new skill, also append it to `install.sh`'s `SKILLS=(...)` array or it won't ship. When **removing** one, drop it from that array and delete its directory; installed copies are reported as "no longer shipped" on the next `install.sh` run and handled by `install.sh --prune` under the [migration and removal contract](README.md#updates-and-migration).
 
 ## `install.sh` behavior — don't break the lock
 
-`install.sh` uses a hash-based lock at `~/.mx/.mx-harness.lock` so re-running it preserves user customizations:
+The canonical installation and update contract is [README.md — Updates and migration](README.md#updates-and-migration), updated 2026-09-11. Read it before changing the installer. It covers the shared copy, agent links, custom reference reconciliation, checkout protection, legacy path migration, and prune failures.
 
-- `SKILL.md` and `README.md` → **always overwritten** (treat as canonical from the repo)
-- `references/*` → only overwritten if the file's current hash matches the recorded hash (i.e. the user hasn't edited it locally)
-- It installs from the **remote `main` tarball**, never your working tree — push before running it. On a symlinked dev install (`~/.claude/skills/mx-*` pointing into this repo) run it only for real-directory targets such as `~/.codex/skills`; running it otherwise copies the remote files back through the symlinks into your working tree. Rationale: `mx-doctrine/references/diagnosis.md`, 2026-08-19 entry.
+Keep user-tunable templates and prompts under `references/`; the contract treats `SKILL.md` and `README.md` as repository-owned files. Source selection and supported destinations are documented in [Installation and updates](README.md#installation-and-updates).
 
-This means: **never put user-tunable content in SKILL.md or README.md**. Templates, prompts, and anything the user might customize go under `references/`. Putting user-editable content in the top two files will silently clobber their changes on next install.
+Installer changes must pass `bash -n install.sh` and `python3 -m unittest discover -s tests -v`. Python 3 is test-only; keep the installer runnable with Bash 3.2 and standard Unix utilities.
 
 ## Path conventions used inside skills
 
@@ -78,6 +76,6 @@ Match the existing log (`git log --oneline`). Format: `type(scope): subject` or 
 
 ## What this repo is NOT
 
-- Not a Go/TS/Python project — no `go test`, no `npm test`, no CI gates to satisfy beyond the install script staying runnable
+- Not a Go/TS/Python application — no application build; the Bash installer is covered by the Python standard-library tests above
 - Not a place for code reviews of application code — the skills *do* code review; the repo itself is prompts and docs
 - Not auto-versioned — there's no `VERSION` file or release pipeline; users install from `main` via `install.sh`

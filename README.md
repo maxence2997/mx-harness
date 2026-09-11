@@ -98,32 +98,61 @@ Most of these also run inside `mx-flow`; all of them work standalone.
 
 ---
 
-## Installation
+## Installation and updates
 
-mx-harness installs via [`npx skills`](https://github.com/vercel-labs/skills) — a CLI that drops skill folders into your agent's global skill directory:
+Installation contract updated 2026-09-11.
 
-- Claude Code: `~/.claude/skills/`
-- Codex: `~/.codex/skills/`
+`install.sh` keeps one real copy of each skill in `~/.agents/skills/<skill>/`, which Codex reads directly. It creates a link for each skill in the following locations when the corresponding agent home exists:
+
+- Claude Code: `~/.claude/skills/`, including existing legacy installs under `~/.config/claude/skills/`
+- Codex: `~/.codex/skills/` (compatibility links)
 - GitHub Copilot: `~/.copilot/skills/`
 - Cursor: `~/.cursor/skills/`
 
-**Install or update everything:**
+**Install or update everything from GitHub main:**
 
 ```bash
 curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh
 ```
 
-Inspect the script first if you'd rather: [install.sh](install.sh).
+Requires Bash 3.2+ and standard Unix utilities, including `sha256sum` or `shasum`. Downloading also requires `curl`, `tar`, and `gzip`. Node.js and Python are not installer dependencies. Inspect [install.sh](install.sh) before running it if desired.
 
-**Install or update a single skill:**
+**Update a subset from GitHub main after downloading the script above:**
 
 ```bash
-npx skills add https://github.com/maxence2997/mx-harness --skill <skill-name> -g -y
+bash /tmp/mx-harness-main/install.sh --remote mx-flow mx-pr
 ```
 
-> This single-skill path bypasses `install.sh`'s hash lock, so it overwrites any local customizations you made under that skill's `references/`.
+**From a clone:** `./install.sh` installs or updates from the working tree; `./install.sh --remote` fetches GitHub `main` instead. Append skill names to select a subset. The lock's `_meta source` row records the source commit or path.
 
-> **If you cloned the repo directly:** `install.sh` always installs from GitHub `main`, never from your working tree — push your local changes before running it. On a symlinked dev install, use `git pull` alone and do **not** run `install.sh`: it would copy the remote files back through the symlinks into your working tree.
+After installing or updating, start a new Claude Code or Codex session to load the current skill files.
+
+### Updates and migration
+
+The hash lock at `~/.mx/.mx-harness.lock` protects customizations under `references/`:
+
+- `SKILL.md` and `README.md` are refreshed from the selected source. Keep local customizations under `references/`.
+- A reference file is updated when its installed hash matches the recorded baseline. A differing local file is preserved, including when no baseline is known.
+- When several installations contain local edits to the same reference, one distinct edited version is retained with its previous baseline. Conflicting edited versions stop that skill's migration before its active installations change; reconcile the reported file and rerun.
+
+During migration, existing real directories and individual skill symlinks that need replacement, including links into a development checkout, are moved to `~/.mx/backups/` before their agent paths are linked to the canonical copy. Backing up a symlink moves the link itself; its checkout target is never overwritten. Canonical skill symlinks and symlinks inside a canonical skill are materialized as ordinary directories and files before updating. A custom installation path recorded in the lock is also migrated before its lock root changes.
+
+An agent's whole `skills` directory may already link to `~/.agents/skills`. Other parent symlinks, such as `~/.claude/skills` pointing into a checkout, fail the path check before that skill is changed; use individual skill links instead.
+
+Skills the lock records but the repo no longer ships are reported. Add `--prune` to remove them: real directories are backed up and links to retired installations are removed. A failed removal returns a nonzero exit status and retains the skill's lock entries for a later retry.
+
+> [`npx skills add maxence2997/mx-harness`](https://github.com/vercel-labs/skills) is an alternative installer, but it bypasses this hash lock and its customization-preservation rules.
+
+### Installer checks
+
+Run the isolated filesystem fixtures with Python 3's standard library:
+
+```bash
+bash -n install.sh
+python3 -m unittest discover -s tests -v
+```
+
+Python is required only for these tests. They exercise installation and update behavior without changing the real agent skill directories.
 
 ---
 
