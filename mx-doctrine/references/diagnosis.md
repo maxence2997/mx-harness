@@ -286,9 +286,9 @@ wc -l */SKILL.md | sort -rn | head
 # 3. Dead pointers (any hit = fix now)
 grep -rn "mx-verify\|mx-tdd\|/team-review " */SKILL.md */README.md README.md
 
-# 4. The content check lives only in mx-pr. Any hit outside mx-pr besides
-#    a hand-off note means it came back:
-grep -rn "content-check\|autosquash\|tree-invariant" */SKILL.md */references/*.md | grep -v '^mx-pr/\|^mx-doctrine/'
+# 4. The suite no longer rewrites branch history. Any hit means it came
+#    back:
+grep -rn "content-check\|autosquash\|force-with-lease\|rebase -i" */SKILL.md */references/*.md | grep -v '^mx-doctrine/'
 
 # 5. Pause inventory. Every hit must be one of: a row in a gate table, an
 #    evidence-gated pause, or a justified irreversible/outward-facing stop.

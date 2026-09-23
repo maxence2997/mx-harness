@@ -1,10 +1,9 @@
 ---
 name: mx-pr
 description: >
-  Draft a pull request from the feature spec and git log, run an autonomous
-  commit-history cleanup (content check), then publish to GitHub or GitLab
-  (Bitbucket experimental) — or hand off. Use when a feature branch is ready
-  for PR, standalone or from mx-flow. Usage: /mx-pr [name]
+  Draft a pull request from the feature spec and git log, then publish to
+  GitHub or GitLab (Bitbucket experimental) — or hand off. Use when a feature
+  branch is ready for PR, standalone or from mx-flow. Usage: /mx-pr [name]
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
 source: https://github.com/maxence2997/mx-harness/tree/main/mx-pr
@@ -29,7 +28,7 @@ allowed-tools:
 
 ## Orchestrated mode
 
-This skill has interactive pauses (Steps 4, 5 and 6). **When invoked from
+This skill has interactive pauses (Steps 3, 4 and 5). **When invoked from
 an orchestrator that declares auto-proceed for its PR gate (e.g. mx-flow
 GATE 4), the orchestrator's gate table overrides those pauses**: still
 display everything you would have shown, but proceed without waiting —
@@ -39,15 +38,15 @@ fail or target the wrong repo — not that you would like a second opinion.
 If `git remote -v` names exactly one host, that is the platform; do not
 ask. When invoked directly by the user, the pauses apply as written.
 
-Step 6 publishes. That is the irreversible step: under auto-proceed,
+Step 5 publishes. That is the irreversible step: under auto-proceed,
 publish without asking, but say what you are about to push and to which
 base before you run it.
 
 Because auto-proceed removes the human review of the draft, add one check
 in its place: if a subagent tool (Agent/Task) is available, spawn a fresh
-read-back agent on the draft before Step 6 — criteria: every factual claim
+read-back agent on the draft before Step 5 — criteria: every factual claim
 traces to spec.md or the git log; every referenced issue number exists;
-the body names no local-only files (Step 3's committed-files-only rule).
+the body names no local-only files (Step 2's committed-files-only rule).
 Fix findings before pushing. If no subagent tool exists, re-check the
 draft yourself against those criteria and label the result "self-checked,
 single-context" in the output.
@@ -74,7 +73,7 @@ Read `GLOBAL_MX/spec.md` (`~/.mx/<project>/<name>/spec.md`) for the
 What/Why/How summary.
 
 Resolve the base branch once — every later step uses this value (the log
-below, the content check in Step 2, and the PR target in Step 6):
+below and the PR target in Step 5):
 
 ```bash
 BASE_BRANCH=""
@@ -134,22 +133,7 @@ output as possibly related instead.
 
 ---
 
-## Step 2 — Autonomous content check (mandatory)
-
-This check is **required** — never skip it. mx-pr is the only place it runs
-(mx-flow hands off to mx-pr for it). Two autonomous passes, no user prompt:
-net-zero churn out, small fixups folded into their parent, each pass
-reverted by a tree-hash invariant if it moves the tree. **Execute the full
-canonical procedure** — read and follow
-`${CLAUDE_SKILL_DIR}/references/content-check.md` (next to this SKILL.md),
-passing the Step 1 ref as its `<base-ref>`. If that file is missing,
-say the content check is unavailable in this install and continue to Step 3
-**without** rewriting any history — never improvise a history rewrite from
-the summary above.
-
----
-
-## Step 3 — Write draft to temp file
+## Step 2 — Write draft to temp file
 
 Read `references/pr-template.md` (located in the same directory as this
 SKILL.md). It defines the PR sections and how each placeholder maps to a
@@ -169,12 +153,12 @@ sources for the content, but never name them or their paths in the body.
 For `{{test_plan}}` this means stating the verification itself (tests
 added, commands run, results) rather than pointing at plan.md. The rule
 covers text copied from the template as well as filled placeholders —
-scan the assembled body once before Step 6 and strip any skill-local path
+scan the assembled body once before Step 5 and strip any skill-local path
 it carries in.
 
 **CHANGELOG.** If the repo has one (`test -f CHANGELOG.md`), add an entry
 following `references/changelog-convention.md` (same directory as this
-SKILL.md) and commit it before Step 6 — the PR number does not exist yet,
+SKILL.md) and commit it before Step 5 — the PR number does not exist yet,
 so leave that reference off. If the repo has no `CHANGELOG.md`, drop the
 "CHANGELOG updated" checklist item from the body.
 
@@ -191,7 +175,7 @@ Write the filled template to the draft file; later steps call its path
 
 ---
 
-## Step 4 — Show draft and ask for review
+## Step 3 — Show draft and ask for review
 
 Display the full draft content inline.
 
@@ -218,7 +202,7 @@ If the user runs /mx-pr again and a draft file exists under
 
 ---
 
-## Step 5 — Select platform
+## Step 4 — Select platform
 
 Ask the user which platform to publish to:
 
@@ -236,24 +220,16 @@ remote and continue — see "Orchestrated mode" above.)
 
 ---
 
-## Step 6 — Push and publish
+## Step 5 — Push and publish
 
-Before invoking the platform CLI, make sure the (possibly rewritten)
-branch is on the remote:
+Before invoking the platform CLI, make sure the branch is on the remote:
 
 ```bash
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if git rev-parse --verify --quiet "origin/$BRANCH" >/dev/null; then
-  # branch exists on remote — Step 2 may have rewritten history, so push with a lease
-  git push --force-with-lease origin "$BRANCH"
-else
-  git push -u origin "$BRANCH"
-fi
+git push -u origin "$(git rev-parse --abbrev-ref HEAD)"
 ```
 
-Use `--force-with-lease` (never plain `--force`) so a concurrent update on
-the remote aborts the push instead of clobbering someone else's work. If
-push fails, surface the error and stop — do not retry blindly.
+Never force-push. A rejected push means the remote branch has commits this
+one lacks — surface the error and stop; do not retry blindly.
 
 Then check the chosen platform's CLI is present before invoking it:
 
@@ -306,7 +282,7 @@ Display the draft path and content for the user to use manually.
 
 ---
 
-## Step 7 — Report
+## Step 6 — Report
 
 **Done** = the PR/MR URL is printed, its base branch is
 `<base-branch>`, and the body contains no unfilled

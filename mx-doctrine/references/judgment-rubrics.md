@@ -68,9 +68,7 @@ question — when ANY of:
 
 - The action is irreversible or outward-facing: push to a shared branch,
   publish a PR the orchestrator didn't authorize, tag/release, delete >~50
-  lines the session didn't write, any `--force`. (Exception:
-  `git push --force-with-lease` executed by mx-pr Step 6 after its
-  tree-invariant-guarded content check is pre-authorized by that skill.)
+  lines the session didn't write, any `--force`.
   (Exception: `git branch -D` executed by mx-flow Phase 8
   (`mx-flow/references/finish.md` 8.6) after 8.1's merge evidence holds —
   PR/MR state MERGED, or a `git merge-tree` check showing the branch adds
@@ -130,9 +128,9 @@ the appropriate tier (`model-dispatch.md` §6).
 | Change type | Floor (run it for real, quote the output) |
 |---|---|
 | Any code change | The project's own gate: `make check`/`make test` if a Makefile defines it, else the package-manager test script, else the language default (`go test ./...`, `cargo test`, `pytest`, `dotnet test`). No gate findable → say exactly that in the report; never invent a command and never claim green without running. New behavior additionally requires the failing-test-first evidence (mx-flow Iron Law). |
-| Spec / plan / PR body / docs | Fresh eyes before use: a human review gate counts (mx-flow GATE 1, interactive mx-pr Step 4); when no human will see it before it ships (auto-published PR body, orchestrated docs), a fresh-context read-back against explicit acceptance criteria (`model-dispatch.md` §5, item 2). Either way: every referenced path, command, and skill name checked to exist (`ls`, grep — don't assume). |
+| Spec / plan / PR body / docs | Fresh eyes before use: a human review gate counts (mx-flow GATE 1, interactive mx-pr Step 3); when no human will see it before it ships (auto-published PR body, orchestrated docs), a fresh-context read-back against explicit acceptance criteria (`model-dispatch.md` §5, item 2). Either way: every referenced path, command, and skill name checked to exist (`ls`, grep — don't assume). |
 | Config (JSON/YAML) | Parse check (`jq empty`, `yq`, or the consuming tool's own validator), then exercise the config once and show the effect. |
-| History rewrite (content check) | Tree-hash invariant compared before/after — already built into mx-pr's content check; never skip it. |
+| History rewrite | Tree-hash invariant (`git rev-parse HEAD^{tree}`) compared before/after; never skip it. |
 | Cross-language / cross-repo change | Run the consuming side, not just the producing side. |
 
 - ✅ Config change to a CI file: `yq` parse passes AND the changed job was

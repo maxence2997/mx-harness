@@ -268,7 +268,6 @@ Read ${CLAUDE_SKILL_DIR}/references/verify.md and follow it. If the file is miss
 Run /mx-pr (if the mx-pr skill is not installed, tell the user the flow
 ends here and hand them the branch name and base branch — do not improvise
 a PR). It will:
-- Run the commit-history content check — mx-pr owns that procedure and runs it unconditionally
 - Draft the PR description from the spec and git log
 - Publish or hand off
 

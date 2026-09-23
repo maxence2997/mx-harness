@@ -40,7 +40,7 @@ instead (`/mx-commit` for the commit, `/mx-pr` if it needs a PR).
   └─────────────────────────────────────────────────┘
 
   Verify      ──▶  Full suite + plan completion
-  PR          ──▶  Content check → draft → publish
+  PR          ──▶  Draft → publish
   Finish      ──▶  Clean up branch + worktree
 ```
 
@@ -166,7 +166,7 @@ Future Maintainer: "Document why TTL=300."
 
 **Triage** — Findings are sorted into fix / track / skip. Fixes loop back to TDD. Clean results move on to Verify.
 
-**Verify → PR** — Full test suite passes and the plan checklist is complete; then mx-pr's content check autonomously cleans up review-iteration noise (Pass 1 removes mutually-cancelling changes; Pass 2 squashes fixups into parents; both tree-invariant guarded), the PR is drafted and published, its URL recorded in `plan.md`, and completion reported criterion by criterion with evidence, the paths created, and an explicit *Not done* section.
+**Verify → PR** — Full test suite passes and the plan checklist is complete; then the PR is drafted and published, its URL recorded in `plan.md`, and completion reported criterion by criterion with evidence, the paths created, and an explicit *Not done* section.
 
 ```
 /mx-flow finish search-cache
@@ -180,9 +180,7 @@ Future Maintainer: "Document why TTL=300."
 - After merge: run `/mx-flow finish <name>` to clean up
 - `.mx/` directory is gitignored automatically
 - Per-phase procedures and tunable templates live in `references/`
-  (plan, worktree, tdd, verify, status, finish, ai-learning entry format);
-  the content check's canonical copy is `mx-pr/references/content-check.md`
-  and only mx-pr runs it
+  (plan, worktree, tdd, verify, status, finish, ai-learning entry format)
 - No test runner detected → mx-flow asks once for the command instead of
   guessing; a project with genuinely no test suite still owes a reviewable
   manual check in the commit, never a skipped RED step

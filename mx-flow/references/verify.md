@@ -1,8 +1,7 @@
 # Phase 6 — Verify and commit (mx-flow)
 
 > Read on entering Phase 6. Final verification gate. No partial checks
-> accepted. The commit-history content check is **not** part of this
-> phase — mx-pr owns it and runs it in Phase 7.
+> accepted.
 
 ## 6.1 — Run full test suite
 
