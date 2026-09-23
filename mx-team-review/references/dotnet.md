@@ -88,13 +88,6 @@ Interlocked.Increment(ref _orderCount);
 // ❌ throw ex — truncates stack trace
 catch (Exception ex) { throw ex; }
 
-// ✅ throw — preserves full stack trace
-catch (Exception ex)
-{
-    _logger.LogError(ex, "Failed to process order {OrderId}", orderId);
-    throw;
-}
-
 // ✅ using declaration (C# 8+) for resource cleanup
 await using var stream = new FileStream(path, FileMode.Open);
 ```
