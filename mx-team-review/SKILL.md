@@ -67,8 +67,8 @@ Display: `📋 Reviewing: {description of what is being reviewed}`
 ## Step 1.5: Right-Size the Review
 
 Size the job before spending anything on it. In diff mode, read the size
-off the diff Step 1 already ran. In repo mode, expand the target path with
-Glob now to get the file list (Step 3 reuses it).
+off the diff Step 1 already ran. In repo mode, list the files under the
+target path now (Step 3 reuses the list).
 
 - **No source files** (docs/config only — `.md`, `.txt`, `.json`, `.yaml`,
   `.yml`, `.toml`, `.xml`): say so and run a **single Future Maintainer
@@ -116,7 +116,7 @@ review material.
 
 ### Repo Mode
 
-Reuse the file list Step 1.5 already produced with Glob (Glob it now if it
+Reuse the file list Step 1.5 already produced (list the files now if it
 is not to hand). Use Read to load each file's content.
 
 **Skip these files/directories:**

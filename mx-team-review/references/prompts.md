@@ -26,6 +26,7 @@ Each reviewer must produce a JSON object with this structure:
       "file": "relative/path/to/File.go",
       "line": 42,
       "severity": "error | warning | suggestion",
+      "confidence": "high | medium | low — how likely the issue is real",
       "category": "logging | race-condition | testing | comment | exception | performance | async | di | architecture",
       "message": "Description of the issue",
       "suggestion": "Concrete improvement, may include a code snippet"
@@ -42,6 +43,14 @@ Each reviewer must produce a JSON object with this structure:
 `specs_read` lists the **filenames** of the standards files the reviewer
 actually read. It is what makes a skipped read visible in the report — an
 empty or missing `specs_read` is reported as a degradation, not ignored.
+
+`issues` is for coverage, not filtering. Report every issue you find in
+your scope, including ones you are unsure of or judge low-severity: later
+stages (the Tech Lead's synthesis, then triage) check each finding and
+drop the ones that do not hold, so a finding dropped later costs little
+and a problem left out is lost. Set `severity` by the impact if the issue
+is real, not by how sure you are — triage turns severity into fix
+priority.
 
 `highlights` are positive observations only. They are informational and
 will **not** be triaged.
@@ -84,6 +93,7 @@ list only says which of them are yours:
 - SRP, constructor responsibilities, and the layering boundary between business logic and infrastructure — principles.md §P0 — SRP / Separation of Concerns
 - Error-handling design choices (wrapping, sentinel errors, custom types) — principles.md §P0 — Exception / Error Handling
 - Over-engineering, unnecessary abstraction, premature generalization — principles.md §P1 — Simplicity / Over-engineering
+- Edits unrelated to the change (drive-by reformatting, unrequested refactors, while-I-was-here cleanup) — principles.md §P1 — Surgical Changes / Scope Creep
 - Idiomatic patterns and existing codebase conventions — the language spec, when one applies
 
 Focus areas (highlights):
@@ -119,6 +129,7 @@ list only says which of them are yours:
 - Race conditions under concurrent load — principles.md §P0 — Race Condition
 - Resource release (connections, streams, goroutines) — principles.md §P0 — Exception / Error Handling, plus the language spec's cleanup patterns
 - Obvious performance hazards (N+1, load-then-filter, unreused clients/connections, blocking async) — principles.md §P2 — Performance
+- Metrics for key operations (missing request-count, latency or error-rate metrics; high-cardinality labels) — principles.md §P3 — Metrics
 
 Focus areas (highlights):
 - Logging that provides genuinely useful incident context
@@ -184,7 +195,7 @@ Rules for issues:
 1. DEDUPLICATE: Multiple findings about the same location and issue → merge into one entry. Pick the clearest message and most actionable suggestion.
 2. CONFIDENCE WEIGHTING: If multiple reviewers independently flagged the same issue, you should be more confident it is a real problem. This may justify raising severity. But do NOT tell the reader how many reviewers flagged it.
 3. RESOLVE CONFLICTS: If reviewers disagree, make the final call. Give one clear recommendation.
-4. FILTER NOISE: Remove false positives, overly speculative suggestions, and findings that don't apply to the actual code context.
+4. FILTER NOISE: Remove false positives, overly speculative suggestions, and findings that don't apply to the actual code context. A reviewer's `confidence`, where given, tells you where to check hardest; it is not on its own a reason to drop a finding.
 5. SEVERITY ASSIGNMENT: Use your judgment. error = will cause bugs/crashes/data loss. warning = creates tech debt or operational risk. suggestion = improvement opportunity. Triage maps these to P0–P3 downstream, using `mx-review-triage/references/SEVERITY.md` — do not emit P-levels here.
 6. SORT: Group by file, then sort by severity (error → warning → suggestion).
 
