@@ -18,8 +18,9 @@ Draft a pull/merge request from the feature spec and git log, review it, then pu
 5. Shows you the draft — you decide to proceed or edit first
 6. Asks which platform to publish to
 7. Pushes the branch (never with force) and publishes against the resolved base branch — if that platform's CLI is missing it falls back to hand-off instead of switching platforms
-8. Reports the URL, the base branch, and the commit count; it does not wait on CI
-9. Leaves draft in `.mx/<name>/tmp/` — cleaned up by `/mx-flow finish`
+8. GitLab only: after the MR's own pipeline appears, cancels the still-active branch pipeline that the push created for the same commit, so the two do not run concurrently
+9. Reports the URL, the base branch, and the commit count; it does not wait on CI
+10. Leaves draft in `.mx/<name>/tmp/` — cleaned up by `/mx-flow finish`
 
 ## Platforms supported
 
