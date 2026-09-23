@@ -21,10 +21,13 @@ Then collect merge evidence, in order — stop as soon as (a) and (b) hold:
 - **(a) PR/MR state** — `gh pr view <branch-name> --json state -q .state`
   → `MERGED`, or
   `glab mr view <branch-name> --output json | jq -r .state` → `merged`
-- **(b) Content is in the base** —
-  `git fetch origin <base-branch> && git diff --quiet origin/<base-branch>..<branch-name>`.
-  An empty diff means every change on the branch is already in the base:
-  squash- and rebase-proof, and independent of commit SHAs.
+- **(b) Content is in the base** — `git fetch origin <base-branch>`, then
+  compare `git merge-tree --write-tree origin/<base-branch> <branch-name>`
+  with `git rev-parse origin/<base-branch>^{tree}`. Equal output means
+  merging the branch would change nothing — every change on it is already
+  in the base: squash- and rebase-proof, independent of commit SHAs, and
+  still true after the base has moved on. (Needs Git 2.38+; on older Git
+  treat (b) as failed.)
 - **(c) Nothing unpushed** — `git rev-list --count @{u}..<branch-name>`
   is 0, or the upstream is gone (the remote branch was deleted after the
   merge — itself merge evidence)
@@ -101,10 +104,11 @@ acts as a safety net.
 **If git refuses** (branch not fully merged): after a squash-merge or
 rebase this is the expected outcome, not an error. With 8.1's evidence in
 hand — (a) or (b) established and (c) clean — run
-`git branch -D <branch-name>` immediately and report:
+`git branch -D <branch-name>` immediately and report, naming only the
+evidence that held:
 
 ```
-Branch deleted (-D; squash-merge verified: PR #<n> MERGED, branch content identical to <base-branch>).
+Branch deleted (-D; merge verified: PR #<n> MERGED / branch changes already in <base-branch>).
 ```
 
 **Still ask — never auto-force — when:**

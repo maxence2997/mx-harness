@@ -172,7 +172,7 @@ Future Maintainer: "Document why TTL=300."
 /mx-flow finish search-cache
 ```
 
-**Finish** — Establishes the merge itself (PR state, or an empty diff against the base — squash-merges included) rather than asking you, then deletes the plan, deletes the tmp directory, and removes the worktree and branch. Design spec and ADRs are preserved permanently. It still stops and asks when the branch holds work the base does not, has unpushed commits, or the worktree is dirty.
+**Finish** — Establishes the merge itself (PR state, or a check that merging the branch would change nothing in the base — squash-merges included, even after the base has moved on) rather than asking you, then deletes the plan, deletes the tmp directory, and removes the worktree and branch. Design spec and ADRs are preserved permanently. It still stops and asks when the branch holds work the base does not, has unpushed commits, or the worktree is dirty.
 
 ## Notes
 

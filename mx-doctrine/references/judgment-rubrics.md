@@ -73,8 +73,8 @@ question — when ANY of:
   tree-invariant-guarded content check is pre-authorized by that skill.)
   (Exception: `git branch -D` executed by mx-flow Phase 8
   (`mx-flow/references/finish.md` 8.6) after 8.1's merge evidence holds —
-  PR/MR state MERGED, or an empty `git diff origin/<base>..<branch>`, with
-  no unpushed commits and a clean worktree.)
+  PR/MR state MERGED, or a `git merge-tree` check showing the branch adds
+  nothing to the base, with no unpushed commits and a clean worktree.)
 - Two instructions genuinely conflict and no precedence rule in the skill
   resolves it — surface the conflict, propose which side should win.
 - The remaining work forks on a taste or scope choice the user hasn't

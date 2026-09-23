@@ -299,8 +299,8 @@ After merge: /mx-flow finish <name>
 ## Phase 8 — Finish (post-merge cleanup)
 
 Triggered by `/mx-flow finish <name>`, independently from the main pipeline. Summary:
-establish merge evidence without asking (PR/MR state, or an empty
-`git diff origin/<base>..<branch>`) → delete `plan.md`, preserve the spec and ADR under
+establish merge evidence without asking (PR/MR state, or a
+`git merge-tree` check that merging the branch changes nothing) → delete `plan.md`, preserve the spec and ADR under
 `~/.mx/<project>/<name>/`, delete `.mx/<name>/tmp/` → `git worktree remove` (never
 `--force` automatically) → `git branch -d`, escalating to `-D` on the expected
 squash-merge refusal once that evidence holds → summary. Still ask before `-D` when the
