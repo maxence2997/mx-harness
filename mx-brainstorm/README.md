@@ -17,7 +17,7 @@ Asks all its clarifying questions in one batch — each with a proposed default 
 
 - **What** — what is being built or changed
 - **Why** — the problem it solves
-- **How** — the chosen approach and design decisions
+- **How** — the chosen approach, design decisions, and the assumptions taken for open details
 - **Out of scope** — what this change explicitly does not cover
 
 `~/.mx/<project>/<name>/adr.md` — the decision rationale and rejected alternatives. Written without asking, but only when the brainstorm weighed two or more viable approaches and the chosen one was not the obvious default; a single-obvious-approach brainstorm records the decision in the spec's How section and says so.
@@ -26,7 +26,7 @@ Whichever files are written have lasting value after implementation is done.
 
 ## Notes
 
-- Clarifying questions arrive as one numbered batch (max 6); answer any subset — unanswered items take the stated default
+- Clarifying questions arrive as one numbered batch, each marked [design] (changes the approach) or [detail]; every design question is asked, however many there are, and a long batch lists the details last as defaults; answer any subset — unanswered items take the stated default, and open details are recorded in the spec as assumptions
 - Bows out when the change is too small for a spec to add anything beyond the diff
 - Hard gate: no code is written until the user approves the design spec — approval means saying so, in words; silence or a comment on the content is not approval
 - Creates `~/.mx/<project>/<name>/` for permanent spec storage (and the ADR, when one is written)

@@ -34,7 +34,10 @@ allowed-tools:
 **Don't assume. Don't hide confusion. Surface tradeoffs.** These apply at
 every step below — not just Step 1.
 
-- **State assumptions explicitly.** If uncertain, ask rather than guess.
+- **State assumptions explicitly.** If uncertain, ask rather than guess —
+  in design, a question costs less than a wrong assumption. Mark each
+  question **[design]** when its answer can change the approach, or
+  **[detail]** when the approach holds either way.
 - **Present multiple interpretations.** When the user's request is
   ambiguous, surface the readings and let the user pick. Do not silently
   choose one and proceed.
@@ -74,10 +77,8 @@ diff: a single obvious fix, one call site, no design choice to make. Say
 the user disagrees, continue. Not under an orchestrator: when mx-flow
 invoked this skill the user already chose the full flow — write the spec.
 
-Read existing code relevant to the topic (if any) using Glob and Read.
-Then ask **all** your clarifying questions in ONE message. Before sending,
-list every open question you have; group them, then send the group. The
-ground to cover:
+Read the existing code relevant to the topic, if any. Then ask all your
+clarifying questions together in one message. The ground to cover:
 
 - What problem does this solve?
 - Who is affected and how?
@@ -85,8 +86,10 @@ ground to cover:
 - What does success look like?
 
 Rules:
-- One batch, 3-6 questions, hard cap 6. If you have more, ask the 6 whose
-  answers most change the design and note that others may follow
+- One batch, no minimum count. Ask every [design] question — never drop
+  one to fit a number. If the batch runs past about six questions, put the
+  [detail] ones last as a list of proposed defaults the user can override
+  in one reply
 - Every question carries (a) a proposed default and (b) one clause on why
   it matters. The user may reply "defaults" / "just decide" to accept all
   proposed defaults — then say which defaults you adopted and continue
@@ -97,16 +100,18 @@ Rules:
   trade-off it accepts
 - Stop asking when you can write all four spec sections — What / Why /
   How / Out of scope — without a TBD that would change the chosen
-  approach. Remaining uncertainty that does not change the approach goes
-  into Out of scope, not into another question
-- Follow-up batches only when an answer opens a genuine new fork (a choice
-  whose options were not visible before). Max 2 follow-up batches; after
-  that, state the remaining uncertainty in Out of scope and move on
+  approach. A [detail] item still open goes into the spec's How as a
+  stated assumption, not into another question
+- Follow-up batches are for [design] questions: one still open, or a
+  genuine new fork an answer opened (a choice whose options were not
+  visible before). Max 2 follow-up batches; after that, state what is
+  still open in Out of scope and move on
 - If invoked from mx-flow, the topic is already provided — send the batch
   immediately, do not ask if the user wants to start
 
-When the answers are in, say what you now understand in 2-3 lines and move
-to Step 2 in the same message. The user can correct you at any point.
+When the answers are in, say briefly what you now understand — enough for
+the user to catch a misreading — and move to Step 2 in the same message.
+The user can correct you at any point.
 
 ---
 
@@ -129,10 +134,11 @@ once, briefly.
 
 ## Step 3 — Refine
 
-Ask follow-up questions as one further batch if the user's choice reveals
-new ambiguities (Step 1's batch rules apply, follow-up cap included).
-Iterate until the design is unambiguous or that cap is reached — what is
-still open then goes into the spec's Out of scope.
+Ask follow-up questions as one further batch if the user's choice leaves
+a [design] question open (Step 1's batch rules apply, follow-up cap
+included). Iterate until the design is unambiguous or that cap is reached
+— what is still open then goes into the spec's Out of scope, and open
+[detail] items become stated assumptions in How.
 
 Then go to Step 4 — the spec-approval gate lives there, after the spec
 exists.
@@ -164,7 +170,8 @@ Spec format:
 <The problem it solves and why it matters>
 
 ## How
-<The chosen approach, key design decisions, trade-offs accepted>
+<The chosen approach, key design decisions, trade-offs accepted; the
+assumptions taken for open [detail] questions>
 
 ## Out of scope
 <Explicitly list what this change does NOT cover>
