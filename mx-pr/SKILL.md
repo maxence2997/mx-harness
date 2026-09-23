@@ -127,7 +127,10 @@ gh issue list --state open --limit 20 2>/dev/null || true
 ```
 
 Collect all candidate issue references. If ambiguous, include all
-candidates and let the user trim during review.
+candidates and let the user trim during review. Under Orchestrated mode
+nobody reviews the draft, so only references found in the branch name or
+commit messages go into the body; list title-keyword matches in the run
+output as possibly related instead.
 
 ---
 

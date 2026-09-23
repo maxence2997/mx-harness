@@ -44,7 +44,7 @@ Default sections and their sources:
 | Section | Source |
 |---------|--------|
 | Summary | Design spec — What and How |
-| Related issues | Issue numbers found in the branch name, commit messages, or open issue list (omitted if none) |
+| Related issues | Issue numbers found in the branch name, commit messages, or open issue list (omitted if none; under an orchestrator, open-issue matches are listed in the run output instead of the body) |
 | Motivation | Design spec — Why |
 | Changes | Git log since branch start, grouped by commit type |
 | Test plan | Completed tasks from plan.md |
