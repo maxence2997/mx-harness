@@ -61,7 +61,7 @@ every sub-agent this skill dispatches.
    of approach) → stop retrying. In a harness with sub-agents, escalate to
    the strongest tier with the full failure trail (what was tried, exact
    diffs, exact errors); otherwise present that trail to the user with
-   concrete options. Never a third identical attempt. (Small-tier/haiku
+   concrete options. Never a third identical attempt. (Small-tier
    workers get only ONE attempt before escalating — counting rule:
    mx-doctrine model-dispatch §6.)
 
@@ -104,7 +104,7 @@ at each reference site.
   sub-agent beyond the ones this file specifies.
 
 Fallback when mx-doctrine is absent: dispatch execution sub-agents at the
-mid tier (`sonnet`), decisions/reviews at the strongest available; apply
+mid tier, decisions/reviews at the strongest available; apply
 the Non-negotiables above literally.
 
 ## Path resolution
@@ -140,8 +140,8 @@ Each phase below is a skeleton — purpose, in/out, gate, guards; its procedure 
    ```
    If `.gitignore` was created or modified, commit it:
    `git add .gitignore && git commit -m "chore: add .mx/ to .gitignore"`
-5. **Read relevant context** — based on the topic, use Glob and Read to
-   collect information the brainstorm will need:
+5. **Read relevant context** — based on the topic, collect the
+   information the brainstorm will need:
    - Files, modules, or packages mentioned explicitly in the topic
    - Related code that is likely in scope (e.g. if topic mentions a component, read adjacent files)
    - Any design docs, behaviour specs, or CLAUDE.md files that apply
@@ -208,7 +208,7 @@ Read ${CLAUDE_SKILL_DIR}/references/worktree.md and follow it. If the file is mi
 
 Execute the plan one task at a time, in plan order, in the execution mode chosen at
 GATE 1 (no recorded choice → inline). Either mode is **strictly serial — one task in
-flight, ever**. Parallel dispatch stays removed (mx-doctrine model-dispatch §2). The
+flight, ever**; no parallel dispatch (why: mx-doctrine model-dispatch §2). The
 user may switch modes between tasks; their instruction always wins. All rules in this
 phase bind whoever types — parent or executor; Non-negotiables 1–3 govern every cycle.
 
@@ -268,7 +268,7 @@ Read ${CLAUDE_SKILL_DIR}/references/verify.md and follow it. If the file is miss
 Run /mx-pr (if the mx-pr skill is not installed, tell the user the flow
 ends here and hand them the branch name and base branch — do not improvise
 a PR). It will:
-- Run the commit-history content check — mx-pr owns that procedure and runs it unconditionally; mx-flow no longer runs a copy
+- Run the commit-history content check — mx-pr owns that procedure and runs it unconditionally
 - Draft the PR description from the spec and git log
 - Publish or hand off
 

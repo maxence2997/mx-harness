@@ -94,7 +94,9 @@ Write `LOCAL_MX/plan.md`:
 - [ ] Task 3 — fix: <subject>
 ```
 
-Show the full task breakdown (with Task N details) to the user for review.
+Show the full task breakdown (with Task N details) to the user for
+visibility, then go straight on to the plan checks below (GATE 2 comes
+after them).
 
 ## Plan checks (run before GATE 2)
 
@@ -105,7 +107,7 @@ from what Phases 1–2 already put in context; re-read `GLOBAL_MX/spec.md` or
 resumed session).
 
 **Grounded in real files and symbols.**
-Confirm, don't explore: per task, use targeted Glob/Grep to pin down
+Confirm, don't explore: per task, run targeted searches to pin down
 the files and symbols it will touch — verify a predicted path exists,
 locate the module that owns a function. 2.1 already did the broad
 reading; do not start repo-wide exploration here.
@@ -125,7 +127,7 @@ renumbering is safe here, nothing has executed yet:
   if they are really one behavior.
 - **No vague tasks**: a task you cannot pin to files/symbols → rewrite the
   bullet naming the file(s), the function/endpoint, the interface contract.
-  A targeted Read/Grep to settle the open question is fine.
+  A targeted read or search to settle the open question is fine.
 
 **Max 2 refinement passes.** Pass 1 rewrites the vague bullets; pass 2
 re-checks only those, leaving the rest untouched. After pass 2 the result

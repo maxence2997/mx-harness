@@ -17,8 +17,8 @@ chosen at GATE 1 (no recorded choice → inline):
   (mx-doctrine delegation-templates §6). The executor writes tests and code
   only; the parent keeps verification, plan bookkeeping, and commits.
 
-Either mode is **strictly serial — one task in flight, ever**. Parallel
-dispatch stays removed (mx-doctrine model-dispatch §2). The escape hatch is
+Either mode is **strictly serial — one task in flight, ever**; no parallel
+dispatch (why: mx-doctrine model-dispatch §2). The escape hatch is
 the user's: they may switch modes between tasks at any time and their
 instruction always wins — take the switch on the next task, never mid-task.
 
@@ -131,12 +131,13 @@ Run the full suite — confirm nothing else broke.
 Non-negotiable 5 (retry budget). Weakening the test to pass is
 Non-negotiable 3. There is no third identical attempt.
 
-**Refactor** — Only after GREEN, look for improvements:
-
-- Extract duplication
-- Improve naming
-- Simplify logic
-- Apply existing patterns from the codebase
+**Refactor** — Only after GREEN, and only inside this task's change:
+remove duplication it introduced, improve names, simplify logic, and
+follow the codebase's existing patterns. Leave code outside the change as
+it is — mx-team-review flags refactors the spec did not call for as scope
+creep (canonical:
+`${CLAUDE_SKILL_DIR}/../mx-team-review/references/principles.md` →
+*P1 — Surgical Changes / Scope Creep*).
 
 Rules:
 - **Never refactor while RED**
