@@ -255,6 +255,24 @@ the old name before finishing.
   ✅ Repoint an individual skill link after backing up the link itself.
   ❌ Write updated files through a skill or parent link into a checkout.
   Regression fixtures are run with the [installer checks](https://github.com/maxence2997/mx-harness#installer-checks).
+- (2026-09-23) Prompt audit of the suite against Claude Opus 5.5 and
+  Fable 5.1 (report, patches and evidence at
+  `~/.mx/mx-harness/prompt-audit-2026-09-23/` on the owner's machine).
+  Two executable defects: (1) the content-check rollback kept its
+  pre-state in shell variables, which do not survive between Bash calls,
+  so a pass that moved the tree could escape the invariant (reproduced:
+  `git reset --hard ""` exits 128) — mx-pr now writes values that cross
+  steps as `<placeholders>`, and the content check itself was removed at
+  the user's decision: squash merges discard branch history, so reading
+  every commit and force-pushing on every PR bought nothing, and it was
+  the suite's most defect-prone procedure;
+  (2) finish.md 8.1 (b) compared branch and base tips with a two-dot
+  diff, which fails as soon as the base moves on after a squash-merge —
+  it now asks `git merge-tree` whether merging the branch would change
+  anything.
+  ✅ Keep a value a later command needs in a file or ref, or print it and
+  write it out literally. ❌ Set a shell variable in one fenced block and
+  read it in the next.
 
 ## Honest limits of this diagnosis
 
