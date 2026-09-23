@@ -143,8 +143,9 @@ CONTEXT: Work ONLY inside {{absolute worktree path}}. Test runner:
 {{Files line, verbatim}}.
 Read the relevant existing code before writing anything.
 HARD RULES (violating any = failed task):
-1. Iron Law — write the failing test FIRST, run the runner, and OBSERVE
-   the failure output before any production code exists.
+1. Iron Law — write the failing test first, run the runner, and read
+   the failure output before any production code exists: seeing it fail
+   is what shows the test can catch the bug.
 2. Vertical slices — one test → its minimal implementation → next test.
    Never batch tests up front.
 3. Minimal GREEN — only enough code to pass the current test; no
@@ -156,8 +157,8 @@ HARD RULES (violating any = failed task):
 6. Comment policy — WHY-comments only, ≤3 lines, no WHAT-comments.
    Canonical: {{absolute path to mx-team-review/references/principles.md}}
    → P2.
-7. Do NOT commit, do NOT touch plan.md, do NOT edit files
-   outside this task's blast radius.
+7. Leave commits and plan.md to the orchestrator, which owns both, and
+   edit only files inside this task's blast radius.
 ACCEPTANCE:
 - RED shown: paste the failing-test output (before any implementation).
 - GREEN shown: paste the passing output AND the tail of the full suite.

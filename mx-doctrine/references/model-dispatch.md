@@ -105,6 +105,8 @@ user — protect it.
   Serial either way; parallel execution stays removed.
   ✅ ask once at GATE 1, then one `opus` executor per task / ❌ silently
   hard-coding either mode because a heuristic says so
+  (2026-09-07: GATE 1 states the mode instead of asking — delegated on a
+  tier gap, inline otherwise; the user can switch at any time.)
 
 ## §3 Every delegation carries three things
 
@@ -136,8 +138,8 @@ the main-loop model — do that only deliberately, not as a shortcut.
 
 | Dispatch site | Type / tier |
 |---|---|
-| mx-flow Phase 2 plan checks | inline in the parent (the former Phase 3 scope analysis, folded into planning) (2026-07-15, see §2 do-inline list); `Explore` mid only as the context-loss escape hatch |
-| mx-flow Phase 5a TDD execution | user's choice at GATE 1 — inline, or one serial `general-purpose` executor per task (mid by default, strongest when the task touches concurrency, auth/security, data migration or a public API); recommend delegation when the main loop is above the strongest dispatchable tier; escalation per §6 with the parent as the tier above strongest — the §6 absolute cap always wins |
+| mx-flow Phase 2 plan checks | inline in the parent (§2 do-inline list); `Explore` mid only as the context-loss escape hatch |
+| mx-flow Phase 5a TDD execution | stated at GATE 1, and the user may switch at any time — inline by default; one serial `general-purpose` executor per task (mid by default, strongest when the task touches concurrency, auth/security, data migration or a public API) when the main loop is above the strongest dispatchable tier; escalation per §6 with the parent as the tier above strongest — the §6 absolute cap always wins |
 | mx-team-review reviewers ×3 | mid |
 | mx-team-review tech-lead synthesizer | mid; strongest when the diff touches concurrency, auth/security, data migration, or public API |
 | Read-back verification (any skill) | mid, fresh context |

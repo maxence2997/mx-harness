@@ -79,7 +79,7 @@ missing file's contents.
 2. **Never self-verify a deliverable** — code: run the project's gate and
    show output; prose/config: fresh-context read-back; no sub-agent tool
    available: label the check "self-checked, single-context".
-3. **Two failed rounds max** per subtask at one tier (small tier/haiku:
+3. **Two failed rounds max** per subtask at one tier (small tier:
    one), then escalate model or ask; 4 failed rounds total → stop and ask
    the user.
 4. **Never weaken a gate to get green** — full list:
