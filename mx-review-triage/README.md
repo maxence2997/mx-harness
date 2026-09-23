@@ -36,5 +36,5 @@ Reply templates and a worked triage table live in `references/EXAMPLES.md`, read
 - `--source pr`: never makes code changes or posts PR replies without user approval — except when invoked by an orchestrator that declares auto-proceed for its triage gate (mx-flow GATE 3)
 - `--source review`: shows the triage table, then executes the "Fix now" bucket immediately; pauses only for fixes that reach outside the reviewed diff or exceed the assigned cost class
 - `--source pr` mode: zero unaddressed comments is a hard gate before merge
-- Auto-detect only runs when invoked directly — mx-flow always uses `--source review`
+- Auto-detect only runs when invoked directly: it uses the one source it finds and says which, and asks when it finds both or neither — mx-flow always uses `--source review`
 - Supports both GitHub (`gh`) and GitLab (`glab`) — authenticate before use

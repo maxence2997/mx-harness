@@ -79,9 +79,9 @@ If zero unresponded comments remain, report "No unresponded comments." and stop.
 
 ### If no argument (direct invocation only)
 
-Auto-detect in this order:
-1. `.mx/*/tmp/review-*.md` (project-local) or the OS temp review-reports directory has a file modified within the last hour → suggest `--source review`
-2. Current branch has an open PR (`gh pr view` or `glab mr view` succeeds) → suggest `--source pr`
+Auto-detect:
+1. `.mx/*/tmp/review-*.md` (project-local) or the OS temp review-reports directory has a file modified within the last hour, and there is no open PR → use `--source review` and say so
+2. Current branch has an open PR (`gh pr view` or `glab mr view` succeeds), and there is no such report → use `--source pr` and say so
 3. Both available → ask user which source to use
 4. Neither available → ask user
 
