@@ -85,30 +85,35 @@ for cand in develop main; do
     BASE_BRANCH="origin/$cand"; break
   fi
 done
+echo "base ref: ${BASE_BRANCH:-none found}"
 ```
 
 Assign the ref you actually verified: a base that exists only on the
 remote is `origin/<name>`, never the bare local name — the bare name is
 not a valid object and every later command degrades to an empty range in
-silence. If `BASE_BRANCH` is still empty, neither branch exists — ask the
+silence. If it prints `none found`, neither branch exists — ask the
 user, do not guess.
 
 If invoked from an orchestrator that already resolved a base branch (e.g.
 mx-flow Phase 4.2), use that value instead.
 
+Later commands write this value out, because each may run in a fresh
+shell where `$BASE_BRANCH` is gone: `<base-ref>` below is the ref (e.g.
+`origin/main`), `<base-branch>` the same name without `origin/`.
+
 Get the git log since the branch diverged from the base branch:
 
 ```bash
-git log $(git merge-base HEAD "$BASE_BRANCH")..HEAD --oneline
+git log $(git merge-base HEAD <base-ref>)..HEAD --oneline
 ```
 
 Get the diff summary:
 
 ```bash
-git diff $(git merge-base HEAD "$BASE_BRANCH")..HEAD --stat
+git diff $(git merge-base HEAD <base-ref>)..HEAD --stat
 ```
 
-If `git merge-base HEAD "$BASE_BRANCH"` fails, or the log comes back
+If `git merge-base HEAD <base-ref>` fails, or the log comes back
 empty, stop and tell the user — never draft a PR from an empty commit
 range.
 
@@ -134,7 +139,7 @@ net-zero churn out, small fixups folded into their parent, each pass
 reverted by a tree-hash invariant if it moves the tree. **Execute the full
 canonical procedure** — read and follow
 `${CLAUDE_SKILL_DIR}/references/content-check.md` (next to this SKILL.md),
-passing `$BASE_BRANCH` from Step 1 as its base. If that file is missing,
+passing the Step 1 ref as its `<base-ref>`. If that file is missing,
 say the content check is unavailable in this install and continue to Step 3
 **without** rewriting any history — never improvise a history rewrite from
 the summary above.
@@ -178,7 +183,8 @@ template.
 Create `LOCAL_MX/tmp/` (`.mx/<name>/tmp/`) if it does not exist.
 Generate draft path: `.mx/<name>/tmp/pr-draft-<YYYYMMDD-HHmmss>.md` using
 the current timestamp.
-Write the filled template to the draft file.
+Write the filled template to the draft file; later steps call its path
+`<draft-path>`.
 
 ---
 
@@ -189,7 +195,7 @@ Display the full draft content inline.
 Then present two options (subject to Orchestrated mode above):
 
 ```
-Draft saved to: $DRAFT
+Draft saved to: <draft-path>
 
 Options:
   [A] Looks good — proceed to platform selection
@@ -201,7 +207,7 @@ as displayed — see "Orchestrated mode" above.)
 
 If the user chooses [B], remind them:
 ```
-Edit $DRAFT, then run /mx-pr again — it will detect the existing draft.
+Edit <draft-path>, then run /mx-pr again — it will detect the existing draft.
 ```
 
 If the user runs /mx-pr again and a draft file exists under
@@ -257,37 +263,38 @@ command -v bb >/dev/null      # Bitbucket
 If it is missing, do not substitute another platform — fall back to
 option [4] Hand off and say which CLI was missing.
 
-The platform CLIs take a branch **name**, so strip any `origin/` prefix
-`$BASE_BRANCH` carries: `${BASE_BRANCH#origin/}`.
+The platform CLIs take a branch **name** — `<base-branch>`, without any
+`origin/` prefix — and read the body from `<draft-path>`; the `test -s`
+guard stops the command when that file is missing or empty.
 
 ### GitHub
 
 ```bash
-gh pr create \
+test -s <draft-path> && gh pr create \
   --title "<title from first Summary bullet>" \
-  --body "$(cat $DRAFT)" \
-  --base "${BASE_BRANCH#origin/}"
+  --body "$(cat <draft-path>)" \
+  --base <base-branch>
 ```
 
 ### GitLab
 
 ```bash
-glab mr create \
+test -s <draft-path> && glab mr create \
   --title "<title>" \
-  --description "$(cat $DRAFT)" \
-  --target-branch "${BASE_BRANCH#origin/}"
+  --description "$(cat <draft-path>)" \
+  --target-branch <base-branch>
 ```
 
 ### Bitbucket
 
 ```bash
-bb pr create \
+test -s <draft-path> && bb pr create \
   --title "<title>" \
-  --description "$(cat $DRAFT)"
+  --description "$(cat <draft-path>)"
 ```
 
 No verified CLI target-branch flag exists for `bb` — after creating,
-confirm the PR targets `${BASE_BRANCH#origin/}` and correct it in the web
+confirm the PR targets `<base-branch>` and correct it in the web
 UI if it does not.
 
 ### Other / Skip
@@ -299,7 +306,7 @@ Display the draft path and content for the user to use manually.
 ## Step 7 — Report
 
 **Done** = the PR/MR URL is printed, its base branch is
-`${BASE_BRANCH#origin/}`, and the body contains no unfilled
+`<base-branch>`, and the body contains no unfilled
 `{{placeholder}}` and no path that fails `git cat-file -e "HEAD:<path>"`.
 Print the URL, the base, and the commit count. Do not wait on CI; if the
 platform CLI reports checks, name them and stop — CI failures are the
@@ -310,7 +317,7 @@ and was not pushed.
 ```
 PR created: <url>          ← if published
 Base: <base branch>  ·  <N> commit(s)
-Draft kept at: $DRAFT
+Draft kept at: <draft-path>
 
 Next: after merge, run /mx-flow finish <name> (will clean up .mx/<name>/tmp/)
 ```

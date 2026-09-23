@@ -56,6 +56,11 @@ Two spellings differ across harnesses; neither changes the instruction:
   a whitelist**: unlisted tools remain callable (with permission prompts).
 - `${CLAUDE_SKILL_DIR}` expands to the directory containing the running
   SKILL.md — the base for `references/` and sibling-skill paths.
+- Each Bash tool call starts a fresh shell: the working directory carries
+  over, shell variables and functions do not (the tool's own description,
+  verified 2026-09-23). A value one fenced block computes and a later
+  block needs travels as written text or in a file or ref — skills mark
+  such values as `<placeholder>`s, not as a bare `$VAR`.
 
 ## §2 Commander doesn't descend
 
