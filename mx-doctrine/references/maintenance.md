@@ -29,8 +29,11 @@ user explicitly wants a local-only customization → put it in that skill's
    the CURRENT session (schema in context, `ls`, `--help`, official docs).
    If you cannot verify, prefix it `UNVERIFIED (YYYY-MM-DD):`. Never carry
    a claim forward just because the previous version said so.
-3. **Date everything you add.** Absolute dates only ("2026-07-07"), never
-   "today"/"recently".
+3. **Date doctrine records and environment claims.** Lessons (§5),
+   verification stamps and `UNVERIFIED` markers use absolute dates
+   ("2026-07-07"), never "today"/"recently". SKILL.md files and templates
+   state operative rules only — no dates, incident notes, or model names
+   where a tier-relative rule works; git records when a rule arrived.
 4. **One canonical statement per rule.** Before adding rule text, grep the
    repo for the same concept. If it exists, point at it; if you must move
    it, grep for every reference to the old location before finishing.
@@ -82,7 +85,7 @@ escalation, user correction), write the lesson down BEFORE ending the turn:
 | A judgment call decided wrongly | `judgment-rubrics.md` — a new ✅/❌ example under the matching §, or a new numbered signal |
 | Wrong tier or delegation shape | `model-dispatch.md` — routing-table row or §6 ladder note |
 | A recurring task shape worth templating | `delegation-templates.md` — new template |
-| A skill's procedure failed in the field | that skill's SKILL.md or references — via §3/§4 rules above |
+| A skill's procedure failed in the field | the fix: that skill's SKILL.md or references, as a plain operative rule (via §3/§4 rules above); the dated lesson: `diagnosis.md` "Additional findings" |
 | Environment truth or degradation warning | `diagnosis.md` — dated line under "Additional findings" |
 
 Format (three lines, dated):
