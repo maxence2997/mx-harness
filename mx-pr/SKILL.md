@@ -147,7 +147,10 @@ Read `references/pr-template.md` (located in the same directory as this
 SKILL.md). It defines the PR sections and how each placeholder maps to a
 source.
 
-Fill each placeholder using the context gathered in Step 1.
+Fill each placeholder using the context gathered in Step 1. Size each
+section to what this change needs and keep to the sections the template
+defines: the reader is a reviewer who wants what changed, why, and how it
+was verified.
 
 **Committed-files-only rule.** The published body is read by people who
 can see only the repository — every file or path it names must exist in
@@ -193,9 +196,8 @@ Options:
   [B] Edit first — open the draft file, make changes, then re-run /mx-pr
 ```
 
-Wait for the user to choose. Do not proceed automatically. (Orchestrated
-mode: continue with the draft as displayed — see "Orchestrated mode"
-above.)
+Wait for the user to choose. (Orchestrated mode: continue with the draft
+as displayed — see "Orchestrated mode" above.)
 
 If the user chooses [B], remind them:
 ```
@@ -324,7 +326,6 @@ Do not delete the draft file here. `/mx-flow finish` handles all
   match your team's conventions
 - Title is derived from the first bullet of `{{summary}}` — keep it under
   72 characters
-- If spec.md does not exist, all content is derived from the git log
 - Draft files live in `.mx/<name>/tmp/` — project-local, gitignored
 - The timestamp suffix prevents collisions if mx-pr is run multiple times
   for the same feature
