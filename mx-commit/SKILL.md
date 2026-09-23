@@ -22,8 +22,8 @@ allowed-tools:
 ## Trigger
 
 ```
-/mx-commit          # interactive — shows draft and waits for approval per commit
-/mx-commit --auto   # non-interactive — commits all groups immediately without confirmation
+/mx-commit          # interactive — shows the drafts and waits for approval
+/mx-commit --auto   # non-interactive — commits all units immediately
 ```
 
 Use `--auto` when invoked from an orchestrating skill (e.g. mx-flow). Use the default when invoked directly by the user.
