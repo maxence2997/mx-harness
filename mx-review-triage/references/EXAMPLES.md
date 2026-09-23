@@ -6,7 +6,7 @@
 | # | Bucket    | Sev | File:Line                     | Comment (summary)                              | Cost | Risk           | Recommended action                    |
 |---|-----------|-----|-------------------------------|-------------------------------------------------|------|----------------|---------------------------------------|
 | 1 | Fix now   | P0  | server_test.go:142            | time.Sleep(100ms) still used — race on slow CI  | Low  | flaky test     | Fix: replace with channel-based sync  |
-| 2 | Fix now   | P1  | metrics_test.go:88            | awaitChan timeout 3s too short for macos runner  | Low  | CI failure     | Fix: increase to 5s with comment      |
+| 2 | Fix now   | P1  | metrics_test.go:88            | awaitChan timeout 3s too short for macos runner  | Low  | CI failure     | Fix: sync on the channel, no timeout  |
 | 3 | Track     | P1  | server_test.go:210            | extract waitForState() helper to reduce boilerplate | Med | none (readability) | Track: out of scope for bugfix PR |
 | 4 | Skip      | P3  | metrics_test.go:15            | rename ts variable to testServer                 | Low  | none           | Won't fix: ts is idiomatic in tests   |
 ```

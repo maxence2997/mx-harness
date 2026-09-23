@@ -23,7 +23,7 @@ The triage logic is identical for both sources: assess validity, severity, and c
 |--------|------|
 | **Fix now** | P0 always; high risk + low/medium cost |
 | **Track** | Medium risk, deferred; added to `TODOS.md` |
-| **Skip** | Low risk, false positive, or nitpick |
+| **Skip** | Low risk, false positive, or a nitpick that is not trivial to fix |
 
 ## Severity levels
 

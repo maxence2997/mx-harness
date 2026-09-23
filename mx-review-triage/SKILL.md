@@ -117,7 +117,7 @@ Read the referenced code and assess every finding on three dimensions:
 |--------|----------|
 | **Fix now** | High risk + low/medium cost. P0 always here. Bug, security, correctness, data loss. |
 | **Track** | Medium risk + needs design, or medium cost + not blocking. Add to `TODOS.md`. |
-| **Skip** | Low risk + high cost, false positive, nitpick, or already handled elsewhere. |
+| **Skip** | Low risk + high cost, false positive, a nitpick that is not trivial to fix (the P3 default in `references/SEVERITY.md`), or already handled elsewhere. |
 
 ---
 
