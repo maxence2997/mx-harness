@@ -134,8 +134,10 @@ eight columns:
 Briefly explain any non-obvious triage decisions after the table.
 
 Then, by source:
-- `--source pr`: **do not post any reply or make changes yet** — wait for user
-  approval (replies are public and not retractable).
+- `--source pr`: **do not post any reply, make changes, or push yet** —
+  wait for user approval (replies are public and not retractable).
+  Approving the table also approves pushing the Fix-now commits to the PR
+  branch before the replies that cite them go out.
   (Orchestrated mode: treat "Fix now" as approved and continue — see above.)
 - `--source review`: execute the "Fix now" bucket immediately after showing the
   table; pause only for items whose fix touches files outside the reviewed diff or
@@ -155,7 +157,9 @@ missing, use the bare formats below.
 **Fix now** — make the code change, then:
 - `--source review`: commit with `/mx-commit` (pass `--auto` when running
   under an orchestrator's auto-proceed gate; default interactive otherwise)
-- `--source pr`: commit then reply on the PR/MR:
+- `--source pr`: commit each fix; once every Fix-now commit exists, push
+  the branch once (plain `git push`, never force — if it is rejected, stop
+  and report instead of replying), then reply on the PR/MR:
   `Fixed in {hash}. {what changed and why}`
 
 **Track** — append the entry to `<repo root>/TODOS.md`, creating the file with a

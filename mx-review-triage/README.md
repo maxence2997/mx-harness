@@ -33,7 +33,7 @@ Reply templates and a worked triage table live in `references/EXAMPLES.md`, read
 
 ## Notes
 
-- `--source pr`: never makes code changes or posts PR replies without user approval — except when invoked by an orchestrator that declares auto-proceed for its triage gate (mx-flow GATE 3)
+- `--source pr`: never makes code changes, pushes, or posts PR replies without user approval — one approval of the triage table covers all three, and fixes are pushed before the replies that cite them — except when invoked by an orchestrator that declares auto-proceed for its triage gate (mx-flow GATE 3)
 - `--source review`: shows the triage table, then executes the "Fix now" bucket immediately; pauses only for fixes that reach outside the reviewed diff or exceed the assigned cost class
 - `--source pr` mode: zero unaddressed comments is a hard gate before merge
 - Auto-detect only runs when invoked directly: it uses the one source it finds and says which, and asks when it finds both or neither — mx-flow always uses `--source review`
