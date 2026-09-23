@@ -276,6 +276,58 @@ glab mr create \
   --target-branch "${BASE_BRANCH#origin/}"
 ```
 
+**Cancel the redundant push pipeline.** GitLab evaluates a rule such as
+`$CI_OPEN_MERGE_REQUESTS → when: never` when it *creates* a pipeline, not
+when the pipeline runs. The push above always lands before the MR exists,
+so GitLab creates a branch pipeline (`source=push`) first regardless of
+that rule, and the MR pipeline (`source=merge_request_event`) that follows
+once the MR exists duplicates it — the two then run concurrently for the
+same commit (on worker-engine MR !196 both ran on one runner and failed
+from contention, 2026-09-23). This step is GitLab-only; the GitHub and
+Bitbucket sections are unchanged. The wait below is only for the MR
+pipeline to be *created*, never for it to finish running — this step does
+not wait on CI (Step 7).
+
+This step never fails the skill — the MR already exists by this point, so
+report any problem here and continue to Step 7. If `jq` is unavailable,
+print `jq not found — check and cancel the push pipeline manually: glab
+api "projects/:id/pipelines?sha=<sha>&source=push"` and skip the rest of
+this step (mx-pr has no other dependency on `jq`; this follows the
+`command -v` tool-presence checks already used above for gh/glab/bb).
+
+```bash
+SHA=$(git rev-parse HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+if ! command -v jq >/dev/null; then
+  echo "jq not found — check and cancel the push pipeline manually: glab api \"projects/:id/pipelines?sha=$SHA&source=push\""
+else
+  # MR pipelines are created asynchronously — poll briefly for one to appear.
+  MR_PIPELINE=""
+  for i in 1 2 3 4 5 6; do
+    MR_PIPELINE=$(glab api "projects/:id/pipelines?sha=$SHA&source=merge_request_event" | jq -c '.[0] // empty')
+    [ -n "$MR_PIPELINE" ] && break
+    [ "$i" -lt 6 ] && sleep 5
+  done
+
+  if [ -z "$MR_PIPELINE" ]; then
+    echo "No MR pipeline found for $SHA after ~30s — nothing to cancel (this repo's CI may not produce MR pipelines; the push pipeline is the only CI and must keep running)."
+  else
+    PUSH_IDS=$(glab api "projects/:id/pipelines?sha=$SHA&ref=$BRANCH&source=push" \
+      | jq -r '.[] | select(.status as $s | ["created","waiting_for_resource","preparing","pending","running","scheduled"] | index($s)) | .id')
+    if [ -z "$PUSH_IDS" ]; then
+      echo "MR pipeline found; no active push pipeline to cancel."
+    else
+      for id in $PUSH_IDS; do
+        glab api -X POST "projects/:id/pipelines/$id/cancel" >/dev/null \
+          && echo "Canceled redundant push pipeline $id" \
+          || echo "Could not cancel push pipeline $id — cancel it manually"
+      done
+    fi
+  fi
+fi
+```
+
 ### Bitbucket
 
 ```bash
@@ -301,14 +353,19 @@ Display the draft path and content for the user to use manually.
 `{{placeholder}}` and no path that fails `git cat-file -e "HEAD:<path>"`.
 Print the URL, the base, and the commit count. Do not wait on CI; if the
 platform CLI reports checks, name them and stop — CI failures are the
-user's next action, not this skill's. For [4] Hand off and [5] Skip there
-is no URL: done means the draft path is printed and you have said what was
-and was not pushed.
+user's next action, not this skill's. For GitLab, also report the push
+pipeline cleanup outcome from Step 6: which pipeline ID(s) were canceled,
+"cancel failed for #<id> — cancel it manually" when the cancel call
+errored, or "none" with the reason (no MR pipeline appeared within the
+wait window, no active push pipeline existed, or `jq` was unavailable).
+For [4] Hand off and [5] Skip there is no URL: done means the draft path
+is printed and you have said what was and was not pushed.
 
 ```
 PR created: <url>          ← if published
 Base: <base branch>  ·  <N> commit(s)
 Draft kept at: $DRAFT
+GitLab pipeline cleanup: <canceled #<id>[, #<id>...] | cancel failed for #<id> — cancel it manually | none — <reason>>   ← GitLab only
 
 Next: after merge, run /mx-flow finish <name> (will clean up .mx/<name>/tmp/)
 ```
