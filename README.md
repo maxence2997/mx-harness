@@ -123,9 +123,29 @@ Requires Bash 3.2+ and standard Unix utilities, including `sha256sum` or `shasum
 bash /tmp/mx-harness-main/install.sh --remote mx-flow mx-pr
 ```
 
-**From a clone:** `./install.sh` installs or updates from the working tree; `./install.sh --remote` fetches GitHub `main` instead. Append skill names to select a subset. The lock's `_meta source` row records the source commit or path.
+**Pin a release instead of main** (tags are listed on the [tags page](https://github.com/maxence2997/mx-harness/tags)):
+
+```bash
+bash /tmp/mx-harness-main/install.sh --ref v1.0.0
+```
+
+**From a clone:** `./install.sh` installs or updates from the working tree; `./install.sh --remote` fetches GitHub `main` and `./install.sh --ref vX.Y.Z` fetches that release instead. Append skill names to select a subset. The lock's `_meta source` row records the source commit or path.
 
 After installing or updating, start a new Claude Code or Codex session to load the current skill files.
+
+### Versions
+
+Releases are git tags `vX.Y.Z` on `main`; the whole suite shares one version because the skills call each other (for example `/mx-flow` hands off to `/mx-pr`). There is no `VERSION` file — the tag is the only source of truth.
+
+| Bump | When |
+|---|---|
+| Major | A user must change something: a skill is renamed or removed, a command's arguments change incompatibly, `~/.mx/` or `.mx/` paths or file formats change, or the installer contract changes in a way that needs action |
+| Minor | Backward-compatible additions: a new skill, subcommand, flag, or behavior |
+| Patch | Prompt wording, bug fixes, and docs that change no interface |
+
+To release, tag a commit on `main` that passes the [installer checks](#installer-checks) and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
+
+To see what is installed: `grep '^_meta' ~/.mx/.mx-harness.lock`. The `version` row is the tag for `--ref` installs, `main` for `--remote`, `git describe` output for a clone (`v1.0.0`, `v1.0.0-3-g<sha>` for commits after a tag, `-dirty` for uncommitted changes to tracked files), or `unknown` for a downloaded `main` archive.
 
 ### Updates and migration
 

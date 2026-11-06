@@ -6,6 +6,7 @@
 #   curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh
 #   ./install.sh [skill ...]   # from a clone: installs the working tree; optional subset
 #   ./install.sh --remote      # ignore the local tree, fetch GitHub main instead
+#   ./install.sh --ref v1.2.0  # fetch that release tag instead (implies --remote)
 #   ./install.sh --prune       # also remove skills this repo no longer ships
 #
 # Layout (one copy, many links):
@@ -17,6 +18,7 @@
 #   <skill>  root      <canonical dir>
 #   <skill>  <file>    <sha256 of that file as this script last wrote it>
 #   _meta    source    <commit sha, or the local path installed from>
+#   _meta    version   <vX.Y.Z tag, git describe output, "main", or "unknown">
 #
 # Update rules:
 #   - SKILL.md and README.md are always overwritten (canonical from the repo).
@@ -55,13 +57,14 @@ AGENT_HOMES=(
 
 usage() {
   cat <<EOF
-Usage: install.sh [--remote] [--prune] [skill ...]
+Usage: install.sh [--remote | --ref vX.Y.Z] [--prune] [skill ...]
 
 Installs or updates mx-harness skills: one canonical copy per skill under
 ~/.agents/skills, symlinked from ~/.claude/skills, ~/.codex/skills,
 ~/.cursor/skills and ~/.copilot/skills (whichever agent homes exist).
 
   --remote   fetch GitHub main instead of installing from this checkout/tarball
+  --ref TAG  fetch release tag TAG (vX.Y.Z) from GitHub instead
   --prune    remove skills this repo no longer ships (moved to ~/.mx/backups first)
   skill ...  install only these; default is all: ${SKILLS[*]}
 EOF
@@ -130,29 +133,39 @@ move_to_backup() {
 SRC=""
 LOCAL_SOURCE_ROOT=""
 SOURCE_ID=""
+VERSION_ID=""
 TMP=""
 
 fetch_remote() {
+  local url label d
+  if [[ -n "$REF" ]]; then
+    url="$REPO/archive/refs/tags/$REF.tar.gz"; label=$REF
+  else
+    url="$REPO/archive/refs/heads/main.tar.gz"; label=main
+  fi
   command -v curl >/dev/null 2>&1 || die "curl not found (needed to fetch $REPO)"
   TMP=$(mktemp -d)
   trap 'rm -rf "$TMP"' EXIT
-  echo "Fetching $REPO main..."
-  if ! curl -fsSL --retry 3 --retry-delay 2 "$REPO/archive/refs/heads/main.tar.gz" -o "$TMP/main.tgz"; then
-    die "failed to download $REPO (rate-limited or offline); retry in a minute"
+  echo "Fetching $REPO $label..."
+  if ! curl -fsSL --retry 3 --retry-delay 2 "$url" -o "$TMP/src.tgz"; then
+    die "failed to download $url (unknown tag, rate-limited or offline)"
   fi
   # GitHub tarballs carry the commit in a pax global header ("52 comment=<sha>").
-  SOURCE_ID=$(gzip -dc "$TMP/main.tgz" | head -c 2048 | tr -d '\0' | grep -a -o 'comment=[0-9a-f]*' | head -1 | cut -d= -f2 || true)
-  [[ -n "$SOURCE_ID" ]] || SOURCE_ID="remote-main"
-  tar -xzf "$TMP/main.tgz" -C "$TMP"
-  SRC="$TMP/mx-harness-main"
-  [[ -d "$SRC" ]] || die "unexpected archive layout: $SRC not found"
+  SOURCE_ID=$(gzip -dc "$TMP/src.tgz" | head -c 2048 | tr -d '\0' | grep -a -o 'comment=[0-9a-f]*' | head -1 | cut -d= -f2 || true)
+  [[ -n "$SOURCE_ID" ]] || SOURCE_ID="remote-$label"
+  VERSION_ID=$label
+  mkdir "$TMP/x"
+  tar -xzf "$TMP/src.tgz" -C "$TMP/x"
+  # GitHub names the top directory mx-harness-main, or mx-harness-1.2.0 for tag v1.2.0.
+  for d in "$TMP/x"/*/; do SRC=${d%/}; break; done
+  [[ -n "$SRC" && -f "$SRC/${SKILLS[0]}/SKILL.md" ]] || die "unexpected archive layout in $url"
 }
 
 resolve_source() {
   local script_dir
   script_dir=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)
   LOCAL_SOURCE_ROOT="$script_dir"
-  if $REMOTE || [[ ! -f "$script_dir/${SKILLS[0]}/SKILL.md" ]]; then
+  if $REMOTE || [[ -n "$REF" || ! -f "$script_dir/${SKILLS[0]}/SKILL.md" ]]; then
     fetch_remote
     return
   fi
@@ -164,6 +177,11 @@ resolve_source() {
     fi
   fi
   [[ -n "$SOURCE_ID" ]] || SOURCE_ID="local:$SRC"
+  # -e, not -d: in a worktree or submodule .git is a file.
+  if [[ -e "$SRC/.git" ]]; then
+    VERSION_ID=$(git -C "$SRC" describe --tags --match 'v[0-9]*.[0-9]*.[0-9]*' --dirty 2>/dev/null || true)
+  fi
+  [[ -n "$VERSION_ID" ]] || VERSION_ID="unknown"
 }
 
 # --- per-skill ---
@@ -400,11 +418,18 @@ report_orphans() {
 
 REMOTE=false
 PRUNE=false
+REF=""
+REF_SET=false
 SELECTED=()
-for arg in "$@"; do
+while [[ $# -gt 0 ]]; do
+  arg=$1; shift
   case "$arg" in
     --remote) REMOTE=true ;;
     --prune) PRUNE=true ;;
+    --ref)
+      [[ $# -gt 0 ]] || die "--ref needs a release tag (vX.Y.Z)"
+      REF=$1; REF_SET=true; shift ;;
+    --ref=*) REF=${arg#--ref=}; REF_SET=true ;;
     -h|--help) usage; exit 0 ;;
     -*) die "unknown option: $arg (see --help)" ;;
     *)
@@ -413,11 +438,16 @@ for arg in "$@"; do
       ;;
   esac
 done
+# Strict pattern: the tag is interpolated into the download URL.
+if $REF_SET && ! [[ "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+  die "--ref must be a release tag like v1.2.0 (vX.Y.Z), got: '$REF'"
+fi
 [[ ${#SELECTED[@]} -gt 0 ]] || SELECTED=("${SKILLS[@]}")
 
 mkdir -p "$HOME/.mx"
 resolve_source
 echo "Source:    $SRC ($SOURCE_ID)"
+echo "Version:   $VERSION_ID"
 echo "Canonical: $CANON_BASE"
 echo
 
@@ -437,7 +467,8 @@ done
 
 if [[ ${#failed[@]} -eq 0 ]]; then
   lock_set _meta source "$SOURCE_ID"
-  echo "Done. ${#SELECTED[@]} skill(s) at $CANON_BASE; linked from:$linked"
+  lock_set _meta version "$VERSION_ID"
+  echo "Done. ${#SELECTED[@]} skill(s) at $CANON_BASE ($VERSION_ID); linked from:$linked"
 else
   echo "Done with ${#failed[@]} failure(s): ${failed[*]}"
   exit 1

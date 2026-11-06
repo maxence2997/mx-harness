@@ -65,19 +65,78 @@ class InstallTests(unittest.TestCase):
         content += f"{skill}\treferences/config.md\t{hashlib.sha256(reference.encode()).hexdigest()}\n"
         self.write(self.target / ".mx/.mx-harness.lock", content)
 
-    def prepare_remote(self):
-        remote = self.base / "remote/mx-harness-main"
+    def prepare_remote(self, top="mx-harness-main"):
+        remote = self.base / "remote" / top
         shutil.copytree(self.source, remote)
         self.write(remote / "mx-pr/SKILL.md", "remote version\n")
         archive = self.base / "remote.tgz"
         with tarfile.open(archive, "w:gz") as tar:
-            tar.add(remote, arcname="mx-harness-main")
-        stub = self.write(self.base / "bin/curl", '#!/bin/bash\nwhile [[ $# -gt 0 ]]; do\n'
+            tar.add(remote, arcname=top)
+        self.curl_log = self.base / "curl.log"
+        stub = self.write(self.base / "bin/curl", '#!/bin/bash\necho "$*" >> "$MX_CURL_LOG"\n'
+                          'while [[ $# -gt 0 ]]; do\n'
                           '  if [[ "$1" == -o ]]; then cp "$MX_REMOTE_ARCHIVE" "$2"; exit; fi\n'
                           '  shift\ndone\nexit 1\n')
         stub.chmod(0o755)
         self.env["PATH"] = str(stub.parent) + os.pathsep + self.env["PATH"]
         self.env["MX_REMOTE_ARCHIVE"] = str(archive)
+        self.env["MX_CURL_LOG"] = str(self.curl_log)
+
+    def lock_meta(self, key):
+        for line in (self.target / ".mx/.mx-harness.lock").read_text().splitlines():
+            parts = line.split("\t")
+            if parts[:2] == ["_meta", key]:
+                return parts[2]
+        return None
+
+    def git(self, *args):
+        subprocess.run(
+            ["git", "-C", str(self.source), "-c", "user.name=t", "-c", "user.email=t@t",
+             "-c", "commit.gpgsign=false", "-c", "tag.gpgsign=false", *args],
+            check=True, capture_output=True,
+        )
+
+    def test_ref_installs_tagged_archive_and_records_version(self):
+        self.prepare_remote(top="mx-harness-1.2.3")
+        self.install("--ref", "v1.2.3", "mx-pr")
+        self.assertEqual((self.canonical() / "SKILL.md").read_text(), "remote version\n")
+        self.assertIn("/archive/refs/tags/v1.2.3.tar.gz", self.curl_log.read_text())
+        self.assertEqual(self.lock_meta("version"), "v1.2.3")
+
+    def test_ref_accepts_equals_form(self):
+        self.prepare_remote(top="mx-harness-1.2.3")
+        self.install("--ref=v1.2.3", "mx-pr")
+        self.assertEqual(self.lock_meta("version"), "v1.2.3")
+
+    def test_ref_rejects_non_semver_value_before_fetching(self):
+        self.prepare_remote()
+        for ref in ("main", "v1.2", "v1.2.3;rm", ""):
+            with self.subTest(ref=ref):
+                result = self.install("--ref", ref, "mx-pr", success=False)
+                self.assertIn("vX.Y.Z", result.stderr)
+        self.install("--ref", success=False)
+        self.assertFalse(self.curl_log.exists())
+        self.assertFalse(self.canonical().exists())
+
+    def test_remote_main_records_main_version(self):
+        self.prepare_remote()
+        self.install("--remote", "mx-pr")
+        self.assertEqual(self.lock_meta("version"), "main")
+
+    def test_tagged_checkout_records_tag_and_dirty_state(self):
+        self.git("init", "-q")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "init")
+        self.git("tag", "v0.1.0")
+        self.install("mx-pr")
+        self.assertEqual(self.lock_meta("version"), "v0.1.0")
+        self.write(self.source / "mx-pr/SKILL.md", "edited\n")
+        self.install("mx-pr")
+        self.assertEqual(self.lock_meta("version"), "v0.1.0-dirty")
+
+    def test_untagged_tree_records_unknown_version(self):
+        self.install("mx-pr")
+        self.assertEqual(self.lock_meta("version"), "unknown")
 
     def test_parent_directory_alias_keeps_canonical_readable(self):
         self.canonical().parent.mkdir(parents=True)

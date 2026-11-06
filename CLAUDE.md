@@ -78,4 +78,4 @@ Match the existing log (`git log --oneline`). Format: `type(scope): subject` or 
 
 - Not a Go/TS/Python application — no application build; the Bash installer is covered by the Python standard-library tests above
 - Not a place for code reviews of application code — the skills *do* code review; the repo itself is prompts and docs
-- Not auto-versioned — there's no `VERSION` file or release pipeline; users install from `main` via `install.sh`
+- Not auto-versioned — no release pipeline; how releases are tagged and numbered: [README.md — Versions](README.md#versions)
