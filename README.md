@@ -100,7 +100,7 @@ Most of these also run inside `mx-flow`; all of them work standalone.
 
 ## Installation and updates
 
-Installation contract updated 2026-09-11.
+Installation contract updated 2026-11-21.
 
 `install.sh` keeps one real copy of each skill in `~/.agents/skills/<skill>/`, which Codex reads directly. It creates a link for each skill in the following locations when the corresponding agent home exists:
 
@@ -109,29 +109,27 @@ Installation contract updated 2026-09-11.
 - GitHub Copilot: `~/.copilot/skills/`
 - Cursor: `~/.cursor/skills/`
 
-**Install or update everything from GitHub main:**
+**Install a release** (it then [updates itself](#automatic-updates)):
 
 ```bash
-curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh
+curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh --ref v1.1.0
 ```
+
+Any `v1` tag from v1.1.0 on works; the first skill run moves the install to the newest `v1` release. Tags are listed on the [tags page](https://github.com/maxence2997/mx-harness/tags).
 
 Requires Bash 3.2+ and standard Unix utilities, including `sha256sum` or `shasum`. Downloading also requires `curl`, `tar`, and `gzip`. Node.js and Python are not installer dependencies. Inspect [install.sh](install.sh) before running it if desired.
 
-**Update a subset from GitHub main after downloading the script above:**
+**Install unreleased `main` instead** (never updates itself), after downloading the script above:
 
 ```bash
-bash /tmp/mx-harness-main/install.sh --remote mx-flow mx-pr
+bash /tmp/mx-harness-main/install.sh --remote
 ```
 
-**Pin a release instead of main** (tags are listed on the [tags page](https://github.com/maxence2997/mx-harness/tags)):
+Append skill names to either command to install a subset, for example `--remote mx-flow mx-pr`; an [automatic update](#automatic-updates) installs the full suite.
 
-```bash
-bash /tmp/mx-harness-main/install.sh --ref v1.0.0
-```
+**From a clone:** `./install.sh` installs or updates from the working tree; `./install.sh --remote` fetches GitHub `main` and `./install.sh --ref vX.Y.Z` fetches that release instead. Append skill names to select a subset. The lock's `_meta source` row records the source commit or path. A working-tree install is a development install and never updates itself.
 
-**From a clone:** `./install.sh` installs or updates from the working tree; `./install.sh --remote` fetches GitHub `main` and `./install.sh --ref vX.Y.Z` fetches that release instead. Append skill names to select a subset. The lock's `_meta source` row records the source commit or path.
-
-After installing or updating, start a new Claude Code or Codex session to load the current skill files.
+After installing or updating by hand, start a new Claude Code or Codex session to load the current skill files.
 
 ### Versions
 
@@ -146,6 +144,17 @@ Releases are git tags `vX.Y.Z` on `main`; the whole suite shares one version bec
 To release, tag a commit on `main` that passes the [installer checks](#installer-checks) and push the tag: `git tag vX.Y.Z && git push origin vX.Y.Z`.
 
 To see what is installed: `grep '^_meta' ~/.mx/.mx-harness.lock`. The `version` row is the tag for `--ref` installs, `main` for `--remote`, `git describe` output for a clone (`v1.0.0`, `v1.0.0-3-g<sha>` for commits after a tag, `-dirty` for uncommitted changes to tracked files), or `unknown` for a downloaded `main` archive.
+
+### Automatic updates
+
+Release installs (`--ref`) update themselves: every skill run first checks GitHub for a newer release with the same major version and installs it, which may take a few seconds.
+
+- Local edits under `references/` are kept ([hash lock rules](#updates-and-migration)). The skill tells you when it updated and names any path it moved to `~/.mx/backups/`.
+- A new major version is never installed automatically, because it needs manual steps (see [Versions](#versions)).
+- If GitHub can't be reached or the update fails, the skill carries on and the next skill run tries again.
+- Installs from `main` or from a working tree never update themselves.
+- Codex's sandbox blocks network access by default, so Codex skills update only when another agent or a manual install updates the shared copy.
+- Automatic updates are on by default. To turn them off, set `MX_HARNESS_AUTO_UPDATE` to `0`, `false` or `off` in the environment your agent starts from, such as your shell profile.
 
 ### Updates and migration
 

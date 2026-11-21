@@ -72,8 +72,9 @@ user explicitly wants a local-only customization → put it in that skill's
 - **Restructuring**: renaming skills or reference files, moving canonical
   content between skills. Every stale pointer you create outlives your
   session.
-- **Changing `install.sh` behavior** (the hash-lock contract especially) —
-  it guards every user's local customizations.
+- **Changing `install.sh` behavior** (the hash-lock contract and
+  `--auto-update`, especially) — it guards every user's local
+  customizations and runs unattended before every skill.
 
 ## §5 Lesson write-back — where and in what format
 

@@ -7,6 +7,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
+import time
 import unittest
 
 
@@ -15,6 +16,24 @@ SKILLS = (
     "mx-doctrine", "mx-flow", "mx-brainstorm", "mx-team-review",
     "mx-review-triage", "mx-commit", "mx-pr",
 )
+
+# Stands in for GitHub: the ref list request gets $MX_REMOTE_REFS, any -o
+# download gets $MX_REMOTE_ARCHIVE, and MX_CURL_OFFLINE fails every call.
+CURL_STUB = r"""#!/bin/bash
+echo "$*" >> "$MX_CURL_LOG"
+[[ -z "${MX_CURL_OFFLINE:-}" ]] || exit 6
+out="" url=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -o) out=$2; shift ;;
+    http*) url=$1 ;;
+  esac
+  shift
+done
+if [[ "$url" == *"/info/refs?"* ]]; then cat "$MX_REMOTE_REFS"; exit 0; fi
+[[ -n "$out" ]] || exit 22
+cp "$MX_REMOTE_ARCHIVE" "$out"
+"""
 
 
 class InstallTests(unittest.TestCase):
@@ -65,20 +84,23 @@ class InstallTests(unittest.TestCase):
         content += f"{skill}\treferences/config.md\t{hashlib.sha256(reference.encode()).hexdigest()}\n"
         self.write(self.target / ".mx/.mx-harness.lock", content)
 
-    def prepare_remote(self, top="mx-harness-main"):
+    def prepare_remote(self, top="mx-harness-main", skill_text="remote version\n",
+                       installer=None, commit=None):
+        """Serve the source tree as a GitHub archive; `commit` goes in its pax header."""
         remote = self.base / "remote" / top
         shutil.copytree(self.source, remote)
-        self.write(remote / "mx-pr/SKILL.md", "remote version\n")
-        archive = self.base / "remote.tgz"
-        with tarfile.open(archive, "w:gz") as tar:
+        self.write(remote / "mx-pr/SKILL.md", skill_text)
+        if installer is not None:
+            self.write(remote / "install.sh", installer)
+        archive = self.base / f"{top}.tgz"
+        pax = {"format": tarfile.PAX_FORMAT, "pax_headers": {"comment": commit}} if commit else {}
+        with tarfile.open(archive, "w:gz", **pax) as tar:
             tar.add(remote, arcname=top)
         self.curl_log = self.base / "curl.log"
-        stub = self.write(self.base / "bin/curl", '#!/bin/bash\necho "$*" >> "$MX_CURL_LOG"\n'
-                          'while [[ $# -gt 0 ]]; do\n'
-                          '  if [[ "$1" == -o ]]; then cp "$MX_REMOTE_ARCHIVE" "$2"; exit; fi\n'
-                          '  shift\ndone\nexit 1\n')
+        stub = self.write(self.base / "bin/curl", CURL_STUB)
         stub.chmod(0o755)
-        self.env["PATH"] = str(stub.parent) + os.pathsep + self.env["PATH"]
+        if str(stub.parent) not in self.env["PATH"].split(os.pathsep):
+            self.env["PATH"] = str(stub.parent) + os.pathsep + self.env["PATH"]
         self.env["MX_REMOTE_ARCHIVE"] = str(archive)
         self.env["MX_CURL_LOG"] = str(self.curl_log)
 
@@ -339,6 +361,145 @@ class InstallTests(unittest.TestCase):
         self.assertFalse((self.source / "mx-pr").is_symlink())
         self.assertEqual((self.source / "mx-pr/SKILL.md").read_text(), "new skill\n")
         self.assertFalse(self.canonical().exists())
+
+    # --- install.sh --auto-update ---
+
+    def release(self, tag, installer=None):
+        """Serve `tag` the way GitHub does; its mx-pr/SKILL.md reads "<tag> skill"."""
+        self.prepare_remote(top=f"mx-harness-{tag[1:]}", skill_text=f"{tag} skill\n",
+                            installer=installer, commit=hashlib.sha1(tag.encode()).hexdigest())
+
+    def tags(self, *tags):
+        """Serve GitHub's ref list with these annotated tags, each also peeled."""
+        refs = "001e# service=git-upload-pack\n0000"
+        refs += f"0159{'0' * 40} HEAD\0multi_ack symref=HEAD:refs/heads/main\n"
+        for tag in tags:
+            refs += f"003f{'1' * 40} refs/tags/{tag}\n0042{'2' * 40} refs/tags/{tag}^{{}}\n"
+        path = self.base / "refs"
+        path.write_bytes((refs + "0000").encode())
+        self.env["MX_REMOTE_REFS"] = str(path)
+
+    def install_release(self, tag):
+        self.release(tag)
+        self.install("--ref", tag)
+        self.assertEqual(self.lock_meta("version"), tag)
+
+    def auto_update(self, **env):
+        """Run the installed copy the way every skill does; it must exit 0 silently on stderr."""
+        self.curl_log.unlink(missing_ok=True)
+        result = subprocess.run(
+            ["/bin/bash", str(self.target / ".mx/.mx-harness-install.sh"), "--auto-update"],
+            env=dict(self.env, **env), text=True, capture_output=True,
+        )
+        self.assertEqual((result.returncode, result.stderr), (0, ""), result.stdout)
+        return result.stdout
+
+    def curl_calls(self):
+        return self.curl_log.read_text().splitlines() if self.curl_log.exists() else []
+
+    def test_auto_update_moves_a_release_install_to_the_newest_tag_of_its_major(self):
+        self.install_release("v1.0.0")
+        copy = self.target / ".mx/.mx-harness-install.sh"
+        self.assertEqual(copy.read_text(), (self.source / "install.sh").read_text())
+        self.release("v1.10.0")
+        self.tags("v0.9.0", "v1.0.0", "v1.2.0", "v1.10.0", "v1.11.0-rc1", "v2.0.0")
+        self.assertEqual(self.auto_update(), "mx-harness updated v1.0.0 -> v1.10.0.\n")
+        self.assertEqual(self.lock_meta("version"), "v1.10.0")
+        self.assertEqual(self.lock_meta("source"), hashlib.sha1(b"v1.10.0").hexdigest())
+        self.assertEqual((self.canonical() / "SKILL.md").read_text(), "v1.10.0 skill\n")
+        self.assertFalse((self.target / ".mx/.mx-harness-update.running").exists())
+
+        self.assertEqual(self.auto_update(), "")
+        self.assertEqual(len(self.curl_calls()), 1)
+        self.assertIn("/info/refs?service=git-upload-pack", self.curl_calls()[0])
+
+    def test_auto_update_skips_silently_when_github_is_unreachable_and_retries(self):
+        self.install_release("v1.0.0")
+        self.release("v1.1.0")
+        self.tags("v1.0.0", "v1.1.0")
+        self.assertEqual(self.auto_update(MX_CURL_OFFLINE="1"), "")
+        self.assertEqual(self.lock_meta("version"), "v1.0.0")
+        self.assertEqual(self.auto_update(), "mx-harness updated v1.0.0 -> v1.1.0.\n")
+
+    def test_auto_update_skips_silently_when_the_release_download_fails_and_retries(self):
+        self.install_release("v1.0.0")
+        self.tags("v1.0.0", "v1.1.0")
+        self.assertEqual(self.auto_update(MX_REMOTE_ARCHIVE=str(self.base / "missing.tgz")), "")
+        self.assertEqual(self.lock_meta("version"), "v1.0.0")
+        self.release("v1.1.0")
+        self.assertEqual(self.auto_update(), "mx-harness updated v1.0.0 -> v1.1.0.\n")
+
+    def test_auto_update_never_downgrades_when_the_installed_tag_is_gone(self):
+        self.install_release("v1.2.0")
+        self.tags("v1.0.0", "v1.1.0")
+        self.assertEqual(self.auto_update(), "")
+        self.assertEqual(self.lock_meta("version"), "v1.2.0")
+        self.assertEqual(len(self.curl_calls()), 1)
+
+    def test_auto_update_leaves_non_release_installs_and_opt_out_alone(self):
+        self.release("v1.1.0")
+        self.tags("v1.0.0", "v1.1.0")
+
+        def untouched(label, **env):
+            with self.subTest(label):
+                self.assertEqual(self.auto_update(**env), "")
+                self.assertEqual(self.curl_calls(), [])
+
+        self.install()
+        untouched("unknown: untagged working tree")
+        self.install("--remote")
+        untouched("main")
+        self.install("--ref", "v1.0.0")
+        for value in ("0", "false", "OFF"):
+            untouched(f"turned off with {value}", MX_HARNESS_AUTO_UPDATE=value)
+        self.git("init", "-q")
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "release")
+        self.git("tag", "v1.0.0")
+        self.git("config", "core.abbrev", "no")
+        self.install()
+        self.assertEqual(self.lock_meta("version"), "v1.0.0")
+        untouched("clone on a release tag")
+
+    def test_auto_update_reports_a_failed_install_and_retries_it(self):
+        self.install_release("v1.0.0")
+        self.release("v1.1.0", installer="#!/bin/bash\necho 'error: broken release' >&2\nexit 3\n")
+        self.tags("v1.0.0", "v1.1.0")
+        failure = ("mx-harness auto-update to v1.1.0 failed; last installer output:\n"
+                   "error: broken release\n")
+        self.assertEqual(self.auto_update(), failure)
+        self.assertEqual(self.lock_meta("version"), "v1.0.0")
+        self.assertFalse((self.target / ".mx/.mx-harness-update.running").exists())
+        self.assertEqual(self.auto_update(), failure)
+
+    def test_auto_update_names_each_path_it_moves_to_backups(self):
+        (self.target / ".claude").mkdir()
+        self.install_release("v1.0.0")
+        link = self.agent(".claude")
+        dev = self.write(self.base / "dev/mx-pr/SKILL.md", "dev skill\n").parent
+        link.unlink()
+        link.symlink_to(dev)
+        self.release("v1.1.0")
+        self.tags("v1.0.0", "v1.1.0")
+        updated, moved = self.auto_update().splitlines()
+        self.assertEqual(updated, "mx-harness updated v1.0.0 -> v1.1.0.")
+        self.assertTrue(moved.startswith(f"  ↳ moved {link} to "), moved)
+        self.assertEqual(link.resolve(), self.canonical().resolve())
+        self.assertEqual((dev / "SKILL.md").read_text(), "dev skill\n")
+
+    def test_auto_update_leaves_a_running_update_alone_unless_its_mutex_is_stale(self):
+        self.install_release("v1.0.0")
+        self.release("v1.1.0")
+        self.tags("v1.0.0", "v1.1.0")
+        running = self.target / ".mx/.mx-harness-update.running"
+        running.mkdir()
+        self.assertEqual(self.auto_update(), "")
+        self.assertEqual(self.lock_meta("version"), "v1.0.0")
+
+        an_hour_ago = time.time() - 3600
+        os.utime(running, (an_hour_ago, an_hour_ago))
+        self.assertEqual(self.auto_update(), "mx-harness updated v1.0.0 -> v1.1.0.\n")
+        self.assertFalse(running.exists())
 
 
 if __name__ == "__main__":

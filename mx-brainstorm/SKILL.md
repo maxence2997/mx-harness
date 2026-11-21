@@ -20,6 +20,15 @@ allowed-tools:
 
 # mx-brainstorm
 
+## Auto-update
+
+Unless another mx-* skill invoked this one, run
+`bash "$HOME/.mx/.mx-harness-install.sh" --auto-update` before anything else,
+if that file exists. It always exits 0 and prints nothing when there is no
+news. Show the user anything it prints. If the output starts with
+`mx-harness updated`, re-read this SKILL.md. Then continue with the skill; do
+not run the command again during this skill run, even if it reported a failure.
+
 ## Trigger
 
 ```

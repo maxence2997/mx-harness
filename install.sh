@@ -3,11 +3,15 @@
 # Install or update the mx-harness skills for every supported agent on this machine.
 #
 # Usage:
-#   curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh
+#   curl -fsSL --retry 3 https://github.com/maxence2997/mx-harness/archive/refs/heads/main.tar.gz | tar -xz -C /tmp && bash /tmp/mx-harness-main/install.sh --ref vX.Y.Z
 #   ./install.sh [skill ...]   # from a clone: installs the working tree; optional subset
 #   ./install.sh --remote      # ignore the local tree, fetch GitHub main instead
 #   ./install.sh --ref v1.2.0  # fetch that release tag instead (implies --remote)
 #   ./install.sh --prune       # also remove skills this repo no longer ships
+#   ~/.mx/.mx-harness-install.sh --auto-update   # what every skill runs first
+#
+# Only --ref installs update themselves (README "Automatic updates");
+# working-tree and main installs stay as installed.
 #
 # Layout (one copy, many links):
 #   ~/.agents/skills/<skill>/            canonical copy — Codex reads it directly
@@ -31,6 +35,8 @@
 #     ~/.mx/backups/ and replaced by a symlink.
 #     Real directories are never deleted, only moved there; stale symlinks
 #     (dangling, or pointing at a retired skill) are removed in place.
+#   - A fully successful run also copies the source's install.sh to
+#     ~/.mx/.mx-harness-install.sh, which every skill runs with --auto-update.
 #
 # Requires: bash 3.2+ (macOS default). curl and tar only for --remote, or when
 # the script is not sitting next to the skill directories. The tarball comes
@@ -58,15 +64,20 @@ AGENT_HOMES=(
 usage() {
   cat <<EOF
 Usage: install.sh [--remote | --ref vX.Y.Z] [--prune] [skill ...]
+       install.sh --auto-update
 
 Installs or updates mx-harness skills: one canonical copy per skill under
 ~/.agents/skills, symlinked from ~/.claude/skills, ~/.codex/skills,
 ~/.cursor/skills and ~/.copilot/skills (whichever agent homes exist).
 
   --remote   fetch GitHub main instead of installing from this checkout/tarball
-  --ref TAG  fetch release tag TAG (vX.Y.Z) from GitHub instead
+  --ref TAG  fetch release tag TAG (vX.Y.Z) from GitHub instead; only these
+             installs update themselves before each skill run
   --prune    remove skills this repo no longer ships (moved to ~/.mx/backups first)
   skill ...  install only these; default is all: ${SKILLS[*]}
+  --auto-update
+             move a --ref install to the newest release of its major version;
+             every skill runs this first; prints only news, always exits 0
 EOF
 }
 
@@ -147,7 +158,8 @@ fetch_remote() {
   TMP=$(mktemp -d)
   trap 'rm -rf "$TMP"' EXIT
   echo "Fetching $REPO $label..."
-  if ! curl -fsSL --retry 3 --retry-delay 2 "$url" -o "$TMP/src.tgz"; then
+  # Timeouts bound a stalled connection: --auto-update runs before every skill.
+  if ! curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 10 --max-time 300 "$url" -o "$TMP/src.tgz"; then
     die "failed to download $url (unknown tag, rate-limited or offline)"
   fi
   # GitHub tarballs carry the commit in a pax global header ("52 comment=<sha>").
@@ -171,7 +183,9 @@ resolve_source() {
   fi
   SRC="$script_dir"
   if [[ -d "$SRC/.git" ]]; then
-    SOURCE_ID=$(git -C "$SRC" rev-parse --short HEAD 2>/dev/null || true)
+    # An explicit length: under core.abbrev=no a full sha would make auto_update
+    # treat this clone as a release install.
+    SOURCE_ID=$(git -C "$SRC" rev-parse --short=7 HEAD 2>/dev/null || true)
     if [[ -n "$SOURCE_ID" && -n "$(git -C "$SRC" status --porcelain 2>/dev/null)" ]]; then
       SOURCE_ID="$SOURCE_ID+dirty"
     fi
@@ -414,16 +428,85 @@ report_orphans() {
   return "$failed_prune"
 }
 
+# Every skill runs this copy with --auto-update. It is the installer of the
+# release just installed, so the next update starts from the newest code.
+install_self() {
+  local dest="$HOME/.mx/.mx-harness-install.sh"
+  # Replace by rename, never in place: a running --auto-update may have started
+  # this installer, and bash would go on reading the rewritten file.
+  cp "$SRC/install.sh" "$dest.tmp.$$"
+  mv -f "$dest.tmp.$$" "$dest"
+}
+
+# --- auto-update (contract: README.md "Automatic updates") ---
+AUTO_RUNNING="$HOME/.mx/.mx-harness-update.running"  # mutex dir: parallel sessions update once
+# A live update can take 20 minutes on a stalling network (fetch_remote: 4 tries
+# of up to 300 s); an older mutex was left by a killed run.
+AUTO_STALE_MINUTES=30
+
+semver_sort() { sort -u -t. -k1,1n -k2,2n -k3,3n; }
+
+# Runs in a subshell without errexit: it must never fail the skill that called it.
+# Prints nothing unless an update was installed or failed.
+auto_update() {
+  local version source major best out
+  # On unless turned off with 0, false or off, in any case.
+  case "$(printf '%s' "${MX_HARNESS_AUTO_UPDATE:-}" | tr '[:upper:]' '[:lower:]')" in
+    0|false|off) return 0 ;;
+  esac
+  version=$(lock_get _meta version)
+  source=$(lock_get _meta source)
+  # Release installs only. A clone sitting on a tag records a short sha instead.
+  [[ "$version" =~ ^v([0-9]+)\.[0-9]+\.[0-9]+$ ]] || return 0
+  major=${BASH_REMATCH[1]}
+  [[ "$source" =~ ^([0-9a-f]{40}|remote-v[0-9.]+)$ ]] || return 0
+  command -v curl >/dev/null 2>&1 || return 0
+
+  # Newest tag of the same major: a major release needs manual steps (README
+  # "Versions"). The list is the one `git ls-remote` reads, fetched with curl for
+  # a hard timeout; not the REST API, which rate-limits per IP like
+  # raw.githubusercontent.com (see the header).
+  best=$(curl -fsSL --connect-timeout 3 --max-time 8 "$REPO.git/info/refs?service=git-upload-pack" 2>/dev/null \
+    | tr -d '\0' \
+    | grep -a -o -E 'refs/tags/v[0-9]+\.[0-9]+\.[0-9]+(\^\{\})?$' \
+    | sed -e 's|^refs/tags/v||' -e 's|\^{}$||' \
+    | awk -F. -v m="$major" '$1 == m' | semver_sort | tail -n 1) || return 0
+  [[ -n "$best" && "v$best" != "$version" ]] || return 0
+  # Never downgrade, e.g. when the installed tag was deleted upstream.
+  [[ "$(printf '%s\n%s\n' "${version#v}" "$best" | semver_sort | tail -n 1)" == "$best" ]] || return 0
+
+  REF="v$best"
+  fetch_remote >/dev/null 2>&1  # sets SRC; on failure it exits this subshell
+  if ! mkdir "$AUTO_RUNNING" 2>/dev/null; then
+    [[ -n "$(find "$AUTO_RUNNING" -maxdepth 0 -mmin +"$AUTO_STALE_MINUTES" 2>/dev/null)" ]] || return 0
+    rm -rf "$AUTO_RUNNING" && mkdir "$AUTO_RUNNING" 2>/dev/null || return 0
+  fi
+  trap 'rm -rf "$TMP" "$AUTO_RUNNING"' EXIT
+  # The session that held the mutex before us may have installed it already.
+  [[ "$(lock_get _meta version)" == "$version" ]] || return 0
+  # The new release's own installer, so it installs with its own rules.
+  if out=$(bash "$SRC/install.sh" --ref "$REF" 2>&1); then
+    echo "mx-harness updated $version -> $REF."
+    # Nobody watched this install: name each path it moved out of the way.
+    printf '%s\n' "$out" | grep -F '↳ moved ' || true
+  else
+    echo "mx-harness auto-update to $REF failed; last installer output:"
+    printf '%s\n' "$out" | tail -n 5
+  fi
+}
+
 # --- main ---
 
 REMOTE=false
 PRUNE=false
+AUTO_UPDATE=false
 REF=""
 REF_SET=false
 SELECTED=()
 while [[ $# -gt 0 ]]; do
   arg=$1; shift
   case "$arg" in
+    --auto-update) AUTO_UPDATE=true ;;
     --remote) REMOTE=true ;;
     --prune) PRUNE=true ;;
     --ref)
@@ -438,6 +521,10 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
+if $AUTO_UPDATE; then
+  ( set +e; auto_update ) || true
+  exit 0
+fi
 # Strict pattern: the tag is interpolated into the download URL.
 if $REF_SET && ! [[ "$REF" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
   die "--ref must be a release tag like v1.2.0 (vX.Y.Z), got: '$REF'"
@@ -468,6 +555,7 @@ done
 if [[ ${#failed[@]} -eq 0 ]]; then
   lock_set _meta source "$SOURCE_ID"
   lock_set _meta version "$VERSION_ID"
+  install_self
   echo "Done. ${#SELECTED[@]} skill(s) at $CANON_BASE ($VERSION_ID); linked from:$linked"
 else
   echo "Done with ${#failed[@]} failure(s): ${failed[*]}"
