@@ -22,8 +22,8 @@ The triage logic is identical for both sources: assess validity, severity, and c
 | Bucket | When |
 |--------|------|
 | **Fix now** | P0 always; high risk + low/medium cost |
-| **Track** | Medium risk, deferred; added to `TODOS.md` |
-| **Skip** | Low risk, false positive, or a nitpick that is not trivial to fix |
+| **Track** | Deferred only when necessary (a concrete consequence with a realistic trigger), worth maintaining (no speculative abstraction), and not a cheap in-scope fix; added to `TODOS.md` with its consequence |
+| **Skip** | Low risk, false positive, unlikely edge case, over-engineered fix, or a nitpick that is not trivial to fix — when unsure between Track and Skip, Skip |
 
 ## Severity levels
 
