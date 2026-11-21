@@ -44,13 +44,15 @@ Three places must stay in sync — change them together or the repo lies:
 2. **`<skill>/README.md`** — user-facing "what it does" list
 3. **`README.md`** (root) — skills table, if the one-liner changed
 
-When **adding** a new skill, also append it to `install.sh`'s `SKILLS=(...)` array or it won't ship. When **removing** one, drop it from that array and delete its directory; installed copies are reported as "no longer shipped" on the next `install.sh` run and handled by `install.sh --prune` under the [migration and removal contract](README.md#updates-and-migration).
+When **adding** a new skill, also append it to `install.sh`'s `SKILLS=(...)` array or it won't ship, and copy the `## Auto-update` section verbatim from an existing `SKILL.md` or it won't update itself. When **removing** one, drop it from that array and delete its directory; installed copies are reported as "no longer shipped" on the next `install.sh` run and handled by `install.sh --prune` under the [migration and removal contract](README.md#updates-and-migration).
 
 ## `install.sh` behavior — don't break the lock
 
 The canonical installation and update contract is [README.md — Updates and migration](README.md#updates-and-migration), updated 2026-09-11. Read it before changing the installer. It covers the shared copy, agent links, custom reference reconciliation, checkout protection, legacy path migration, and prune failures.
 
 Keep user-tunable templates and prompts under `references/`; the contract treats `SKILL.md` and `README.md` as repository-owned files. Source selection and supported destinations are documented in [Installation and updates](README.md#installation-and-updates).
+
+Every skill runs `install.sh --auto-update` (through the copy at `~/.mx/.mx-harness-install.sh`) before it starts; its contract is [README.md — Automatic updates](README.md#automatic-updates).
 
 Installer changes must pass `bash -n install.sh` and `python3 -m unittest discover -s tests -v`. Python 3 is test-only; keep the installer runnable with Bash 3.2 and standard Unix utilities.
 

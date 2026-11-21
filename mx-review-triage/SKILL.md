@@ -21,6 +21,15 @@ allowed-tools:
 
 # mx-review-triage
 
+## Auto-update
+
+Unless another mx-* skill invoked this one, run
+`bash "$HOME/.mx/.mx-harness-install.sh" --auto-update` before anything else,
+if that file exists. It always exits 0 and prints nothing when there is no
+news. Show the user anything it prints. If the output starts with
+`mx-harness updated`, re-read this SKILL.md. Then continue with the skill; do
+not run the command again during this skill run, even if it reported a failure.
+
 ## Trigger
 
 ```
@@ -116,8 +125,20 @@ Read the referenced code and assess every finding on three dimensions:
 | Bucket | Criteria |
 |--------|----------|
 | **Fix now** | High risk + low/medium cost. P0 always here. Bug, security, correctness, data loss. |
-| **Track** | Medium risk + needs design, or medium cost + not blocking. Add to `TODOS.md`. |
-| **Skip** | Low risk + high cost, false positive, a nitpick that is not trivial to fix (the P3 default in `references/SEVERITY.md`), or already handled elsewhere. |
+| **Track** | Passes all three conditions of the Track test below. Add to `TODOS.md`. |
+| **Skip** | Low risk + high cost, false positive, fails the Track test, a nitpick that is not trivial to fix (the P3 default in `references/SEVERITY.md`), or already handled elsewhere. |
+
+**Track test** — a finding that is not fixed now goes to `TODOS.md` only when all
+three hold; otherwise it is Skip. When unsure, Skip: every TODO is a standing
+maintenance cost, and a list full of maybes hides the entries that matter.
+1. **Necessary** — you can name the concrete consequence (what breaks or degrades,
+   for whom) and a trigger that realistically occurs with this code's actual inputs,
+   callers, and deployment. A theoretical edge case with no plausible trigger fails.
+2. **Worth maintaining** — the eventual fix addresses that consequence directly and
+   adds less complexity than the problem it removes. A new abstraction, config
+   option, extension point, or generalization for needs nobody has stated fails.
+3. **Deferral is justified** — the fix needs design or falls outside this change's
+   scope. A cheap in-scope fix is not deferred: fix it now or skip it.
 
 ---
 
@@ -164,7 +185,7 @@ missing, use the bare formats below.
 
 **Track** — append the entry to `<repo root>/TODOS.md`, creating the file with a
 `# TODOS` heading if it does not exist. Entry format:
-`- [ ] <sev> <file:line> — <finding> (from review <date>)`
+`- [ ] <sev> <file:line> — <finding>; <consequence if left> (from review <date>)`
 - `--source pr`: reply `Tracked in TODOS.md — {reason}`
 
 **Skip (won't fix)**:
