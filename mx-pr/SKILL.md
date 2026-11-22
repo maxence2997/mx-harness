@@ -180,6 +180,16 @@ If spec.md does not exist, derive `{{summary}}`, `{{motivation}}`, and
 Remove any section whose content is empty and marked optional in the
 template.
 
+Before writing under `.mx/`, make sure git ignores it — otherwise the
+draft shows up as an untracked file that a later commit can pick up. When
+git does not ignore it yet, add `.mx/` to the clone's exclude file, which
+is untracked, so the PR gains no commit:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git check-ignore -q .mx/ || echo '.mx/' >> "$(git rev-parse --git-path info/exclude)"
+```
+
 Create `LOCAL_MX/tmp/` (`.mx/<name>/tmp/`) if it does not exist.
 Generate draft path: `.mx/<name>/tmp/pr-draft-<YYYYMMDD-HHmmss>.md` using
 the current timestamp.
@@ -381,6 +391,6 @@ Do not delete the draft file here. `/mx-flow finish` handles all
   match your team's conventions
 - Title is derived from the first bullet of `{{summary}}` — keep it under
   72 characters
-- Draft files live in `.mx/<name>/tmp/` — project-local, gitignored
+- Draft files live in `.mx/<name>/tmp/` — project-local; Step 2 makes sure git ignores `.mx/`
 - The timestamp suffix prevents collisions if mx-pr is run multiple times
   for the same feature

@@ -80,7 +80,7 @@ mx-flow stores files in two places:
 | `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
 | `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
 
-`.mx/` is automatically added to `.gitignore` on first run.
+If git does not ignore `.mx/` yet, the first run adds it to the clone's exclude file (`.git/info/exclude`) — local only, no commit.
 
 ## Convergent loop safety limit
 
@@ -178,7 +178,7 @@ Future Maintainer: "Document why TTL=300."
 
 - Default mode auto-publishes the PR
 - After merge: run `/mx-flow finish <name>` to clean up
-- `.mx/` directory is gitignored automatically
+- `.mx/` directory is kept out of git automatically (local exclude file, no commit)
 - Per-phase procedures and tunable templates live in `references/`
   (plan, worktree, tdd, verify, status, finish, ai-learning entry format)
 - No test runner detected → mx-flow asks once for the command instead of
