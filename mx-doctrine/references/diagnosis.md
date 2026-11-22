@@ -273,6 +273,18 @@ the old name before finishing.
   ✅ Keep a value a later command needs in a file or ref, or print it and
   write it out literally. ❌ Set a shell variable in one fenced block and
   read it in the next.
+- (2026-11-22, from PR #2) Three procedures failed in one PR run:
+  (1) local `main` held an unpushed commit, so mx-pr's local-first base
+  ref would have left `61719ac` out of the PR range — mx-pr and mx-flow
+  4.2 now prefer `origin/<base>` (mx-flow also branches with `--no-track`);
+  (2) mx-commit wrote a numbered body against this repo's `CLAUDE.md` —
+  its Step 1 now lets a convention the repository documents win; (3) mx-pr
+  wrote its draft under an unignored `.mx/` — mx-pr Step 2 and mx-flow
+  Phase 0 now add `.mx/` to the clone's `info/exclude` (no commit, which
+  would stay behind on the local base).
+  ✅ Measure a PR against the remote base; follow the repository's own
+  documented conventions. ❌ Trust a same-named local branch, or a skill
+  default the repository contradicts.
 
 ## Honest limits of this diagnosis
 
