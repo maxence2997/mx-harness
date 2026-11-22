@@ -152,7 +152,7 @@ It modifies nothing: read-only.
 
 **Plan** — Decomposes the spec into ordered tasks: cache interface, Redis adapter, handler wiring, integration test. Then audits that list against the repo: pins each task to real files and symbols, fixes ordering, splits oversized tasks, rewrites vague ones. Plan saved to `.mx/search-cache/plan.md`.
 
-**Worktree** — Creates an isolated branch and worktree at `.mx/search-cache/worktree/`, runs baseline tests to confirm a clean starting point.
+**Worktree** — Creates an isolated branch off the remote base branch (so unpushed local commits stay out of the PR) and a worktree at `.mx/search-cache/worktree/`, runs baseline tests to confirm a clean starting point.
 
 **TDD loop** — For each task: writes a failing test, implements the minimum to pass, refactors, and commits with a structured message.
 

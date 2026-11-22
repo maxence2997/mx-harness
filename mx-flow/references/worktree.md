@@ -22,18 +22,21 @@ If the name already has a correct prefix, proceed.
 
 ## 4.2 — Create the worktree
 
-First, resolve the base branch (`develop` preferred, then `main`) and assign
-the ref you actually verified — a base that exists only on the remote is
-`origin/<name>`; the bare local name would be an invalid object and every
-later `<base>..HEAD` range would degrade to empty in silence:
+First, resolve the base branch (`develop` preferred, then `main`). The
+remote branch comes first because the PR is compared with it: branching
+from a local branch of the same name would carry its unpushed commits into
+the PR, or start from stale code. Assign the ref you actually verified —
+`origin/<name>` for a remote branch; when only the remote has the branch,
+the bare name would be an invalid object and every later `<base>..HEAD`
+range would degrade to empty in silence:
 
 ```bash
 BASE_BRANCH=""
 for cand in develop main; do
-  if git rev-parse --verify --quiet "refs/heads/$cand" >/dev/null; then
-    BASE_BRANCH="$cand"; break
-  elif git rev-parse --verify --quiet "refs/remotes/origin/$cand" >/dev/null; then
+  if git rev-parse --verify --quiet "refs/remotes/origin/$cand" >/dev/null; then
     BASE_BRANCH="origin/$cand"; break
+  elif git rev-parse --verify --quiet "refs/heads/$cand" >/dev/null; then
+    BASE_BRANCH="$cand"; break
   fi
 done
 ```
@@ -43,10 +46,12 @@ to base from. This value is **canonical**: Phases 5b, 6 and 7 and mx-pr use
 it rather than re-deriving one (strip the `origin/` prefix only where a
 platform CLI needs a branch *name*).
 
-Then create the worktree under LOCAL_MX:
+Then create the worktree under LOCAL_MX. `--no-track` stops the new branch
+from tracking the base branch, so a plain `git push` before mx-pr's
+`git push -u` cannot land on the base:
 
 ```bash
-git worktree add .mx/<name>/worktree -b <branch-name> <base-branch>
+git worktree add --no-track .mx/<name>/worktree -b <branch-name> <base-branch>
 ```
 
 Verify it was created:

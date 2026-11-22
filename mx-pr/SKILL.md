@@ -87,20 +87,24 @@ below and the PR target in Step 5):
 ```bash
 BASE_BRANCH=""
 for cand in develop main; do
-  if git rev-parse --verify --quiet "refs/heads/$cand" >/dev/null; then
-    BASE_BRANCH="$cand"; break
-  elif git rev-parse --verify --quiet "refs/remotes/origin/$cand" >/dev/null; then
+  if git rev-parse --verify --quiet "refs/remotes/origin/$cand" >/dev/null; then
     BASE_BRANCH="origin/$cand"; break
+  elif git rev-parse --verify --quiet "refs/heads/$cand" >/dev/null; then
+    BASE_BRANCH="$cand"; break
   fi
 done
 echo "base ref: ${BASE_BRANCH:-none found}"
 ```
 
-Assign the ref you actually verified: a base that exists only on the
-remote is `origin/<name>`, never the bare local name — the bare name is
-not a valid object and every later command degrades to an empty range in
-silence. If it prints `none found`, neither branch exists — ask the
-user, do not guess.
+The remote branch comes first because the platform compares the PR with
+it: a local branch of the same name can hold unpushed commits or lag
+behind, and the range below would then leave commits out or count extra
+ones. A local branch is the fallback when the remote has no such branch.
+Assign the ref you actually verified — `origin/<name>` for a remote
+branch, never the bare name: when only the remote has the branch, the bare
+name is not a valid object and every later command degrades to an empty
+range in silence. If it prints `none found`, neither branch exists — ask
+the user, do not guess.
 
 If invoked from an orchestrator that already resolved a base branch (e.g.
 mx-flow Phase 4.2), use that value instead.

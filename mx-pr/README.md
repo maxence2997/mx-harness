@@ -11,7 +11,7 @@ Draft a pull/merge request from the feature spec and git log, review it, then pu
 
 ## What it does
 
-1. Reads `~/.mx/<project>/<name>/spec.md` and the git log since branch creation
+1. Reads `~/.mx/<project>/<name>/spec.md` and the git log since the branch left the remote base branch (`origin/develop` or `origin/main`) — the branch the PR is compared with, so an unpushed or stale local copy cannot drop or add commits
 2. Drafts a structured PR description from the history — the body only names files that exist in the committed branch; local sources (spec.md, plan.md, anything under `~/.mx/` or `.mx/`) feed the content but are never cited
 3. Adds a CHANGELOG entry (and commits it) when the repo has a `CHANGELOG.md` — otherwise that checklist item is dropped from the body
 4. Saves draft to `.mx/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions)
