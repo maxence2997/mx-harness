@@ -87,20 +87,24 @@ below and the PR target in Step 5):
 ```bash
 BASE_BRANCH=""
 for cand in develop main; do
-  if git rev-parse --verify --quiet "refs/heads/$cand" >/dev/null; then
-    BASE_BRANCH="$cand"; break
-  elif git rev-parse --verify --quiet "refs/remotes/origin/$cand" >/dev/null; then
+  if git rev-parse --verify --quiet "refs/remotes/origin/$cand" >/dev/null; then
     BASE_BRANCH="origin/$cand"; break
+  elif git rev-parse --verify --quiet "refs/heads/$cand" >/dev/null; then
+    BASE_BRANCH="$cand"; break
   fi
 done
 echo "base ref: ${BASE_BRANCH:-none found}"
 ```
 
-Assign the ref you actually verified: a base that exists only on the
-remote is `origin/<name>`, never the bare local name — the bare name is
-not a valid object and every later command degrades to an empty range in
-silence. If it prints `none found`, neither branch exists — ask the
-user, do not guess.
+The remote branch comes first because the platform compares the PR with
+it: a local branch of the same name can hold unpushed commits or lag
+behind, and the range below would then leave commits out or count extra
+ones. A local branch is the fallback when the remote has no such branch.
+Assign the ref you actually verified — `origin/<name>` for a remote
+branch, never the bare name: when only the remote has the branch, the bare
+name is not a valid object and every later command degrades to an empty
+range in silence. If it prints `none found`, neither branch exists — ask
+the user, do not guess.
 
 If invoked from an orchestrator that already resolved a base branch (e.g.
 mx-flow Phase 4.2), use that value instead.
@@ -175,6 +179,16 @@ If spec.md does not exist, derive `{{summary}}`, `{{motivation}}`, and
 `{{notes}}` from the git log only.
 Remove any section whose content is empty and marked optional in the
 template.
+
+Before writing under `.mx/`, make sure git ignores it — otherwise the
+draft shows up as an untracked file that a later commit can pick up. When
+git does not ignore it yet, add `.mx/` to the clone's exclude file, which
+is untracked, so the PR gains no commit:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git check-ignore -q .mx/ || echo '.mx/' >> "$(git rev-parse --git-path info/exclude)"
+```
 
 Create `LOCAL_MX/tmp/` (`.mx/<name>/tmp/`) if it does not exist.
 Generate draft path: `.mx/<name>/tmp/pr-draft-<YYYYMMDD-HHmmss>.md` using
@@ -377,6 +391,6 @@ Do not delete the draft file here. `/mx-flow finish` handles all
   match your team's conventions
 - Title is derived from the first bullet of `{{summary}}` — keep it under
   72 characters
-- Draft files live in `.mx/<name>/tmp/` — project-local, gitignored
+- Draft files live in `.mx/<name>/tmp/` — project-local; Step 2 makes sure git ignores `.mx/`
 - The timestamp suffix prevents collisions if mx-pr is run multiple times
   for the same feature

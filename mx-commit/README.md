@@ -6,11 +6,13 @@ Commit all pending changes following a structured commit message convention.
 
 1. Reads all pending changes — staged *and* unstaged (`git status`, `git diff`, `git diff --staged`)
 2. Groups them into logical units — one coherent change with one type per unit
-3. Drafts a commit message per unit following the format in `references/commit-message.md`
+3. Drafts a commit message per unit following the repository's own commit convention when it documents one (`CLAUDE.md`, `AGENTS.md`, `CONTRIBUTING.md` or `.github/CONTRIBUTING.md`), and the defaults in `references/commit-message.md` for anything it leaves unsaid
 4. Presents the drafts for review before committing (skipped with `--auto`)
 5. Stages and commits each unit separately, then shows the resulting commits
 
 ## Commit message format
+
+The default, used wherever the repository documents nothing else:
 
 ```
 <type>: <subject>                    ← max 50 characters
@@ -31,7 +33,7 @@ No need to stage anything first — the skill stages each unit itself. Use `--au
 
 ## Customizing the rules
 
-Edit `references/commit-message.md` to adjust types, format, or examples to match your project conventions.
+Edit `references/commit-message.md` to change the defaults for every repository. A repository that documents its own convention needs no edit — mx-commit follows it there.
 
 ## Notes
 

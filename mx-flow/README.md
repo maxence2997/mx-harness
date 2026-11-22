@@ -80,7 +80,7 @@ mx-flow stores files in two places:
 | `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
 | `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
 
-`.mx/` is automatically added to `.gitignore` on first run.
+If git does not ignore `.mx/` yet, the first run adds it to git's local exclude file (`git rev-parse --git-path info/exclude`, usually `.git/info/exclude`) — local only, no commit.
 
 ## Convergent loop safety limit
 
@@ -152,7 +152,7 @@ It modifies nothing: read-only.
 
 **Plan** — Decomposes the spec into ordered tasks: cache interface, Redis adapter, handler wiring, integration test. Then audits that list against the repo: pins each task to real files and symbols, fixes ordering, splits oversized tasks, rewrites vague ones. Plan saved to `.mx/search-cache/plan.md`.
 
-**Worktree** — Creates an isolated branch and worktree at `.mx/search-cache/worktree/`, runs baseline tests to confirm a clean starting point.
+**Worktree** — Creates an isolated branch off the remote base branch (so unpushed local commits stay out of the PR) and a worktree at `.mx/search-cache/worktree/`, runs baseline tests to confirm a clean starting point.
 
 **TDD loop** — For each task: writes a failing test, implements the minimum to pass, refactors, and commits with a structured message.
 
@@ -178,7 +178,7 @@ Future Maintainer: "Document why TTL=300."
 
 - Default mode auto-publishes the PR
 - After merge: run `/mx-flow finish <name>` to clean up
-- `.mx/` directory is gitignored automatically
+- `.mx/` directory is kept out of git automatically (local exclude file, no commit)
 - Per-phase procedures and tunable templates live in `references/`
   (plan, worktree, tdd, verify, status, finish, ai-learning entry format)
 - No test runner detected → mx-flow asks once for the command instead of

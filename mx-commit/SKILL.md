@@ -2,9 +2,9 @@
 name: mx-commit
 description: >
   Commit all pending changes as one commit per logical concern, following the
-  project's message convention (type prefix, 50-char subject, English). Use when
-  the working tree may hold several changes or the convention must be enforced;
-  a single trivial change can use plain git commit.
+  project's message convention (default: type prefix, 50-char subject,
+  English). Use when the working tree may hold several changes or the
+  convention must be enforced; a single trivial change can use plain git commit.
   Usage: /mx-commit [--auto]
 author: Maxence Yang
 github: https://github.com/maxence2997/mx-harness
@@ -50,7 +50,9 @@ Use `--auto` when invoked from an orchestrating skill (e.g. mx-flow). Use the de
 ## Step 1 — Load commit message rules
 
 Read `references/commit-message.md` (located in the same directory as this SKILL.md).
-This file contains the format, type definitions, rules, and examples to follow when drafting the commit message.
+This file contains the default format, type definitions, rules, and examples to follow when drafting the commit message.
+
+Then check whether the repository documents its own commit convention: a section on commit messages in `CLAUDE.md`, `AGENTS.md` or `CONTRIBUTING.md` at the repo root, or in `.github/CONTRIBUTING.md`. Where it differs from the defaults (subject format or length, body style, types, language), follow the repository, and keep the defaults for anything it leaves unsaid. Say which file you followed.
 
 ---
 
@@ -70,7 +72,7 @@ If there are no changes at all (nothing staged, nothing modified), tell the user
 
 Analyse all pending changes (staged and unstaged together) and group them into one or more **logical units**. A logical unit is a set of files that together represent exactly one coherent change with a single `type`.
 
-If all pending changes are one coherent change (single concern, one type), say so in one line and go straight to Step 4 with a single unit — no grouping analysis. Subject only, no body, when the change is trivial (typo, bump, comment); the 50-char subject limit and the type prefix still apply.
+If all pending changes are one coherent change (single concern, one type), say so in one line and go straight to Step 4 with a single unit — no grouping analysis. Subject only, no body, when the change is trivial (typo, bump, comment); the subject format and length limit from Step 1 still apply.
 
 Rules:
 - A logical unit maps to exactly one commit type (`feat`, `fix`, `refactor`, `doc`, `test`, `chore`, …)
@@ -84,10 +86,10 @@ If changes span multiple logical units, plan the commit order (dependencies firs
 
 ## Step 4 — Draft commit messages
 
-For each logical unit, draft a commit message following the format in `references/commit-message.md`:
+For each logical unit, draft a commit message following the convention from Step 1 — the repository's where it documents one, the defaults everywhere else:
 
-1. Subject line: `<type>: <subject>` — must be ≤ 50 characters.
-2. Optional body: follow that file's body rules — max 3 items, each ≤ 50 characters.
+1. Subject line in the convention's format and within its length limit (default: `<type>: <subject>`, ≤ 50 characters).
+2. Optional body in the convention's body style (default: at most 3 numbered items, each ≤ 50 characters).
 
 If `--auto` was **not** passed, present all drafts to the user grouped by unit before committing any of them. Wait for approval.
 
@@ -105,9 +107,9 @@ git add <file1> <file2> ...
 2. Commit using a HEREDOC:
 ```bash
 git commit -m "$(cat <<'EOF'
-<type>: <subject>
+<subject line>
 
-1.<change> → <scenario + reason>
+<body, if any>
 EOF
 )"
 ```

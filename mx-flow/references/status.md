@@ -81,7 +81,7 @@ Before showing normal status, check for these anomalies:
     The plan references a worktree but it no longer exists on disk.
     Recovery:
       Option A — Recreate: from the main repo directory run
-                 `git worktree add .mx/<name>/worktree -b <branch> <base>` (mx-flow Phase 4.2),
+                 `git worktree add --no-track .mx/<name>/worktree -b <branch> <base>` (mx-flow Phase 4.2),
                  then resume the TDD loop in that worktree
       Option B — Proceed without worktree: work directly in the main repo
 ```

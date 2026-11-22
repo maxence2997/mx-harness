@@ -142,13 +142,14 @@ Each phase below is a skeleton — purpose, in/out, gate, guards; its procedure 
    Example: `write-timeout-error-propagation`
 2. Resolve GLOBAL_MX and LOCAL_MX per the path resolution section above
 3. Create both directories if they do not exist
-4. **Check `.gitignore`** — ensure `.mx/` is gitignored:
+4. **Keep `.mx/` out of git** — when git does not ignore it yet, add it to
+   the clone's exclude file. That file is untracked, so no commit lands on
+   the current branch, where it would stay unpushed and outside the
+   feature's PR (Phase 4 branches from the remote base):
    ```bash
-   grep -q '^\.mx/$' "$REPO_ROOT/.gitignore" 2>/dev/null \
-     || echo '.mx/' >> "$REPO_ROOT/.gitignore"
+   cd "$(git rev-parse --show-toplevel)"
+   git check-ignore -q .mx/ || echo '.mx/' >> "$(git rev-parse --git-path info/exclude)"
    ```
-   If `.gitignore` was created or modified, commit it:
-   `git add .gitignore && git commit -m "chore: add .mx/ to .gitignore"`
 5. **Read relevant context** — based on the topic, collect the
    information the brainstorm will need:
    - Files, modules, or packages mentioned explicitly in the topic
