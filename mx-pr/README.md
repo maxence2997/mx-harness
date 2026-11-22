@@ -14,7 +14,7 @@ Draft a pull/merge request from the feature spec and git log, review it, then pu
 1. Reads `~/.mx/<project>/<name>/spec.md` and the git log since the branch left the remote base branch (`origin/develop` or `origin/main`) — the branch the PR is compared with, so an unpushed or stale local copy cannot drop or add commits
 2. Drafts a structured PR description from the history — the body only names files that exist in the committed branch; local sources (spec.md, plan.md, anything under `~/.mx/` or `.mx/`) feed the content but are never cited
 3. Adds a CHANGELOG entry (and commits it) when the repo has a `CHANGELOG.md` — otherwise that checklist item is dropped from the body
-4. Saves draft to `.mx/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions); if git does not ignore `.mx/` yet, first adds it to the clone's exclude file (`.git/info/exclude`) — local only, no commit
+4. Saves draft to `.mx/<name>/tmp/pr-draft-<timestamp>.md` (timestamp prevents collisions); if git does not ignore `.mx/` yet, first adds it to git's local exclude file (`git rev-parse --git-path info/exclude`, usually `.git/info/exclude`) — local only, no commit
 5. Shows you the draft — you decide to proceed or edit first
 6. Asks which platform to publish to
 7. Pushes the branch (never with force) and publishes against the resolved base branch — if that platform's CLI is missing it falls back to hand-off instead of switching platforms

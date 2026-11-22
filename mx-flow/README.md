@@ -80,7 +80,7 @@ mx-flow stores files in two places:
 | `~/.mx/<project>/<name>/` | spec.md, adr.md | Permanent — survives cleanup |
 | `.mx/<name>/` (project root) | plan.md, worktree/, tmp/ | Ephemeral — cleaned by `/mx-flow finish` |
 
-If git does not ignore `.mx/` yet, the first run adds it to the clone's exclude file (`.git/info/exclude`) — local only, no commit.
+If git does not ignore `.mx/` yet, the first run adds it to git's local exclude file (`git rev-parse --git-path info/exclude`, usually `.git/info/exclude`) — local only, no commit.
 
 ## Convergent loop safety limit
 
